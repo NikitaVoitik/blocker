@@ -1,10 +1,10 @@
 import { test, expect } from '../fixtures/extension';
 import { getTrackingDataForToday } from '../helpers/messaging';
-import { clearStorage, setStorage } from '../helpers/storage';
+import { setStorage } from '../helpers/storage';
 
 test.describe('Tier 2: Time Tracking Accuracy', () => {
   test('time only accrues while tab is focused', async ({ context, extensionPage }) => {
-    await clearStorage(extensionPage);
+    await setStorage(extensionPage, { trackingData: { visits: {}, time: {} } });
     await extensionPage.waitForTimeout(500);
 
     const page = await context.newPage();
@@ -30,7 +30,7 @@ test.describe('Tier 2: Time Tracking Accuracy', () => {
   });
 
   test('switching back to tracked site resumes tracking', async ({ context, extensionPage }) => {
-    await clearStorage(extensionPage);
+    await setStorage(extensionPage, { trackingData: { visits: {}, time: {} } });
     await extensionPage.waitForTimeout(500);
 
     const page = await context.newPage();
@@ -56,7 +56,7 @@ test.describe('Tier 2: Time Tracking Accuracy', () => {
   });
 
   test('multiple tracked sites track independently', async ({ context, extensionPage }) => {
-    await clearStorage(extensionPage);
+    await setStorage(extensionPage, { trackingData: { visits: {}, time: {} } });
     await extensionPage.waitForTimeout(500);
 
     const redditPage = await context.newPage();
@@ -79,7 +79,7 @@ test.describe('Tier 2: Time Tracking Accuracy', () => {
   });
 
   test('visit count increments per navigation', async ({ context, extensionPage }) => {
-    await clearStorage(extensionPage);
+    await setStorage(extensionPage, { trackingData: { visits: {}, time: {} } });
     await extensionPage.waitForTimeout(500);
 
     const page = await context.newPage();

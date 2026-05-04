@@ -1,0 +1,421 @@
+// Popup script
+
+const allTimeEl = document.getElementById('all-time');
+const threeDayEl = document.getElementById('three-day');
+const todayEl = document.getElementById('today');
+const photosEl = document.getElementById('photos');
+const shameLevelEl = document.getElementById('shame-level');
+const shameLevelContainer = document.querySelector('.shame-level');
+const viewGalleryBtn = document.getElementById('view-gallery');
+const viewReportBtn = document.getElementById('view-report');
+const testBlockBtn = document.getElementById('test-block');
+const blockedListEl = document.getElementById('blocked-list');
+const siteInput = document.getElementById('site-input');
+const addSiteBtn = document.getElementById('add-site-btn');
+
+const trackTotalVisitsEl = document.getElementById('track-total-visits');
+const trackTotalTimeEl = document.getElementById('track-total-time');
+const trackedBreakdownEl = document.getElementById('tracked-breakdown');
+const trackedListEl = document.getElementById('tracked-list');
+const trackSiteInput = document.getElementById('track-site-input');
+const addTrackBtn = document.getElementById('add-track-btn');
+const viewTrackingReportBtn = document.getElementById('view-tracking-report');
+
+const shameLevels = [
+  { min: 0, name: 'Clean', class: 'level-1' },
+  { min: 1, name: 'Rookie', class: 'level-1' },
+  { min: 3, name: 'Repeat Offender', class: 'level-2' },
+  { min: 6, name: 'Addict', class: 'level-3' },
+  { min: 10, name: 'Terminal Brain Rot', class: 'level-4' },
+  { min: 20, name: 'Beyond Saving', class: 'level-5' }
+];
+
+function getShameLevel(count) {
+  let level = shameLevels[0];
+  for (const l of shameLevels) {
+    if (count >= l.min) level = l;
+  }
+  return level;
+}
+
+function extractHostname(input) {
+  let cleaned = input.trim().toLowerCase();
+  cleaned = cleaned.replace(/^https?:\/\//, '');
+  cleaned = cleaned.replace(/\/.*$/, '');
+  return cleaned;
+}
+
+function formatTime(seconds) {
+  if (seconds < 60) return '<1m';
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) return hours + 'h ' + mins + 'm';
+  return mins + 'm';
+}
+
+// --- Tab switching ---
+
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabBlocker = document.getElementById('tab-blocker');
+const tabTracker = document.getElementById('tab-tracker');
+
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    tabBlocker.style.display = tab === 'blocker' ? '' : 'none';
+    tabTracker.style.display = tab === 'tracker' ? '' : 'none';
+    if (tab === 'tracker') {
+      loadTrackingData();
+      loadTrackedSites();
+    }
+  });
+});
+
+// --- Blocker tab ---
+
+async function loadBlockedSites() {
+  const sites = await chrome.runtime.sendMessage({ type: 'GET_BLOCKED_SITES' });
+  renderBlockedSites(sites || []);
+  await loadAvailablePresets();
+}
+
+async function loadAvailablePresets() {
+  const presets = await chrome.runtime.sendMessage({ type: 'GET_AVAILABLE_PRESETS' });
+  renderPresetSuggestions(presets || []);
+}
+
+function renderPresetSuggestions(presets) {
+  let container = document.getElementById('preset-suggestions');
+  if (container) container.remove();
+
+  if (presets.length === 0) return;
+
+  container = document.createElement('div');
+  container.id = 'preset-suggestions';
+  container.className = 'preset-suggestions';
+
+  const heading = document.createElement('h3');
+  heading.textContent = 'Available presets';
+  container.appendChild(heading);
+
+  for (const preset of presets) {
+    const item = document.createElement('div');
+    item.className = 'preset-item';
+
+    const label = document.createElement('span');
+    label.className = 'preset-label';
+    label.textContent = preset.label || preset.id;
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'preset-add';
+    addBtn.textContent = '+';
+    addBtn.title = 'Add';
+    addBtn.addEventListener('click', async () => {
+      const result = await chrome.runtime.sendMessage({ type: 'ADD_BLOCKED_SITE', site: preset });
+      if (result && result.success) await loadBlockedSites();
+    });
+
+    item.appendChild(label);
+    item.appendChild(addBtn);
+    container.appendChild(item);
+  }
+
+  blockedListEl.parentElement.insertBefore(container, blockedListEl.nextSibling);
+}
+
+function renderBlockedSites(sites) {
+  blockedListEl.innerHTML = '';
+  for (const site of sites) {
+    const item = document.createElement('div');
+    item.className = 'site-item';
+
+    const label = document.createElement('span');
+    label.className = 'site-label';
+    label.textContent = site.label || site.id;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'site-remove';
+    removeBtn.textContent = '×';
+    removeBtn.title = 'Remove';
+    removeBtn.addEventListener('click', () => removeSite(site.id));
+
+    item.appendChild(label);
+    item.appendChild(removeBtn);
+    blockedListEl.appendChild(item);
+  }
+}
+
+async function addSite() {
+  const raw = siteInput.value;
+  if (!raw.trim()) return;
+
+  const hostname = extractHostname(raw);
+  if (!hostname || !hostname.includes('.')) return;
+
+  const id = hostname.replace(/^www\./, '');
+  const domains = [hostname];
+  if (!hostname.startsWith('www.')) {
+    domains.push('www.' + hostname);
+  }
+
+  const site = {
+    id,
+    label: id,
+    domains,
+    builtin: false
+  };
+
+  const result = await chrome.runtime.sendMessage({ type: 'ADD_BLOCKED_SITE', site });
+  if (result && result.success) {
+    siteInput.value = '';
+    await loadBlockedSites();
+  }
+}
+
+async function removeSite(siteId) {
+  const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId });
+  if (result && result.success) {
+    await loadBlockedSites();
+  }
+}
+
+async function loadStats() {
+  try {
+    const stats = await chrome.runtime.sendMessage({ type: 'GET_STATS' });
+    const photos = await chrome.runtime.sendMessage({ type: 'GET_PHOTOS' });
+
+    const allTime = stats?.allTimeCount || 0;
+    const threeDayCount = stats?.threeDayCount || 0;
+    const today = stats?.todayCount || 0;
+    const photoCount = photos?.length || 0;
+
+    allTimeEl.textContent = allTime;
+    threeDayEl.textContent = threeDayCount;
+    todayEl.textContent = today;
+    photosEl.textContent = photoCount;
+
+    const level = getShameLevel(threeDayCount);
+    shameLevelEl.textContent = level.name;
+    shameLevelContainer.className = 'shame-level ' + level.class;
+  } catch (error) {
+    console.error('Failed to load stats:', error);
+  }
+}
+
+// --- Tracker tab ---
+
+async function loadTrackedSites() {
+  const sites = await chrome.runtime.sendMessage({ type: 'GET_TRACKED_SITES' });
+  renderTrackedSites(sites || []);
+  await loadAvailableTrackingPresets();
+}
+
+async function loadAvailableTrackingPresets() {
+  const presets = await chrome.runtime.sendMessage({ type: 'GET_AVAILABLE_TRACKING_PRESETS' });
+  renderTrackingPresetSuggestions(presets || []);
+}
+
+function renderTrackingPresetSuggestions(presets) {
+  let container = document.getElementById('tracking-preset-suggestions');
+  if (container) container.remove();
+
+  if (presets.length === 0) return;
+
+  container = document.createElement('div');
+  container.id = 'tracking-preset-suggestions';
+  container.className = 'preset-suggestions';
+
+  const heading = document.createElement('h3');
+  heading.textContent = 'Available presets';
+  container.appendChild(heading);
+
+  for (const preset of presets) {
+    const item = document.createElement('div');
+    item.className = 'preset-item preset-item-track';
+
+    const label = document.createElement('span');
+    label.className = 'preset-label';
+    label.textContent = preset.label || preset.id;
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'preset-add preset-add-track';
+    addBtn.textContent = '+';
+    addBtn.title = 'Add';
+    addBtn.addEventListener('click', async () => {
+      const result = await chrome.runtime.sendMessage({ type: 'ADD_TRACKED_SITE', site: preset });
+      if (result && result.success) {
+        await loadTrackedSites();
+        await loadTrackingData();
+      }
+    });
+
+    item.appendChild(label);
+    item.appendChild(addBtn);
+    container.appendChild(item);
+  }
+
+  trackedListEl.parentElement.insertBefore(container, trackedListEl.nextSibling);
+}
+
+function renderTrackedSites(sites) {
+  trackedListEl.innerHTML = '';
+  for (const site of sites) {
+    const item = document.createElement('div');
+    item.className = 'site-item site-item-track';
+
+    const label = document.createElement('span');
+    label.className = 'site-label site-label-track';
+    label.textContent = site.label || site.id;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'site-remove';
+    removeBtn.textContent = '×';
+    removeBtn.title = 'Remove';
+    removeBtn.addEventListener('click', async () => {
+      const result = await chrome.runtime.sendMessage({ type: 'REMOVE_TRACKED_SITE', siteId: site.id });
+      if (result && result.success) {
+        await loadTrackedSites();
+        await loadTrackingData();
+      }
+    });
+
+    item.appendChild(label);
+    item.appendChild(removeBtn);
+    trackedListEl.appendChild(item);
+  }
+}
+
+async function loadTrackingData() {
+  try {
+    const data = await chrome.runtime.sendMessage({ type: 'GET_TRACKING_DATA' });
+    if (!data) return;
+
+    let totalVisits = 0;
+    let totalTime = 0;
+    const entries = [];
+
+    for (const [siteId, stats] of Object.entries(data)) {
+      totalVisits += stats.visits;
+      totalTime += stats.time;
+      entries.push({ siteId, ...stats });
+    }
+
+    trackTotalVisitsEl.textContent = totalVisits;
+    trackTotalTimeEl.textContent = formatTime(totalTime);
+
+    entries.sort((a, b) => b.time - a.time);
+    renderTrackedBreakdown(entries);
+  } catch (error) {
+    console.error('Failed to load tracking data:', error);
+  }
+}
+
+function renderTrackedBreakdown(entries) {
+  trackedBreakdownEl.innerHTML = '';
+
+  const active = entries.filter(e => e.visits > 0 || e.time > 0);
+  if (active.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'breakdown-empty';
+    empty.textContent = 'No activity yet today';
+    trackedBreakdownEl.appendChild(empty);
+    return;
+  }
+
+  const maxTime = Math.max(1, ...active.map(e => e.time));
+
+  for (const entry of active) {
+    const row = document.createElement('div');
+    row.className = 'breakdown-item';
+
+    const label = document.createElement('span');
+    label.className = 'breakdown-label';
+    label.textContent = entry.siteId;
+
+    const stats = document.createElement('span');
+    stats.className = 'breakdown-stats';
+    stats.textContent = entry.visits + ' · ' + formatTime(entry.time);
+
+    const barTrack = document.createElement('div');
+    barTrack.className = 'breakdown-bar-track';
+    const bar = document.createElement('div');
+    bar.className = 'breakdown-bar';
+    bar.style.width = (entry.time / maxTime) * 100 + '%';
+    barTrack.appendChild(bar);
+
+    row.appendChild(label);
+    row.appendChild(stats);
+    row.appendChild(barTrack);
+    trackedBreakdownEl.appendChild(row);
+  }
+}
+
+async function addTrackedSite() {
+  const raw = trackSiteInput.value;
+  if (!raw.trim()) return;
+
+  const hostname = extractHostname(raw);
+  if (!hostname || !hostname.includes('.')) return;
+
+  const id = hostname.replace(/^www\./, '');
+  const domains = [hostname];
+  if (!hostname.startsWith('www.')) {
+    domains.push('www.' + hostname);
+  }
+
+  const site = {
+    id,
+    label: id,
+    domains,
+    builtin: false
+  };
+
+  const result = await chrome.runtime.sendMessage({ type: 'ADD_TRACKED_SITE', site });
+  if (result && result.success) {
+    trackSiteInput.value = '';
+    await loadTrackedSites();
+    await loadTrackingData();
+  }
+}
+
+// --- Event listeners ---
+
+addSiteBtn.addEventListener('click', addSite);
+siteInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addSite();
+});
+
+addTrackBtn.addEventListener('click', addTrackedSite);
+trackSiteInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addTrackedSite();
+});
+
+viewGalleryBtn.addEventListener('click', () => {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL('blocked/blocked.html?gallery=true')
+  });
+});
+
+viewReportBtn.addEventListener('click', () => {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL('report/report.html')
+  });
+});
+
+testBlockBtn.addEventListener('click', () => {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL('blocked/blocked.html')
+  });
+});
+
+viewTrackingReportBtn.addEventListener('click', () => {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL('report/report.html?tab=tracking')
+  });
+});
+
+// Load on popup open
+loadStats();
+loadBlockedSites();

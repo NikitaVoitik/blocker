@@ -1,0 +1,26 @@
+/* Hide YouTube Shorts elements across the site */
+
+/* Homepage Shorts shelf */
+ytd-rich-shelf-renderer[is-shorts],
+ytd-reel-shelf-renderer,
+ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]) {
+  display: none !important;
+}
+
+/* Shorts in search results */
+ytd-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"]) {
+  display: none !important;
+}
+
+/* Sidebar navigation Shorts link */
+ytd-guide-entry-renderer:has(a[href="/shorts"]),
+ytd-mini-guide-entry-renderer:has(a[href="/shorts"]) {
+  display: none !important;
+}
+
+/* Shorts in recommendations and related videos */
+ytd-rich-item-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"]),
+ytd-compact-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"]),
+ytd-grid-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"]) {
+  display: none !important;
+}

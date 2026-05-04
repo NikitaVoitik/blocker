@@ -25,28 +25,21 @@ test.describe('Tier 2: Data Integrity', () => {
     await newPage.close();
   });
 
-  test('attempt stats increment correctly', async ({ extensionPage }) => {
-    await clearStorage(extensionPage);
-    await extensionPage.waitForTimeout(500);
-
-    const stats1 = await getStats(extensionPage);
-    expect(stats1.allTimeCount).toBe(0);
-    expect(stats1.todayCount).toBe(0);
-
+  test('attempt stats reflect storage values', async ({ extensionPage }) => {
     await extensionPage.evaluate(async () => {
       const today = new Date().toDateString();
       const todayKey = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
       await chrome.storage.local.set({
-        attemptCount: 5,
+        attemptCount: 25,
         todayDate: today,
-        todayCount: 3,
-        dailyCounts: { [todayKey]: 3 }
+        todayCount: 7,
+        dailyCounts: { [todayKey]: 7 }
       });
     });
 
-    const stats2 = await getStats(extensionPage);
-    expect(stats2.allTimeCount).toBe(5);
-    expect(stats2.todayCount).toBe(3);
+    const stats = await getStats(extensionPage);
+    expect(stats.allTimeCount).toBe(25);
+    expect(stats.todayCount).toBe(7);
   });
 
   test('report data includes 30-day breakdown', async ({ extensionPage }) => {

@@ -1,0 +1,72 @@
+{
+  "manifest_version": 3,
+  "name": "Site Blocker - Selfie Punishment Mode",
+  "version": "1.3.0",
+  "description": "Blocks distracting sites, captures your shame when you try to relapse",
+  "incognito": "spanning",
+
+  "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "storage",
+    "offscreen",
+    "webNavigation",
+    "alarms"
+  ],
+
+  "host_permissions": [
+    "*://*/*"
+  ],
+
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "block_twitter",
+      "enabled": true,
+      "path": "rules.json"
+    }]
+  },
+
+  "content_scripts": [{
+    "matches": [
+      "*://youtube.com/*",
+      "*://www.youtube.com/*",
+      "*://m.youtube.com/*"
+    ],
+    "css": ["content/youtube-shorts.css"],
+    "js": ["content/youtube-shorts.js"],
+    "run_at": "document_start"
+  }],
+
+  "web_accessible_resources": [{
+    "resources": [
+      "blocked/blocked.html",
+      "blocked/blocked.css",
+      "blocked/blocked.js",
+      "lib/storage.js",
+      "lib/filters.js",
+      "report/report.html",
+      "report/report.css",
+      "report/report.js"
+    ],
+    "matches": ["<all_urls>"]
+  }],
+
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  }
+}

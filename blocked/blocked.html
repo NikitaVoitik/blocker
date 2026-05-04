@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLOCKED - Selfie Punishment Mode</title>
+  <link rel="stylesheet" href="blocked.css">
+</head>
+<body>
+  <div class="shame-container">
+    <h1 class="shame-title">BLOCKED</h1>
+
+    <div class="photo-frame" id="photo-frame">
+      <canvas id="shame-canvas" width="640" height="480"></canvas>
+      <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <span>Capturing your shame...</span>
+      </div>
+      <div id="error-overlay" class="error-overlay" style="display: none;">
+        <span class="error-icon">📷</span>
+        <span>Camera unavailable</span>
+        <span class="error-sub">But we still see you, loser.</span>
+      </div>
+    </div>
+
+    <p class="shame-text" id="shame-text">
+      Look at this sad sack of shit trying to relapse again. Pathetic.
+    </p>
+
+    <div class="stats">
+      <p class="attempt-label">Attempt #<span id="attempt-count">0</span></p>
+      <p class="sub-text">You've tried to access Twitter <span id="total-attempts">0</span> times today</p>
+      <p class="all-time-text">All time: <span id="all-time-attempts">0</span> shameful attempts</p>
+    </div>
+
+    <div class="quotes" id="quotes">
+      <p class="quote">"The definition of insanity is doing the same thing over and over again and expecting different results."</p>
+    </div>
+
+    <div class="leaderboard">
+      <h3 class="leaderboard-title">Leaderboard of Losers</h3>
+      <p class="leaderboard-sub">Top 3 most pathetic relapses today</p>
+      <ol class="leaderboard-list">
+        <li class="leaderboard-entry you">
+          <span class="entry-name">you</span>
+          <span class="entry-count" id="leaderboard-you">0</span>
+        </li>
+        <li class="leaderboard-entry">
+          <span class="entry-name">some other gooner (probably you on alt)</span>
+          <span class="entry-count">2</span>
+        </li>
+        <li class="leaderboard-entry">
+          <span class="entry-name">literal bot accounts beat you</span>
+          <span class="entry-count">1</span>
+        </li>
+      </ol>
+    </div>
+
+    <button id="view-gallery" class="gallery-btn">
+      View Hall of Shame
+    </button>
+  </div>
+
+  <div id="gallery-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close-btn" id="close-gallery">&times;</span>
+      <div class="gallery-header">
+        <h2 class="gallery-title">Hall of Shame</h2>
+        <p class="gallery-subtitle">A curated collection of your worst moments</p>
+        <span class="gallery-count" id="gallery-count">0 photos</span>
+      </div>
+      <div id="gallery-grid" class="gallery-grid"></div>
+      <div id="gallery-empty" class="gallery-empty" style="display: none;">
+        <span class="empty-icon">📸</span>
+        <p class="empty-text">No shame photos yet.</p>
+        <p class="empty-subtext">Your time will come.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="blocked.js"></script>
+</body>
+</html>

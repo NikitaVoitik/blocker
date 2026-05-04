@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup - Selfie Punishment Mode</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111113;
+      --border: #2a2a2d;
+      --text: #ededef;
+      --text-muted: #6b6b70;
+      --accent: #E4FF1A;
+      --accent-dim: rgba(228, 255, 26, 0.08);
+      --danger: #FF2D2D;
+      --success: #00FF88;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Space Mono', monospace;
+      color: var(--text);
+      padding: 20px;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(255, 255, 255, 0.005) 3px,
+        rgba(255, 255, 255, 0.005) 6px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .setup-container {
+      max-width: 520px;
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-bottom: 40px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 36px 30px;
+      margin-bottom: 20px;
+    }
+
+    .step h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .step p {
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      font-size: 0.8rem;
+    }
+
+    .camera-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      opacity: 0.6;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: #000;
+      border: 1px solid var(--accent);
+      padding: 14px 36px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .btn:hover {
+      background: #f0ff4d;
+      border-color: #f0ff4d;
+    }
+
+    .btn:disabled {
+      background: var(--border);
+      border-color: var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text);
+      color: var(--text);
+      background: transparent;
+    }
+
+    .success-message {
+      display: none;
+      color: var(--success);
+      margin-top: 20px;
+      font-size: 0.8rem;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .error-message {
+      display: none;
+      color: var(--danger);
+      margin-top: 20px;
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .preview-container {
+      display: none;
+      margin-top: 24px;
+    }
+
+    .preview-container.show {
+      display: block;
+    }
+
+    .preview-container p {
+      color: var(--success);
+      margin-bottom: 12px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    #preview {
+      max-width: 100%;
+      border: 1px solid var(--border);
+    }
+
+    .features {
+      text-align: left;
+      margin-top: 32px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .features h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      color: var(--accent);
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .features ul {
+      color: var(--text-muted);
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .features li {
+      margin-bottom: 10px;
+      font-size: 0.75rem;
+      padding-left: 16px;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .features li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .features li strong {
+      color: var(--text);
+    }
+
+    .done-container {
+      display: none;
+    }
+
+    .done-container.show {
+      display: block;
+    }
+
+    .checkmark {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem;
+      color: var(--success);
+      margin-bottom: 20px;
+    }
+
+    .done-container h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .done-container p {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="setup-container">
+    <h1>Selfie Punishment Mode</h1>
+    <p class="subtitle">Your personal accountability partner</p>
+
+    <div class="step" id="permission-step">
+      <div class="camera-icon">📷</div>
+      <h2>Enable Camera Access</h2>
+      <p>
+        This extension captures photos of you when you try to access Twitter/X.
+        These shame photos are stored locally and never leave your device.
+      </p>
+
+      <button class="btn" id="enable-camera">Enable Camera</button>
+
+      <div class="error-message" id="error-msg">
+        Camera permission denied. The extension will still block sites,
+        but won't capture photos. You can enable camera in your browser settings.
+      </div>
+
+      <div class="preview-container" id="preview-container">
+        <p>Camera enabled — preview active:</p>
+        <video id="preview" autoplay playsinline muted></video>
+      </div>
+
+      <button class="btn btn-secondary" id="skip-btn">Skip for now</button>
+    </div>
+
+    <div class="done-container" id="done-container">
+      <div class="checkmark">✓</div>
+      <h2>System Active</h2>
+      <p>
+        The extension is now active. Try visiting twitter.com to see it in action.
+      </p>
+      <button class="btn" id="close-tab">Close This Tab</button>
+    </div>
+
+    <div class="features">
+      <h3>How it works</h3>
+      <ul>
+        <li><strong>Site Blocking:</strong> Twitter.com and X.com are blocked</li>
+        <li><strong>Shame Photos:</strong> A photo is taken each time you try to access blocked sites</li>
+        <li><strong>Escalating Shame:</strong> Clown filters and wojak overlays appear after repeated attempts</li>
+        <li><strong>Hall of Shame:</strong> View all your shame photos in the gallery</li>
+        <li><strong>100% Local:</strong> All photos stay on your device</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="setup.js"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report</title>
+  <link rel="stylesheet" href="report.css">
+</head>
+<body>
+  <div class="report-container">
+    <div class="report-tab-switcher">
+      <button class="report-tab-btn active" data-tab="shame">Shame Report</button>
+      <button class="report-tab-btn" data-tab="tracking">Time Tracking</button>
+    </div>
+
+    <div class="report-tab-content" id="report-shame">
+      <h1>Shame Report</h1>
+
+      <div class="summary-cards">
+        <div class="card">
+          <span class="card-value" id="today-count">0</span>
+          <span class="card-label">Today</span>
+        </div>
+        <div class="card">
+          <span class="card-value" id="seven-day-count">0</span>
+          <span class="card-label">This Week</span>
+        </div>
+        <div class="card">
+          <span class="card-value" id="thirty-day-count">0</span>
+          <span class="card-label">This Month</span>
+        </div>
+        <div class="card">
+          <span class="card-value" id="all-time-count">0</span>
+          <span class="card-label">All Time</span>
+        </div>
+      </div>
+
+      <div class="insights">
+        <div class="insight">
+          <span class="insight-label">Worst Day</span>
+          <span class="insight-value" id="worst-day">-</span>
+        </div>
+        <div class="insight">
+          <span class="insight-label">Current Clean Streak</span>
+          <span class="insight-value" id="current-streak">0 days</span>
+        </div>
+        <div class="insight">
+          <span class="insight-label">Longest Clean Streak</span>
+          <span class="insight-value" id="longest-streak">0 days</span>
+        </div>
+        <div class="insight">
+          <span class="insight-label">Shame Photos</span>
+          <span class="insight-value" id="photo-count">0</span>
+        </div>
+        <div class="insight">
+          <span class="insight-label">Shame Level</span>
+          <span class="insight-value" id="shame-level">Clean</span>
+        </div>
+      </div>
+
+      <div class="chart-section">
+        <h2>Daily Attempts <span class="chart-subtitle">Last 30 Days</span></h2>
+        <div class="daily-chart" id="daily-chart"></div>
+        <div class="chart-axis" id="chart-axis"></div>
+      </div>
+
+      <div class="chart-section">
+        <h2>Weekly Summary</h2>
+        <div class="weekly-chart" id="weekly-chart"></div>
+      </div>
+    </div>
+
+    <div class="report-tab-content" id="report-tracking" style="display: none;">
+      <h1 class="tracking-title">Time Tracking Report</h1>
+
+      <div class="summary-cards">
+        <div class="card card-track">
+          <span class="card-value card-value-track" id="track-today-visits">0</span>
+          <span class="card-label">Visits Today</span>
+        </div>
+        <div class="card card-track">
+          <span class="card-value card-value-track" id="track-today-time">0m</span>
+          <span class="card-label">Time Today</span>
+        </div>
+        <div class="card card-track">
+          <span class="card-value card-value-track" id="track-week-time">0m</span>
+          <span class="card-label">This Week</span>
+        </div>
+        <div class="card card-track">
+          <span class="card-value card-value-track" id="track-month-time">0h</span>
+          <span class="card-label">This Month</span>
+        </div>
+      </div>
+
+      <div class="insights insights-track">
+        <div class="insight">
+          <span class="insight-label">Most Time Spent On</span>
+          <span class="insight-value insight-value-track" id="track-most-time">-</span>
+        </div>
+        <div class="insight">
+          <span class="insight-label">Most Visited</span>
+          <span class="insight-value insight-value-track" id="track-most-visited">-</span>
+        </div>
+        <div class="insight">
+          <span class="insight-label">Avg Daily Screen Time</span>
+          <span class="insight-value insight-value-track" id="track-avg-daily">0m</span>
+        </div>
+        <div class="insight">
+          <span class="insight-label">Worst Day</span>
+          <span class="insight-value insight-value-track" id="track-worst-day">-</span>
+        </div>
+        <div class="insight">
+          <span class="insight-label">Total Visits This Month</span>
+          <span class="insight-value insight-value-track" id="track-month-visits">0</span>
+        </div>
+      </div>
+
+      <div class="chart-section chart-section-track">
+        <h2>Daily Screen Time <span class="chart-subtitle">Last 30 Days</span></h2>
+        <div class="daily-chart" id="tracking-daily-chart"></div>
+        <div class="chart-axis" id="tracking-chart-axis"></div>
+      </div>
+
+      <div class="chart-section chart-section-track">
+        <h2>Time by Site
+          <span class="period-switcher">
+            <button class="period-btn active" data-period="today">Today</button>
+            <button class="period-btn" data-period="week">Week</button>
+            <button class="period-btn" data-period="month">Month</button>
+          </span>
+        </h2>
+        <div id="site-time-breakdown"></div>
+        <div class="breakdown-empty-report" id="site-breakdown-empty" style="display: none;">No activity yet</div>
+      </div>
+
+      <div class="chart-section chart-section-track">
+        <h2>Weekly Comparison</h2>
+        <div class="weekly-chart" id="tracking-weekly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="report.js"></script>
+</body>
+</html>

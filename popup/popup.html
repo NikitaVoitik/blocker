@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Selfie Punishment Mode</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <h1>Punishment Mode</h1>
+
+    <div class="tab-switcher">
+      <button class="tab-btn active" data-tab="blocker">Blocker</button>
+      <button class="tab-btn" data-tab="tracker">Tracker</button>
+    </div>
+
+    <div class="tab-content" id="tab-blocker">
+      <div class="stats-card">
+        <div class="stat">
+          <span class="stat-value" id="all-time">0</span>
+          <span class="stat-label">Total Attempts</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="three-day">0</span>
+          <span class="stat-label">Last 3 Days</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="today">0</span>
+          <span class="stat-label">Today</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="photos">0</span>
+          <span class="stat-label">Photos Saved</span>
+        </div>
+      </div>
+
+      <div class="shame-level">
+        <span class="label">Shame Level:</span>
+        <span class="level" id="shame-level">Rookie</span>
+      </div>
+
+      <div class="blocked-sites">
+        <h3>Blocked Sites</h3>
+        <div id="blocked-list"></div>
+        <div class="add-site">
+          <input type="text" id="site-input" placeholder="e.g. reddit.com" />
+          <button id="add-site-btn" class="btn-add">Block</button>
+        </div>
+        <span class="input-hint">Enter a domain, not a specific page (e.g. reddit.com, not reddit.com/r/funny)</span>
+      </div>
+
+      <div class="actions">
+        <button id="view-gallery" class="btn">View Hall of Shame</button>
+        <button id="view-report" class="btn btn-secondary">Shame Report</button>
+        <button id="test-block" class="btn btn-secondary">Test Block Page</button>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-tracker" style="display: none;">
+      <div class="tracking-summary">
+        <div class="stat">
+          <span class="stat-value" id="track-total-visits">0</span>
+          <span class="stat-label">Visits Today</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="track-total-time">0m</span>
+          <span class="stat-label">Time Today</span>
+        </div>
+      </div>
+
+      <div class="tracked-breakdown">
+        <h3>Today's Activity</h3>
+        <div id="tracked-breakdown"></div>
+      </div>
+
+      <div class="tracked-sites">
+        <h3>Tracked Sites</h3>
+        <div id="tracked-list"></div>
+        <div class="add-site">
+          <input type="text" id="track-site-input" placeholder="e.g. discord.com" />
+          <button id="add-track-btn" class="btn-add btn-add-track">Track</button>
+        </div>
+        <span class="input-hint">Track time spent on any website</span>
+      </div>
+
+      <div class="actions">
+        <button id="view-tracking-report" class="btn btn-secondary btn-track">Full Report</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>// Stay strong. Touch grass.</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
