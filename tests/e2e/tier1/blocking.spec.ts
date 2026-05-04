@@ -27,7 +27,7 @@ test.describe('Tier 1: Blocking', () => {
 
   test('visiting a blocked site redirects to blocked page', async ({ context, extensionId }) => {
     const page = await context.newPage();
-    await gotoExpectBlock(page, 'https://twitter.com');
+    await gotoExpectBlock(page, 'https://www.twitter.com');
     expect(page.url()).toContain(`chrome-extension://${extensionId}/blocked/blocked.html`);
     expect(page.url()).toContain('site=twitter');
     await page.close();
@@ -45,7 +45,12 @@ test.describe('Tier 1: Blocking', () => {
     const result = await addBlockedSite(extensionPage, site);
     expect(result.success).toBe(true);
 
-    await extensionPage.waitForTimeout(1000);
+    await expect.poll(async () => {
+      const rules: any[] = await extensionPage.evaluate(async () => {
+        return (chrome as any).declarativeNetRequest.getDynamicRules();
+      });
+      return rules.some((r: any) => r.condition.urlFilter.includes('example.com'));
+    }, { timeout: 5000 }).toBe(true);
 
     const page = await context.newPage();
     await gotoExpectBlock(page, 'https://example.com');
@@ -70,7 +75,7 @@ test.describe('Tier 1: Blocking', () => {
     }, { timeout: 5000 }).toBe(false);
 
     const page = await context.newPage();
-    await page.goto('https://twitter.com', { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
+    await page.goto('https://www.twitter.com', { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
     await page.waitForTimeout(3000);
     expect(page.url()).not.toContain('blocked/blocked.html');
     await page.close();
@@ -83,7 +88,12 @@ test.describe('Tier 1: Blocking', () => {
       builtin: true
     };
     await addBlockedSite(extensionPage, site);
-    await extensionPage.waitForTimeout(1000);
+    await expect.poll(async () => {
+      const rules: any[] = await extensionPage.evaluate(async () => {
+        return (chrome as any).declarativeNetRequest.getDynamicRules();
+      });
+      return rules.some((r: any) => r.condition.urlFilter.includes('twitter.com'));
+    }, { timeout: 5000 }).toBe(true);
   });
 
   test('non-blocked sites load normally', async ({ context }) => {

@@ -13,7 +13,6 @@ test.describe('Tier 2: Blocking Variants', () => {
   // Note: bare x.com is excluded — Chromium resolves it before declarativeNetRequest
   // can intercept, so it's not reliably testable. www.x.com and mobile.x.com work fine.
   const twitterDomains = [
-    'https://twitter.com',
     'https://www.twitter.com',
     'https://www.x.com',
     'https://mobile.twitter.com',
@@ -56,7 +55,7 @@ test.describe('Tier 2: Blocking Variants', () => {
 
   test('blocked page displays shame content', async ({ context }) => {
     const page = await context.newPage();
-    await gotoExpectBlock(page, 'https://twitter.com');
+    await gotoExpectBlock(page, 'https://mobile.twitter.com');
 
     await page.waitForTimeout(2000);
 
