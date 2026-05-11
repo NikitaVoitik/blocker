@@ -769,6 +769,23 @@ async function removeBlockedSite(siteId) {
   return { success: true, sites };
 }
 
+async function logRemoval(siteId, siteLabel, photoId) {
+  const result = await chrome.storage.local.get('removalLog');
+  const log = result.removalLog || [];
+  log.push({
+    siteId,
+    siteLabel,
+    timestamp: Date.now(),
+    photoId: photoId || null
+  });
+  await chrome.storage.local.set({ removalLog: log });
+}
+
+async function getRemovalLog() {
+  const result = await chrome.storage.local.get('removalLog');
+  return result.removalLog || [];
+}
+
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Ignore messages from offscreen document (it handles CAPTURE_PHOTO internally)
@@ -909,6 +926,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const trackedIds = new Set(currentTrackedSites.map(s => s.id));
       sendResponse(DEFAULT_TRACKED_SITES.filter(s => !trackedIds.has(s.id)));
     });
+    return true;
+  }
+
+  if (message.type === 'LOG_REMOVAL') {
+    logRemoval(message.siteId, message.siteLabel, message.photoId).then(() => sendResponse({ success: true }));
+    return true;
+  }
+
+  if (message.type === 'GET_REMOVAL_LOG') {
+    getRemovalLog().then(sendResponse);
     return true;
   }
 
