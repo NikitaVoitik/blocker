@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+@import url('../assets/fonts/fonts.css');
 
 * {
   margin: 0;
@@ -361,6 +361,95 @@ h2 {
 
 /* Tracking breakdown empty state */
 .breakdown-empty-report {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px;
+  border: 1px dashed var(--border);
+}
+
+/* Coward Log */
+.coward-log-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.coward-log-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.coward-log-stat-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  color: var(--danger);
+}
+
+.coward-log-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.coward-log-entry:last-child {
+  border-bottom: none;
+}
+
+.coward-log-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.coward-log-thumb-placeholder {
+  width: 48px;
+  height: 48px;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.coward-log-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.coward-log-site {
+  font-size: 0.8rem;
+  color: var(--danger);
+  font-weight: bold;
+}
+
+.coward-log-date {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.coward-log-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.7rem;
+  color: var(--danger);
+  letter-spacing: 0.1em;
+  border: 1px solid var(--danger);
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+.coward-log-empty {
   font-size: 0.8rem;
   color: var(--text-muted);
   text-align: center;

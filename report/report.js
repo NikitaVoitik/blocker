@@ -164,6 +164,75 @@
     }
   });
 
+  // --- Coward Log ---
+
+  function renderCowardLog(log, photos) {
+    const listEl = document.getElementById('coward-log-list');
+    const emptyEl = document.getElementById('coward-log-empty');
+    const totalEl = document.getElementById('coward-total');
+
+    totalEl.textContent = log.length;
+
+    if (log.length === 0) {
+      emptyEl.style.display = '';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    const photoMap = {};
+    for (const p of photos) {
+      photoMap[p.id] = p.data;
+    }
+
+    const sorted = [...log].sort((a, b) => b.timestamp - a.timestamp);
+
+    for (const entry of sorted) {
+      const row = document.createElement('div');
+      row.className = 'coward-log-entry';
+
+      if (entry.photoId && photoMap[entry.photoId]) {
+        const img = document.createElement('img');
+        img.className = 'coward-log-thumb';
+        img.src = photoMap[entry.photoId];
+        img.alt = 'Shame selfie';
+        row.appendChild(img);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'coward-log-thumb-placeholder';
+        placeholder.textContent = 'N/A';
+        row.appendChild(placeholder);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'coward-log-info';
+
+      const site = document.createElement('div');
+      site.className = 'coward-log-site';
+      site.textContent = entry.siteLabel || entry.siteId;
+
+      const date = document.createElement('div');
+      date.className = 'coward-log-date';
+      date.textContent = new Date(entry.timestamp).toLocaleString();
+
+      info.appendChild(site);
+      info.appendChild(date);
+      row.appendChild(info);
+
+      const badge = document.createElement('span');
+      badge.className = 'coward-log-badge';
+      badge.textContent = 'COWARD';
+      row.appendChild(badge);
+
+      listEl.appendChild(row);
+    }
+  }
+
+  chrome.runtime.sendMessage({ type: 'GET_REMOVAL_LOG' }, (log) => {
+    chrome.runtime.sendMessage({ type: 'GET_PHOTOS' }, (photos) => {
+      renderCowardLog(log || [], photos || []);
+    });
+  });
+
   // --- Tracking report ---
 
   function loadTrackingReport() {
