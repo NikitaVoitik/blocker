@@ -37,3 +37,11 @@ export async function getTrackingDataForToday(page: Page) {
 export async function getTrackingReportData(page: Page) {
   return sendMessage(page, { type: 'GET_TRACKING_REPORT_DATA' });
 }
+
+export async function logRemoval(page: Page, siteId: string, siteLabel: string, photoId?: string) {
+  return sendMessage(page, { type: 'LOG_REMOVAL', siteId, siteLabel, photoId: photoId || null });
+}
+
+export async function getRemovalLog(page: Page) {
+  return sendMessage(page, { type: 'GET_REMOVAL_LOG' });
+}

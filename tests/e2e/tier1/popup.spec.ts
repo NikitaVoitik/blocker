@@ -51,6 +51,13 @@ test.describe('Tier 1: Popup', () => {
 
     const removeBtn = page.locator('.site-item:has-text("testsite123.com") .site-remove');
     await removeBtn.click();
+
+    // Gauntlet modal appears — click through all 3 steps
+    await expect(page.locator('#gauntlet-overlay')).toBeVisible();
+    await page.locator('#gauntlet-continue').click();
+    await page.locator('#gauntlet-continue').click();
+    await page.locator('#gauntlet-continue').click();
+
     await expect(page.locator('#blocked-list')).not.toContainText('testsite123.com');
     await page.close();
   });
