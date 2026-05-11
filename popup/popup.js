@@ -139,7 +139,7 @@ function renderBlockedSites(sites) {
     removeBtn.className = 'site-remove';
     removeBtn.textContent = '×';
     removeBtn.title = 'Remove';
-    removeBtn.addEventListener('click', () => removeSite(site.id));
+    removeBtn.addEventListener('click', () => startRemovalGauntlet(site.id, site.label || site.id));
 
     item.appendChild(label);
     item.appendChild(removeBtn);
@@ -174,12 +174,89 @@ async function addSite() {
   }
 }
 
-async function removeSite(siteId) {
+const GAUNTLET_STEPS = [
+  {
+    title: 'REMOVING {site}? COWARD.',
+    body: 'You blocked this site for a reason. Giving up already?',
+    continueLabel: 'Continue'
+  },
+  {
+    title: "YOU'RE REALLY GIVING UP?",
+    body: 'This goes on your permanent record. Every surrender is tracked.',
+    continueLabel: 'Continue'
+  },
+  {
+    title: 'LAST CHANCE.',
+    body: 'Your shame selfie is about to be taken. Everyone will know you caved.',
+    continueLabel: 'Remove'
+  }
+];
+
+let gauntletState = null;
+
+function startRemovalGauntlet(siteId, siteLabel) {
+  gauntletState = { siteId, siteLabel, step: 0 };
+  showGauntletStep();
+}
+
+function showGauntletStep() {
+  const overlay = document.getElementById('gauntlet-overlay');
+  const stepEl = document.getElementById('gauntlet-step');
+  const titleEl = document.getElementById('gauntlet-title');
+  const bodyEl = document.getElementById('gauntlet-body');
+  const continueBtn = document.getElementById('gauntlet-continue');
+
+  const step = GAUNTLET_STEPS[gauntletState.step];
+  stepEl.textContent = `STEP ${gauntletState.step + 1}/3`;
+  titleEl.textContent = step.title.replace('{site}', gauntletState.siteLabel);
+  bodyEl.textContent = step.body;
+  continueBtn.textContent = step.continueLabel;
+  overlay.style.display = '';
+}
+
+function closeGauntlet() {
+  document.getElementById('gauntlet-overlay').style.display = 'none';
+  gauntletState = null;
+}
+
+async function advanceGauntlet() {
+  if (!gauntletState) return;
+
+  gauntletState.step++;
+
+  if (gauntletState.step < GAUNTLET_STEPS.length) {
+    showGauntletStep();
+    return;
+  }
+
+  const { siteId, siteLabel } = gauntletState;
+  closeGauntlet();
+
+  let photoId = null;
+  try {
+    const capture = await chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO' });
+    if (capture && capture.success) {
+      photoId = 'removal_' + siteId + '_' + Date.now();
+    }
+  } catch (e) {
+    // Camera denied or failed — proceed without photo
+  }
+
+  await chrome.runtime.sendMessage({
+    type: 'LOG_REMOVAL',
+    siteId,
+    siteLabel,
+    photoId
+  });
+
   const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId });
   if (result && result.success) {
     await loadBlockedSites();
   }
 }
+
+document.getElementById('gauntlet-continue').addEventListener('click', advanceGauntlet);
+document.getElementById('gauntlet-cancel').addEventListener('click', closeGauntlet);
 
 async function loadStats() {
   try {

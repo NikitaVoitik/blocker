@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+@import url('../assets/fonts/fonts.css');
 
 * {
   margin: 0;
@@ -480,4 +480,89 @@ h1::after {
 /* Tracked sites */
 .tracked-sites {
   margin-bottom: 14px;
+}
+
+/* Removal gauntlet modal */
+.gauntlet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.gauntlet-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 24px 20px;
+  width: 100%;
+  max-width: 288px;
+}
+
+.gauntlet-step {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+
+.gauntlet-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  color: var(--danger);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+
+.gauntlet-body {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.gauntlet-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.gauntlet-btn {
+  flex: 1;
+  padding: 10px 12px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.gauntlet-btn-continue {
+  background: var(--danger);
+  color: #fff;
+  border: 1px solid var(--danger);
+}
+
+.gauntlet-btn-continue:hover {
+  background: #ff4d4d;
+  border-color: #ff4d4d;
+}
+
+.gauntlet-btn-cancel {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.gauntlet-btn-cancel:hover {
+  border-color: var(--text);
+  color: var(--text);
 }
