@@ -121,7 +121,7 @@ h1::after {
 /* Stats card */
 .stats-card {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1px;
   background: var(--border);
   border: 1px solid var(--border);
@@ -149,6 +149,10 @@ h1::after {
   letter-spacing: 0.05em;
   margin-top: 4px;
   display: block;
+}
+
+.stat-value-surrendered {
+  color: var(--danger);
 }
 
 /* Shame level */

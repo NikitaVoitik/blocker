@@ -12,6 +12,7 @@ const testBlockBtn = document.getElementById('test-block');
 const blockedListEl = document.getElementById('blocked-list');
 const siteInput = document.getElementById('site-input');
 const addSiteBtn = document.getElementById('add-site-btn');
+const surrenderedEl = document.getElementById('surrendered');
 
 const trackTotalVisitsEl = document.getElementById('track-total-visits');
 const trackTotalTimeEl = document.getElementById('track-total-time');
@@ -252,6 +253,7 @@ async function advanceGauntlet() {
   const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId });
   if (result && result.success) {
     await loadBlockedSites();
+    await loadRemovalStats();
   }
 }
 
@@ -457,6 +459,11 @@ async function addTrackedSite() {
   }
 }
 
+async function loadRemovalStats() {
+  const log = await chrome.runtime.sendMessage({ type: 'GET_REMOVAL_LOG' });
+  surrenderedEl.textContent = (log && log.length) || 0;
+}
+
 // --- Event listeners ---
 
 addSiteBtn.addEventListener('click', addSite);
@@ -496,3 +503,4 @@ viewTrackingReportBtn.addEventListener('click', () => {
 // Load on popup open
 loadStats();
 loadBlockedSites();
+loadRemovalStats();
