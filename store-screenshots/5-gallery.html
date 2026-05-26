@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--surface:#111113;--border:#2a2a2d;--text:#ededef;--text-muted:#6b6b70;--accent:#E4FF1A;--accent-dim:rgba(228,255,26,0.08);--danger:#FF2D2D;--danger-dim:rgba(255,45,45,0.08)}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;min-height:100vh;position:relative;display:flex;justify-content:center;padding:40px 20px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.006) 3px,rgba(255,255,255,0.006) 6px);pointer-events:none;z-index:9999}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:9998}
+.modal-content{background:var(--surface);border:1px solid var(--border);padding:40px 36px;width:100%;max-width:1100px;position:relative}
+.close-btn{position:absolute;top:16px;right:22px;font-size:1.5rem;cursor:pointer;color:var(--text-muted);line-height:1;font-family:'Space Mono',monospace}
+.gallery-header{text-align:center;margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.gallery-title{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px}
+.gallery-subtitle{color:var(--text-muted);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:16px}
+.gallery-count{display:inline-block;background:var(--accent-dim);color:var(--accent);font-size:0.7rem;font-weight:700;padding:4px 14px;border:1px solid rgba(228,255,26,0.2);letter-spacing:0.05em}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:24px}
+.gallery-item{background:var(--bg);border:1px solid var(--border);padding:0;overflow:hidden}
+.gallery-item:hover{border-color:var(--danger);box-shadow:0 0 20px rgba(255,45,45,0.1)}
+.gallery-item .photo{width:100%;height:180px;display:block;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.gallery-item .photo-inner{width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-family:'Bebas Neue',sans-serif;letter-spacing:0.2em;color:rgba(255,255,255,0.06);font-size:1.2rem}
+.gallery-item-caption{padding:10px 12px;background:var(--bg)}
+.caption-text{font-size:0.7rem;color:var(--text-muted);line-height:1.4;margin-bottom:4px}
+.timestamp{font-size:0.6rem;color:var(--text-muted);opacity:0.5}
+.noise{position:absolute;inset:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.08"/></svg>');pointer-events:none}
+</style>
+</head>
+<body>
+<div class="modal-content">
+<span class="close-btn">&times;</span>
+<div class="gallery-header">
+<h2 class="gallery-title">Hall of Shame</h2>
+<p class="gallery-subtitle">A curated collection of your worst moments</p>
+<span class="gallery-count">38 PHOTOS OF DISGRACE</span>
+</div>
+<div class="gallery-grid">
+<div class="gallery-item">
+<div class="photo" style="background:linear-gradient(135deg,#1a0505,#0d0d0d)"><div class="photo-inner">SHAME CAPTURED</div><div class="noise"></div></div>
+<div class="gallery-item-caption"><p class="caption-text">"This is what rock bottom looks like"</p><p class="timestamp">May 5, 2026 — 2:34 PM</p></div>
+</div>
+<div class="gallery-item">
+<div class="photo" style="background:linear-gradient(135deg,#0d0d1a,#0d0d0d)"><div class="photo-inner">EVIDENCE #37</div><div class="noise"></div></div>
+<div class="gallery-item-caption"><p class="caption-text">"Your ancestors fought wars for this?"</p><p class="timestamp">May 5, 2026 — 1:12 PM</p></div>
+</div>
+<div class="gallery-item">
+<div class="photo" style="background:linear-gradient(135deg,#1a1a05,#0d0d0d)"><div class="photo-inner">CAUGHT IN 4K</div><div class="noise"></div></div>
+<div class="gallery-item-caption"><p class="caption-text">"Peak degeneracy documented"</p><p class="timestamp">May 5, 2026 — 11:47 AM</p></div>
+</div>
+<div class="gallery-item">
+<div class="photo" style="background:linear-gradient(135deg,#0d1a0d,#0d0d0d)"><div class="photo-inner">SHAME CAPTURED</div><div class="noise"></div></div>
+<div class="gallery-item-caption"><p class="caption-text">"Certified loser moment"</p><p class="timestamp">May 4, 2026 — 9:23 PM</p></div>
+</div>
+<div class="gallery-item">
+<div class="photo" style="background:linear-gradient(135deg,#1a0510,#0d0d0d)"><div class="photo-inner">EVIDENCE #35</div><div class="noise"></div></div>
+<div class="gallery-item-caption"><p class="caption-text">"Disappointing but not surprising"</p><p class="timestamp">May 4, 2026 — 6:55 PM</p></div>
+</div>
+<div class="gallery-item">
+<div class="photo" style="background:linear-gradient(135deg,#0a0a1a,#0d0d0d)"><div class="photo-inner">CAUGHT IN 4K</div><div class="noise"></div></div>
+<div class="gallery-item-caption"><p class="caption-text">"The face of someone who gave up"</p><p class="timestamp">May 4, 2026 — 3:18 PM</p></div>
+</div>
+<div class="gallery-item">
+<div class="photo" style="background:linear-gradient(135deg,#1a1005,#0d0d0d)"><div class="photo-inner">SHAME CAPTURED</div><div class="noise"></div></div>
+<div class="gallery-item-caption"><p class="caption-text">"You could be learning a language right now"</p><p class="timestamp">May 3, 2026 — 11:02 PM</p></div>
+</div>
+<div class="gallery-item">
+<div class="photo" style="background:linear-gradient(135deg,#150505,#0d0d0d)"><div class="photo-inner">EVIDENCE #33</div><div class="noise"></div></div>
+<div class="gallery-item-caption"><p class="caption-text">"This one's going in the annual report"</p><p class="timestamp">May 3, 2026 — 7:41 PM</p></div>
+</div>
+</div>
+</div>
+</body>
+</html>

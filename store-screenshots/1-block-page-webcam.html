@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--surface:#111113;--border:#2a2a2d;--text:#ededef;--text-muted:#6b6b70;--accent:#E4FF1A;--accent-dim:rgba(228,255,26,0.08);--danger:#FF2D2D;--danger-dim:rgba(255,45,45,0.08)}
+body{background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;font-family:'Space Mono',monospace;color:var(--text);overflow:hidden;position:relative}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.006) 3px,rgba(255,255,255,0.006) 6px);pointer-events:none;z-index:9999}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:9998}
+.shame-container{text-align:center;padding:20px 24px;max-width:740px;width:100%}
+.shame-title{font-family:'Bebas Neue',sans-serif;font-size:5rem;font-weight:400;color:var(--danger);letter-spacing:0.3em;margin-bottom:20px;position:relative;text-shadow:none;animation:glitchTitle 4s ease-in-out infinite}
+.shame-title::before{content:'BLOCKED';position:absolute;top:0;left:2px;color:var(--accent);opacity:0;clip-path:inset(0 0 50% 0);animation:glitchClip 4s ease-in-out infinite}
+@keyframes glitchTitle{0%,92%,100%{transform:none}93%{transform:translateX(-3px)}94%{transform:translateX(3px)}95%{transform:translateX(-1px)}96%{transform:none}}
+@keyframes glitchClip{0%,92%,100%{opacity:0}93%{opacity:0.8;clip-path:inset(20% 0 40% 0)}94%{opacity:0}95%{opacity:0.6;clip-path:inset(60% 0 10% 0)}96%{opacity:0}}
+.photo-frame{position:relative;display:inline-block;border:2px solid var(--border);padding:0;margin-bottom:20px;background:#000;overflow:hidden}
+.photo-frame::before{content:'EVIDENCE //';position:absolute;top:-20px;left:0;font-family:'Bebas Neue',sans-serif;font-size:0.7rem;color:var(--text-muted);letter-spacing:0.2em}
+.photo-frame img{display:block;width:420px;height:315px;object-fit:cover;object-position:center top}
+.photo-overlay{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:10px 14px;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 100%)}
+.photo-overlay-label{font-family:'Bebas Neue',sans-serif;font-size:0.65rem;color:var(--danger);letter-spacing:0.15em;text-transform:uppercase}
+.photo-overlay-time{font-size:0.6rem;color:var(--text-muted);letter-spacing:0.08em}
+.shame-captured{position:absolute;top:12px;left:12px;font-family:'Bebas Neue',sans-serif;font-size:0.75rem;color:var(--danger);letter-spacing:0.15em;text-transform:uppercase;background:rgba(0,0,0,0.6);padding:4px 10px;border:1px solid rgba(255,45,45,0.3)}
+.shame-text{font-size:1.1rem;color:#FF6B00;margin-bottom:16px;padding:20px 24px;background:var(--danger-dim);border-left:3px solid var(--danger);text-align:left;line-height:1.5;font-weight:bold}
+.stats{margin-bottom:16px;padding:16px;border:1px solid var(--border);background:var(--surface)}
+.attempt-label{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--danger);line-height:1}
+.sub-text{color:var(--text-muted);margin-top:8px;font-size:0.8rem}
+.all-time-text{color:var(--text-muted);font-size:0.7rem;margin-top:8px;opacity:0.6}
+.quotes{margin-bottom:16px;padding:14px 24px;border:1px solid var(--border);position:relative}
+.quotes::before{content:'//';position:absolute;top:8px;left:10px;font-family:'Bebas Neue',sans-serif;color:var(--text-muted);font-size:0.7rem;opacity:0.5}
+.quote{font-style:italic;color:var(--text-muted);font-size:0.85rem;line-height:1.5}
+.leaderboard{margin-bottom:16px;border:1px solid var(--border);background:var(--surface)}
+.leaderboard-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.2em;padding:16px 20px 4px}
+.leaderboard-sub{font-size:0.65rem;color:var(--text-muted);padding:0 20px 16px}
+.leaderboard-list{list-style:none;counter-reset:rank}
+.leaderboard-entry{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;font-size:0.8rem;color:var(--text-muted);border-top:1px solid var(--border);counter-increment:rank}
+.leaderboard-entry::before{content:"#" counter(rank);margin-right:12px;color:var(--text-muted);min-width:24px;font-size:0.7rem;opacity:0.5}
+.leaderboard-entry.you{color:var(--danger);background:var(--danger-dim)}
+.leaderboard-entry.you .entry-count{color:var(--danger);font-weight:bold}
+.entry-name{flex:1;text-align:left}
+.entry-count{font-weight:bold;color:var(--text-muted);min-width:24px;text-align:right}
+.gallery-btn{background:transparent;border:2px solid var(--border);color:var(--text-muted);padding:14px 32px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="shame-container">
+<h1 class="shame-title">BLOCKED</h1>
+<div class="photo-frame">
+<img src="webcam-photo.png" alt="Shame selfie">
+<div class="shame-captured">SHAME CAPTURED</div>
+<div class="photo-overlay">
+<span class="photo-overlay-label">CAUGHT IN 4K</span>
+<span class="photo-overlay-time">May 11, 2026 — 9:34 PM</span>
+</div>
+</div>
+<p class="shame-text">Oh look who's back. Twitter again? You know damn well nothing good awaits you there. Close this tab and go outside.</p>
+<div class="stats">
+<p class="attempt-label">Attempt #7</p>
+<p class="sub-text">You've tried to access Twitter 7 times today</p>
+<p class="all-time-text">All time: 142 shameful attempts</p>
+</div>
+<div class="quotes">
+<p class="quote">"Every time you open Twitter, a neuron dies. You're running out."</p>
+</div>
+<div class="leaderboard">
+<h3 class="leaderboard-title">Leaderboard of Losers</h3>
+<p class="leaderboard-sub">Top relapses today — all local, all you</p>
+<ol class="leaderboard-list">
+<li class="leaderboard-entry"><span class="entry-name">serial relapser</span><span class="entry-count">14</span></li>
+<li class="leaderboard-entry"><span class="entry-name">ctrl+T enjoyer</span><span class="entry-count">11</span></li>
+<li class="leaderboard-entry you"><span class="entry-name">you</span><span class="entry-count">7</span></li>
+<li class="leaderboard-entry"><span class="entry-name">one more scroll andy</span><span class="entry-count">5</span></li>
+</ol>
+</div>
+<button class="gallery-btn">View Hall of Shame</button>
+</div>
+</body>
+</html>

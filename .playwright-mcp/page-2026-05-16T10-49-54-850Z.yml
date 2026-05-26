@@ -1,0 +1,281 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Punishment Mode" [ref=e4] [cursor=pointer]:
+        - /url: "#"
+        - img [ref=e5]
+        - generic [ref=e13]: Punishment Mode
+      - generic [ref=e14]:
+        - link "Features" [ref=e15] [cursor=pointer]:
+          - /url: "#features"
+        - link "How It Works" [ref=e16] [cursor=pointer]:
+          - /url: "#how-it-works"
+        - link "Privacy" [ref=e17] [cursor=pointer]:
+          - /url: "#privacy"
+        - link "FAQ" [ref=e18] [cursor=pointer]:
+          - /url: "#faq"
+      - link "Add to Chrome" [ref=e19] [cursor=pointer]:
+        - /url: https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm
+  - generic [ref=e20]:
+    - generic [ref=e21]:
+      - generic [ref=e22]: // CHROME EXTENSION v1.3
+      - heading "PUNISHMENT MODE MODE" [level=1] [ref=e23]:
+        - generic [ref=e24]: PUNISHMENT
+        - generic [ref=e25]: MODE MODE
+      - paragraph [ref=e26]:
+        - text: Block distracting sites. Get shamed when you relapse.
+        - strong [ref=e27]: No mercy. No excuses.
+      - generic [ref=e28]:
+        - link "Add to Chrome — Free" [ref=e29] [cursor=pointer]:
+          - /url: https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm
+          - img [ref=e30]
+          - text: Add to Chrome — Free
+        - link "See How It Works" [ref=e35] [cursor=pointer]:
+          - /url: "#features"
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]: 100%
+          - generic [ref=e39]: Private
+        - generic [ref=e40]:
+          - generic [ref=e41]: "0"
+          - generic [ref=e42]: Data Collected
+        - generic [ref=e43]:
+          - generic [ref=e44]: "0"
+          - generic [ref=e45]: Servers
+        - generic [ref=e46]:
+          - generic [ref=e47]: ∞
+          - generic [ref=e48]: Shame
+    - generic [ref=e50]:
+      - generic [ref=e51]: BLOCK PAGE //
+      - img "Block page showing shame selfie capture" [ref=e52]
+  - generic [ref=e58]:
+    - generic [ref=e59]:
+      - img [ref=e60]
+      - text: 100% Local Storage
+    - generic [ref=e64]:
+      - img [ref=e65]
+      - text: Zero Data Collection
+    - generic [ref=e68]:
+      - img [ref=e69]
+      - text: No Cloud. No Accounts.
+    - generic [ref=e73]:
+      - img [ref=e74]
+      - text: Your Photos Never Leave Your Device
+  - generic [ref=e77]:
+    - generic [ref=e78]: // PROTOCOL
+    - heading "How It Works" [level=2] [ref=e79]
+    - generic [ref=e80]:
+      - generic [ref=e81]:
+        - generic [ref=e82]: "01"
+        - generic [ref=e83]:
+          - heading "Block Sites" [level=3] [ref=e84]
+          - paragraph [ref=e85]: Add any distracting site to your blocklist. Twitter, Reddit, TikTok, YouTube Shorts — whatever your poison. The extension intercepts every attempt.
+        - generic [ref=e87]:
+          - generic [ref=e88]:
+            - generic [ref=e89]: ">"
+            - text: block twitter.com
+          - generic [ref=e90]:
+            - generic [ref=e91]: ">"
+            - text: block reddit.com
+          - generic [ref=e92]:
+            - generic [ref=e93]: ">"
+            - text: block tiktok.com
+          - generic [ref=e94]: SITES LOCKED. NO TURNING BACK.
+      - generic [ref=e95]:
+        - generic [ref=e96]: "02"
+        - generic [ref=e97]:
+          - heading "Get Caught" [level=3] [ref=e98]
+          - paragraph [ref=e99]: Try to visit a blocked site and your webcam fires. A shame selfie is captured and stored locally. You see your own face staring back at you alongside a personalized roast.
+        - generic [ref=e101]:
+          - generic [ref=e102]:
+            - generic [ref=e103]: "!"
+            - text: "BLOCKED: twitter.com"
+          - generic [ref=e104]:
+            - generic [ref=e105]: ">"
+            - text: capturing evidence...
+          - generic [ref=e106]:
+            - generic [ref=e107]: ">"
+            - text: photo saved to hall of shame
+          - generic [ref=e108]: "\"Oh look who's back. Twitter again?\""
+      - generic [ref=e109]:
+        - generic [ref=e110]: "03"
+        - generic [ref=e111]:
+          - heading "Face the Evidence" [level=3] [ref=e112]
+          - paragraph [ref=e113]: Browse your Hall of Shame gallery. Check your stats — daily attempts, worst days, shame level progression. The data doesn't lie. Neither do the photos.
+        - generic [ref=e115]:
+          - generic [ref=e116]: "SHAME LEVEL: TERMINAL BRAIN ROT"
+          - generic [ref=e117]: "TODAY: 7 attempts"
+          - generic [ref=e118]: "PHOTOS: 38 captured"
+          - generic [ref=e119]: "CLEAN STREAK: 0 days"
+  - generic [ref=e121]:
+    - generic [ref=e122]: // CAPABILITIES
+    - heading "Feature Arsenal" [level=2] [ref=e123]
+    - generic [ref=e124]:
+      - generic [ref=e125]:
+        - generic [ref=e126]: BLOCK PAGE //
+        - img "Block page with shame selfie" [ref=e128]
+        - heading "Shame Selfie Capture" [level=3] [ref=e129]
+        - paragraph [ref=e130]: Your webcam fires the moment you try visiting a blocked site. See your own disappointed face alongside a personalized roast. Every photo stored in your local Hall of Shame.
+      - generic [ref=e131]:
+        - generic [ref=e132]: ESCALATION //
+        - generic [ref=e133]:
+          - heading "Escalating Punishment" [level=3] [ref=e134]
+          - paragraph [ref=e135]: Punishment intensifies with every relapse. Screen shake at attempt 13. Glitch distortion at 42. Matrix rain at 67. Full screen chaos at 100+.
+          - generic [ref=e136]:
+            - generic [ref=e139]: Rookie
+            - generic [ref=e142]: Repeat Offender
+            - generic [ref=e145]: Addict
+            - generic [ref=e148]: Terminal Brain Rot
+            - generic [ref=e151]: Beyond Saving
+      - generic [ref=e152]:
+        - generic [ref=e153]: INTEL //
+        - generic [ref=e154]:
+          - heading "Personalized Roasts" [level=3] [ref=e155]
+          - paragraph [ref=e156]: Every blocked site gets its own custom shame messages. Twitter obsession? Reddit brain? TikTok brain rot? The extension knows exactly what to say.
+          - generic [ref=e157]:
+            - generic [ref=e158]: "\"Your ancestors didn't survive plagues for you to scroll Reddit.\""
+            - generic [ref=e159]: "\"Back on TikTok? Your attention span is now shorter than a goldfish.\""
+            - generic [ref=e160]: "\"Peak degeneracy documented.\""
+      - generic [ref=e161]:
+        - generic [ref=e162]: TRACKER //
+        - img "Time tracking analytics" [ref=e164]
+        - heading "Time Tracking" [level=3] [ref=e165]
+        - paragraph [ref=e166]: Monitor exactly how much time you waste. Per-site breakdowns, daily charts, weekly comparisons. Cold, hard data about your habits.
+      - generic [ref=e167]:
+        - generic [ref=e168]: REPORT //
+        - img "Shame report with statistics" [ref=e170]
+        - heading "Shame Report" [level=3] [ref=e171]
+        - paragraph [ref=e172]: Full analytics dashboard. Worst days, clean streaks, attempt history, weekly trends. A 30-day chart of your failures that doesn't lie.
+      - generic [ref=e173]:
+        - generic [ref=e174]: EVIDENCE //
+        - img "Hall of Shame photo gallery" [ref=e176]
+        - heading "Hall of Shame" [level=3] [ref=e177]
+        - paragraph [ref=e178]: A curated gallery of your worst moments. Every captured selfie with timestamp and shame caption. Scroll through your collection of poor life choices.
+      - generic [ref=e179]:
+        - generic [ref=e180]: CONTENT //
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - img [ref=e184]
+              - generic [ref=e186]: Home
+            - generic [ref=e187]:
+              - img [ref=e188]
+              - generic [ref=e190]: Explore
+            - generic [ref=e191]:
+              - img [ref=e192]
+              - generic [ref=e194]: Shorts
+              - generic [ref=e195]: BLOCKED
+            - generic [ref=e196]:
+              - img [ref=e197]
+              - generic [ref=e199]: Subscriptions
+            - generic [ref=e200]:
+              - img [ref=e201]
+              - generic [ref=e203]: Library
+          - generic [ref=e210]:
+            - generic [ref=e211]:
+              - img [ref=e212]
+              - generic [ref=e214]: Shorts
+              - generic [ref=e215]: ×
+            - generic [ref=e222]: BLOCKED BY PUNISHMENT MODE
+        - heading "YouTube Shorts Blocker" [level=3] [ref=e227]
+        - paragraph [ref=e228]: Automatically hides the YouTube Shorts shelf and button. Block the most addictive content format without blocking all of YouTube.
+  - generic [ref=e231]:
+    - generic [ref=e232]:
+      - generic [ref=e233]: // COMMAND CENTER
+      - heading "Everything In One Popup" [level=2] [ref=e234]:
+        - text: Everything
+        - text: In One Popup
+      - paragraph [ref=e235]: Two tabs. Full control. The Blocker tab manages your blocked sites and shows your shame statistics. The Tracker tab monitors time spent on any site you choose.
+      - list [ref=e236]:
+        - listitem [ref=e237]:
+          - generic [ref=e238]: ›
+          - text: Add or remove blocked sites instantly
+        - listitem [ref=e239]:
+          - generic [ref=e240]: ›
+          - text: Real-time attempt counters and shame level
+        - listitem [ref=e241]:
+          - generic [ref=e242]: ›
+          - text: Per-site time tracking with daily totals
+        - listitem [ref=e243]:
+          - generic [ref=e244]: ›
+          - text: Quick access to Hall of Shame and reports
+      - link "Get Started" [ref=e245] [cursor=pointer]:
+        - /url: https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm
+    - generic [ref=e247]:
+      - generic [ref=e248]: EXTENSION POPUP //
+      - img "Extension popup interface" [ref=e249]
+  - generic [ref=e256]:
+    - generic [ref=e257]:
+      - generic [ref=e258]: // SECURITY CLEARANCE
+      - heading "Your Data Never Leaves" [level=2] [ref=e259]:
+        - text: Your Data
+        - text: Never Leaves
+      - paragraph [ref=e260]: Everything stays on your device. No cloud. No servers. No accounts. No analytics. Not even cookies.
+    - generic [ref=e261]:
+      - generic [ref=e262]:
+        - img [ref=e264]
+        - heading "Local-Only Storage" [level=3] [ref=e267]
+        - paragraph [ref=e268]: All data uses Chrome's built-in local storage API. Photos, settings, stats — nothing is transmitted anywhere.
+      - generic [ref=e269]:
+        - img [ref=e271]
+        - heading "Camera Privacy" [level=3] [ref=e274]
+        - paragraph [ref=e275]: Webcam photos are stored locally and never uploaded. Camera access requires explicit permission and can be revoked anytime.
+      - generic [ref=e276]:
+        - img [ref=e278]
+        - heading "Zero Tracking" [level=3] [ref=e281]
+        - paragraph [ref=e282]: No analytics scripts. No third-party services. No data collection of any kind. The only external load is Google Fonts.
+      - generic [ref=e283]:
+        - img [ref=e285]
+        - heading "Clean Uninstall" [level=3] [ref=e287]
+        - paragraph [ref=e288]: Remove the extension and all data is permanently gone. No residual cloud data, no orphaned accounts, no trace.
+  - generic [ref=e290]:
+    - generic [ref=e291]: // INTERROGATION
+    - heading "FAQ" [level=2] [ref=e292]
+    - generic [ref=e293]:
+      - group [ref=e294]:
+        - generic "Can I really not bypass the block?" [ref=e295] [cursor=pointer]:
+          - generic [ref=e296]: Can I really not bypass the block?
+      - group [ref=e298]:
+        - generic "Do my photos get uploaded anywhere?" [ref=e299] [cursor=pointer]:
+          - generic [ref=e300]: Do my photos get uploaded anywhere?
+      - group [ref=e302]:
+        - generic "What if I don't want the camera feature?" [ref=e303] [cursor=pointer]:
+          - generic [ref=e304]: What if I don't want the camera feature?
+      - group [ref=e306]:
+        - generic "Does it work in Incognito mode?" [ref=e307] [cursor=pointer]:
+          - generic [ref=e308]: Does it work in Incognito mode?
+      - group [ref=e310]:
+        - generic "What sites come pre-blocked?" [ref=e311] [cursor=pointer]:
+          - generic [ref=e312]: What sites come pre-blocked?
+      - group [ref=e314]:
+        - generic "What are the \"shame levels\"?" [ref=e315] [cursor=pointer]:
+          - generic [ref=e316]: What are the "shame levels"?
+      - group [ref=e318]:
+        - generic "Is it free?" [ref=e319] [cursor=pointer]:
+          - generic [ref=e320]: Is it free?
+  - generic [ref=e324]:
+    - heading "Ready to Face Yourself?" [level=2] [ref=e329]:
+      - text: Ready to Face
+      - text: Yourself?
+    - paragraph [ref=e330]:
+      - text: Every second you spend thinking about it is a second you could be doom-scrolling.
+      - text: Install now. Block the noise. Get shamed.
+    - link "Add to Chrome — Free" [ref=e331] [cursor=pointer]:
+      - /url: https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm
+      - img [ref=e332]
+      - text: Add to Chrome — Free
+    - generic [ref=e337]: // Stay strong. Touch grass.
+  - contentinfo [ref=e338]:
+    - generic [ref=e339]:
+      - generic [ref=e340]:
+        - generic [ref=e341]:
+          - img [ref=e342]
+          - generic [ref=e347]: Punishment Mode
+        - paragraph [ref=e348]: © 2026 Punishment Mode. All rights reserved.
+      - generic [ref=e349]:
+        - link "Privacy Policy" [ref=e350] [cursor=pointer]:
+          - /url: /privacy
+        - link "Contact" [ref=e351] [cursor=pointer]:
+          - /url: mailto:nikitavoitik2006@gmail.com
+        - link "Chrome Web Store" [ref=e352] [cursor=pointer]:
+          - /url: https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm

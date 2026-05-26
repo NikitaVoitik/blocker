@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Site Blocker - Selfie Punishment Mode",
-  "version": "1.3.0",
-  "description": "Blocks distracting sites, captures your shame when you try to relapse",
+  "name": "Punishment Mode - Site Blocker and Tracker",
+  "version": "1.3.3",
+  "description": "Website blocker that punishes you for visiting distracting sites — shame selfies, escalating roasts, time tracking. 100% private.",
   "incognito": "spanning",
 
   "permissions": [
@@ -59,7 +59,14 @@
       "lib/filters.js",
       "report/report.html",
       "report/report.css",
-      "report/report.js"
+      "report/report.js",
+      "assets/fonts/fonts.css",
+      "assets/fonts/bebas-neue-latin.woff2",
+      "assets/fonts/bebas-neue-latin-ext.woff2",
+      "assets/fonts/space-mono-400-latin.woff2",
+      "assets/fonts/space-mono-400-latin-ext.woff2",
+      "assets/fonts/space-mono-700-latin.woff2",
+      "assets/fonts/space-mono-700-latin-ext.woff2"
     ],
     "matches": ["<all_urls>"]
   }],

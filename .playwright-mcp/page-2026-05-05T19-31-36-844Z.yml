@@ -1,0 +1,30 @@
+- generic [ref=e2]:
+  - heading "BLOCKED BLOCKED" [level=1] [ref=e3]
+  - generic [ref=e4]:
+    - text: EVIDENCE //
+    - generic [ref=e6]:
+      - generic [ref=e7]: 📷
+      - generic [ref=e8]: Camera unavailable
+      - generic [ref=e9]: But we still see you, loser.
+  - paragraph [ref=e10]: Oh look who's back. Twitter again? You know damn well nothing good awaits you there. Close this tab and go outside.
+  - generic [ref=e11]:
+    - paragraph [ref=e12]: "Attempt #7"
+    - paragraph [ref=e13]: You've tried to access Twitter 7 times today
+    - paragraph [ref=e14]: "All time: 142 shameful attempts"
+  - generic [ref=e15]:
+    - text: //
+    - paragraph [ref=e16]: "\"Every time you open Twitter, a neuron dies. You're running out.\""
+  - generic [ref=e17]:
+    - heading "Leaderboard of Losers" [level=3] [ref=e18]
+    - paragraph [ref=e19]: Top 3 most pathetic relapses today
+    - list [ref=e20]:
+      - listitem [ref=e21]:
+        - generic [ref=e22]: you
+        - generic [ref=e23]: "7"
+      - listitem [ref=e24]:
+        - generic [ref=e25]: some other gooner (probably you on alt)
+        - generic [ref=e26]: "2"
+      - listitem [ref=e27]:
+        - generic [ref=e28]: literal bot accounts beat you
+        - generic [ref=e29]: "1"
+  - button "View Hall of Shame" [ref=e30] [cursor=pointer]

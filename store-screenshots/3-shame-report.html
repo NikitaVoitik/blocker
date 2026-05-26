@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--surface:#111113;--border:#2a2a2d;--text:#ededef;--text-muted:#6b6b70;--accent:#E4FF1A;--accent-dim:rgba(228,255,26,0.08);--danger:#FF2D2D;--danger-dim:rgba(255,45,45,0.08);--track:#00D4FF;--track-dim:rgba(0,212,255,0.08)}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;min-height:100vh;position:relative}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.005) 3px,rgba(255,255,255,0.005) 6px);pointer-events:none;z-index:9999}
+.report-container{max-width:740px;margin:0 auto;padding:12px 24px}
+.report-tab-switcher{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border)}
+.report-tab-btn{flex:1;background:transparent;border:none;color:var(--text-muted);font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.12em;text-transform:uppercase;padding:10px 0;cursor:pointer}
+.report-tab-btn:first-child{border-right:1px solid var(--border)}
+.report-tab-btn.active{color:var(--accent);background:var(--accent-dim)}
+h1{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--accent);text-align:center;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h2{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px}
+.chart-subtitle{font-family:'Space Mono',monospace;font-weight:normal;font-size:0.65rem;color:var(--text-muted);opacity:0.6;letter-spacing:0;text-transform:none}
+.summary-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:16px}
+.card{background:var(--surface);padding:10px 12px;text-align:center}
+.card-value{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--accent);line-height:1}
+.card-label{font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:6px;display:block}
+.insights{background:var(--surface);border:1px solid var(--border);padding:0;margin-bottom:10px}
+.insight{display:flex;justify-content:space-between;align-items:center;padding:6px 20px}
+.insight+.insight{border-top:1px solid var(--border)}
+.insight-label{font-size:0.8rem;color:var(--text-muted)}
+.insight-value{font-size:0.8rem;color:var(--accent);font-weight:bold}
+.chart-section{background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:16px}
+.daily-chart{display:flex;align-items:flex-end;gap:2px;height:120px;padding-bottom:4px}
+.bar{flex:1;min-width:0;position:relative;border-radius:0}
+.bar-zero{background:var(--border);min-height:2px}
+.chart-axis{display:flex;justify-content:space-between;margin-top:8px}
+.chart-axis span{font-size:0.6rem;color:var(--text-muted);opacity:0.5}
+.weekly-chart{display:flex;flex-direction:column;gap:8px}
+.week-row{display:flex;align-items:center;gap:12px}
+.week-label{font-size:0.7rem;color:var(--text-muted);width:80px;text-align:right;flex-shrink:0}
+.week-bar-track{flex:1;background:var(--bg);height:20px;overflow:hidden;border:1px solid var(--border)}
+.week-bar{height:100%;min-width:0}
+.week-count{font-size:0.75rem;color:var(--accent);font-weight:bold;width:30px;text-align:right;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="report-container">
+<div class="report-tab-switcher">
+<button class="report-tab-btn active" data-tab="shame">Shame Report</button>
+<button class="report-tab-btn" data-tab="tracking">Time Tracking</button>
+</div>
+<h1>Shame Report</h1>
+<div class="summary-cards">
+<div class="card"><span class="card-value">7</span><span class="card-label">Today</span></div>
+<div class="card"><span class="card-value">23</span><span class="card-label">This Week</span></div>
+<div class="card"><span class="card-value">68</span><span class="card-label">This Month</span></div>
+<div class="card"><span class="card-value">142</span><span class="card-label">All Time</span></div>
+</div>
+<div class="insights">
+<div class="insight"><span class="insight-label">Worst Day</span><span class="insight-value">Apr 28 — 14 attempts</span></div>
+<div class="insight"><span class="insight-label">Current Clean Streak</span><span class="insight-value">0 days</span></div>
+<div class="insight"><span class="insight-label">Longest Clean Streak</span><span class="insight-value">3 days</span></div>
+<div class="insight"><span class="insight-label">Shame Photos</span><span class="insight-value">38</span></div>
+<div class="insight"><span class="insight-label">Shame Level</span><span class="insight-value" style="color:var(--danger);text-shadow:0 0 8px rgba(255,45,45,0.6)">TERMINAL BRAIN ROT</span></div>
+</div>
+<div class="chart-section">
+<h2>Daily Attempts <span class="chart-subtitle">Last 30 Days</span></h2>
+<div class="daily-chart" id="daily-chart"></div>
+<div class="chart-axis"><span>30d ago</span><span>Today</span></div>
+</div>
+<div class="chart-section">
+<h2>Weekly Summary</h2>
+<div class="weekly-chart">
+<div class="week-row"><span class="week-label">This Week</span><div class="week-bar-track"><div class="week-bar" style="width:82%;background:var(--accent)"></div></div><span class="week-count">23</span></div>
+<div class="week-row"><span class="week-label">Last Week</span><div class="week-bar-track"><div class="week-bar" style="width:100%;background:var(--accent)"></div></div><span class="week-count">28</span></div>
+<div class="week-row"><span class="week-label">2 Weeks Ago</span><div class="week-bar-track"><div class="week-bar" style="width:57%;background:var(--accent)"></div></div><span class="week-count">16</span></div>
+<div class="week-row"><span class="week-label">3 Weeks Ago</span><div class="week-bar-track"><div class="week-bar" style="width:39%;background:var(--accent)"></div></div><span class="week-count">11</span></div>
+</div>
+</div>
+</div>
+<script>
+const data=[0,2,0,1,3,0,0,5,8,2,0,1,0,4,6,3,0,0,2,7,14,4,0,1,3,8,5,2,0,7];
+const max=Math.max(...data);
+const chart=document.getElementById('daily-chart');
+data.forEach(v=>{
+const bar=document.createElement('div');
+bar.className='bar'+(v===0?' bar-zero':'');
+const h=v===0?2:Math.max(4,(v/max)*100);
+bar.style.height=h+'%';
+bar.style.background=v===0?'var(--border)':v>=10?'var(--danger)':v>=5?'#FF6B00':'var(--accent)';
+chart.appendChild(bar);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--surface:#111113;--border:#2a2a2d;--text:#ededef;--text-muted:#6b6b70;--accent:#E4FF1A;--accent-dim:rgba(228,255,26,0.08);--danger:#FF2D2D;--danger-dim:rgba(255,45,45,0.08);--track:#00D4FF;--track-dim:rgba(0,212,255,0.08)}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;min-height:100vh;position:relative}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.005) 3px,rgba(255,255,255,0.005) 6px);pointer-events:none;z-index:9999}
+.report-container{max-width:740px;margin:0 auto;padding:12px 24px}
+.report-tab-switcher{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border)}
+.report-tab-btn{flex:1;background:transparent;border:none;color:var(--text-muted);font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.12em;text-transform:uppercase;padding:10px 0;cursor:pointer}
+.report-tab-btn:first-child{border-right:1px solid var(--border)}
+.report-tab-btn.active-track{color:var(--track);background:var(--track-dim)}
+h1{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--track);text-align:center;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--track)}
+h2{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px}
+.chart-subtitle{font-family:'Space Mono',monospace;font-weight:normal;font-size:0.65rem;color:var(--text-muted);opacity:0.6;letter-spacing:0;text-transform:none}
+.summary-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:10px}
+.card{background:var(--surface);padding:10px 12px;text-align:center}
+.card-value{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--track);line-height:1}
+.card-label{font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:6px;display:block}
+.insights{background:var(--surface);border:1px solid var(--border);padding:0;margin-bottom:10px}
+.insight{display:flex;justify-content:space-between;align-items:center;padding:6px 20px}
+.insight+.insight{border-top:1px solid var(--border)}
+.insight-label{font-size:0.8rem;color:var(--text-muted)}
+.insight-value{font-size:0.8rem;color:var(--track);font-weight:bold}
+.chart-section{background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.daily-chart{display:flex;align-items:flex-end;gap:2px;height:100px;padding-bottom:4px}
+.bar{flex:1;min-width:0;position:relative}
+.bar-zero{background:var(--border);min-height:2px}
+.chart-axis{display:flex;justify-content:space-between;margin-top:8px}
+.chart-axis span{font-size:0.6rem;color:var(--text-muted);opacity:0.5}
+.site-breakdown{display:flex;flex-direction:column;gap:0}
+.site-row{display:grid;grid-template-columns:100px 1fr 60px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.site-row:last-child{border-bottom:none}
+.site-name{font-size:0.8rem;color:var(--text)}
+.site-bar-bg{background:var(--bg);height:12px;overflow:hidden;border:1px solid var(--border)}
+.site-bar{height:100%;background:var(--track)}
+.site-time{font-size:0.75rem;color:var(--track);font-weight:bold;text-align:right}
+.period-switcher{display:inline-flex;gap:0;margin-left:12px;vertical-align:middle;border:1px solid var(--border)}
+.period-btn{background:transparent;border:none;border-right:1px solid var(--border);color:var(--text-muted);font-family:'Space Mono',monospace;font-size:0.6rem;padding:4px 10px;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em}
+.period-btn:last-child{border-right:none}
+.period-btn.active{color:var(--track);background:var(--track-dim)}
+.weekly-chart{display:flex;flex-direction:column;gap:8px}
+.week-row{display:flex;align-items:center;gap:12px}
+.week-label{font-size:0.7rem;color:var(--text-muted);width:80px;text-align:right;flex-shrink:0}
+.week-bar-track{flex:1;background:var(--bg);height:20px;overflow:hidden;border:1px solid var(--border)}
+.week-bar{height:100%;min-width:0}
+.week-count{font-size:0.75rem;color:var(--track);font-weight:bold;width:60px;text-align:right;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="report-container">
+<div class="report-tab-switcher">
+<button class="report-tab-btn" data-tab="shame">Shame Report</button>
+<button class="report-tab-btn active-track" data-tab="tracking">Time Tracking</button>
+</div>
+<h1>Time Tracking Report</h1>
+<div class="summary-cards">
+<div class="card"><span class="card-value">34</span><span class="card-label">Visits Today</span></div>
+<div class="card"><span class="card-value">2h 47m</span><span class="card-label">Time Today</span></div>
+<div class="card"><span class="card-value">14h 22m</span><span class="card-label">This Week</span></div>
+<div class="card"><span class="card-value">52h</span><span class="card-label">This Month</span></div>
+</div>
+<div class="insights">
+<div class="insight"><span class="insight-label">Most Time Spent On</span><span class="insight-value">twitter.com — 1h 23m</span></div>
+<div class="insight"><span class="insight-label">Most Visited</span><span class="insight-value">reddit.com — 18 visits</span></div>
+<div class="insight"><span class="insight-label">Avg Daily Screen Time</span><span class="insight-value">2h 03m</span></div>
+<div class="insight"><span class="insight-label">Worst Day</span><span class="insight-value">Apr 28 — 4h 51m</span></div>
+<div class="insight"><span class="insight-label">Total Visits This Month</span><span class="insight-value">847</span></div>
+</div>
+<div class="chart-section">
+<h2>Daily Screen Time <span class="chart-subtitle">Last 30 Days</span></h2>
+<div class="daily-chart" id="daily-chart"></div>
+<div class="chart-axis"><span>30d ago</span><span>Today</span></div>
+</div>
+<div class="chart-section">
+<h2>Time by Site
+<span class="period-switcher">
+<button class="period-btn">Today</button>
+<button class="period-btn active">Week</button>
+<button class="period-btn">Month</button>
+</span>
+</h2>
+<div class="site-breakdown">
+<div class="site-row"><span class="site-name">twitter.com</span><div class="site-bar-bg"><div class="site-bar" style="width:100%"></div></div><span class="site-time">6h 12m</span></div>
+<div class="site-row"><span class="site-name">reddit.com</span><div class="site-bar-bg"><div class="site-bar" style="width:68%"></div></div><span class="site-time">4h 13m</span></div>
+<div class="site-row"><span class="site-name">youtube.com</span><div class="site-bar-bg"><div class="site-bar" style="width:42%"></div></div><span class="site-time">2h 37m</span></div>
+<div class="site-row"><span class="site-name">instagram.com</span><div class="site-bar-bg"><div class="site-bar" style="width:19%"></div></div><span class="site-time">1h 11m</span></div>
+<div class="site-row"><span class="site-name">discord.com</span><div class="site-bar-bg"><div class="site-bar" style="width:1%"></div></div><span class="site-time">9m</span></div>
+</div>
+</div>
+<div class="chart-section">
+<h2>Weekly Comparison</h2>
+<div class="weekly-chart">
+<div class="week-row"><span class="week-label">This Week</span><div class="week-bar-track"><div class="week-bar" style="width:74%;background:var(--track)"></div></div><span class="week-count">14h 22m</span></div>
+<div class="week-row"><span class="week-label">Last Week</span><div class="week-bar-track"><div class="week-bar" style="width:100%;background:var(--track)"></div></div><span class="week-count">19h 08m</span></div>
+<div class="week-row"><span class="week-label">2 Weeks Ago</span><div class="week-bar-track"><div class="week-bar" style="width:60%;background:var(--track)"></div></div><span class="week-count">11h 31m</span></div>
+<div class="week-row"><span class="week-label">3 Weeks Ago</span><div class="week-bar-track"><div class="week-bar" style="width:36%;background:var(--track)"></div></div><span class="week-count">6h 54m</span></div>
+</div>
+</div>
+</div>
+<script>
+const data=[45,120,0,80,180,60,0,150,290,95,0,45,30,200,165,110,0,0,75,240,291,160,0,55,90,210,140,80,0,167];
+const max=Math.max(...data);
+const chart=document.getElementById('daily-chart');
+data.forEach(v=>{
+const bar=document.createElement('div');
+bar.className='bar'+(v===0?' bar-zero':'');
+const h=v===0?2:Math.max(4,(v/max)*100);
+bar.style.height=h+'%';
+bar.style.background=v===0?'var(--border)':'var(--track)';
+chart.appendChild(bar);
+});
+</script>
+</body>
+</html>

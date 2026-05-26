@@ -1,0 +1,34 @@
+- generic [ref=e2]:
+  - heading "BLOCKED BLOCKED" [level=1] [ref=e3]
+  - generic [ref=e4]:
+    - text: EVIDENCE //
+    - img "Shame selfie" [ref=e5]
+    - generic [ref=e6]: SHAME CAPTURED
+    - generic [ref=e7]:
+      - generic [ref=e8]: CAUGHT IN 4K
+      - generic [ref=e9]: May 11, 2026 — 9:34 PM
+  - paragraph [ref=e10]: Oh look who's back. Twitter again? You know damn well nothing good awaits you there. Close this tab and go outside.
+  - generic [ref=e11]:
+    - paragraph [ref=e12]: "Attempt #7"
+    - paragraph [ref=e13]: You've tried to access Twitter 7 times today
+    - paragraph [ref=e14]: "All time: 142 shameful attempts"
+  - generic [ref=e15]:
+    - text: //
+    - paragraph [ref=e16]: "\"Every time you open Twitter, a neuron dies. You're running out.\""
+  - generic [ref=e17]:
+    - heading "Leaderboard of Losers" [level=3] [ref=e18]
+    - paragraph [ref=e19]: Top relapses today — all local, all you
+    - list [ref=e20]:
+      - listitem [ref=e21]:
+        - generic [ref=e22]: serial relapser
+        - generic [ref=e23]: "14"
+      - listitem [ref=e24]:
+        - generic [ref=e25]: ctrl+T enjoyer
+        - generic [ref=e26]: "11"
+      - listitem [ref=e27]:
+        - generic [ref=e28]: you
+        - generic [ref=e29]: "7"
+      - listitem [ref=e30]:
+        - generic [ref=e31]: one more scroll andy
+        - generic [ref=e32]: "5"
+  - button "View Hall of Shame" [ref=e33] [cursor=pointer]

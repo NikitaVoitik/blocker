@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--surface:#111113;--border:#2a2a2d;--text:#ededef;--text-muted:#6b6b70;--accent:#E4FF1A;--danger:#FF2D2D}
+body{width:440px;height:280px;background:var(--bg);font-family:'Space Mono',monospace;color:var(--text);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.008) 2px,rgba(255,255,255,0.008) 4px);pointer-events:none;z-index:9999}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.5) 100%);pointer-events:none;z-index:9998}
+.container{text-align:center;z-index:1;padding:0 32px}
+.title{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;line-height:1;margin-bottom:8px}
+.subtitle{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--text-muted);line-height:1.6;margin-bottom:16px}
+.blocked-tag{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--danger);letter-spacing:0.2em;border:2px solid var(--danger);padding:4px 20px;position:relative;animation:glitchTitle 4s ease-in-out infinite}
+.blocked-tag::before{content:'BLOCKED';position:absolute;top:4px;left:22px;color:var(--accent);opacity:0;clip-path:inset(0 0 50% 0);animation:glitchClip 4s ease-in-out infinite}
+@keyframes glitchTitle{0%,92%,100%{transform:none}93%{transform:translateX(-2px)}94%{transform:translateX(2px)}95%{transform:translateX(-1px)}96%{transform:none}}
+@keyframes glitchClip{0%,92%,100%{opacity:0}93%{opacity:0.8;clip-path:inset(20% 0 40% 0)}94%{opacity:0}95%{opacity:0.6;clip-path:inset(60% 0 10% 0)}96%{opacity:0}}
+.features{display:flex;gap:16px;justify-content:center;margin-top:16px}
+.feature{font-size:0.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em}
+.feature::before{content:'>';margin-right:4px;color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="title">Punishment<br>Mode</div>
+<p class="subtitle">Block distracting sites. Get shamed when you relapse.</p>
+<div class="blocked-tag">BLOCKED</div>
+<div class="features">
+<span class="feature">Shame capture</span>
+<span class="feature">Time tracking</span>
+<span class="feature">Analytics</span>
+</div>
+</div>
+</body>
+</html>

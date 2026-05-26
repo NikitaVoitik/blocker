@@ -777,6 +777,11 @@ async function createOffscreenDocument() {
 // Close offscreen document
 async function closeOffscreenDocument() {
   if (await hasOffscreenDocument()) {
+    try {
+      await chrome.runtime.sendMessage({ type: 'CLEANUP' });
+    } catch (e) {
+      // Document may already be unresponsive
+    }
     await chrome.offscreen.closeDocument();
   }
 }

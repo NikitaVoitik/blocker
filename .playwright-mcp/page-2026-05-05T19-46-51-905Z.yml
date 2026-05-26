@@ -1,0 +1,62 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - heading "Punishment Mode" [level=2] [ref=e4]:
+      - text: Punishment
+      - text: Mode
+    - paragraph [ref=e5]:
+      - text: Block distracting sites.
+      - text: Get shamed when you relapse.
+      - text: No mercy. No excuses.
+    - list [ref=e6]:
+      - listitem [ref=e7]: ">Camera-based shame capture"
+      - listitem [ref=e8]: ">Escalating punishment levels"
+      - listitem [ref=e9]: ">Hall of Shame photo gallery"
+      - listitem [ref=e10]: ">Time tracking analytics"
+      - listitem [ref=e11]: ">YouTube Shorts auto-hide"
+  - generic [ref=e12]:
+    - text: EXTENSION POPUP
+    - generic [ref=e14]:
+      - heading "Punishment Mode v1.3" [level=1] [ref=e15]
+      - generic [ref=e16]:
+        - button "Blocker" [ref=e17] [cursor=pointer]
+        - button "Tracker" [ref=e18] [cursor=pointer]
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: "142"
+          - generic [ref=e22]: Total Attempts
+        - generic [ref=e23]:
+          - generic [ref=e24]: "23"
+          - generic [ref=e25]: Last 3 Days
+        - generic [ref=e26]:
+          - generic [ref=e27]: "7"
+          - generic [ref=e28]: Today
+        - generic [ref=e29]:
+          - generic [ref=e30]: "38"
+          - generic [ref=e31]: Photos Saved
+      - generic [ref=e32]:
+        - generic [ref=e33]: "Shame Level:"
+        - generic [ref=e34]: TERMINAL BRAIN ROT
+      - generic [ref=e35]:
+        - heading "Blocked Sites" [level=3] [ref=e36]
+        - generic [ref=e37]:
+          - generic [ref=e38]: ×Twitter / X
+          - generic [ref=e39] [cursor=pointer]: −
+        - generic [ref=e40]:
+          - generic [ref=e41]: ×YouTube Shorts
+          - generic [ref=e42] [cursor=pointer]: −
+        - generic [ref=e43]:
+          - generic [ref=e44]: ×reddit.com
+          - generic [ref=e45] [cursor=pointer]: −
+        - generic [ref=e46]:
+          - generic [ref=e47]: ×instagram.com
+          - generic [ref=e48] [cursor=pointer]: −
+        - generic [ref=e49]:
+          - generic [ref=e50]: ×tiktok.com
+          - generic [ref=e51] [cursor=pointer]: −
+        - generic [ref=e52]:
+          - textbox "e.g. reddit.com" [ref=e53]
+          - button "Block" [ref=e54] [cursor=pointer]
+      - generic [ref=e55]:
+        - button "View Hall of Shame" [ref=e56] [cursor=pointer]
+        - button "Shame Report" [ref=e57] [cursor=pointer]
+      - paragraph [ref=e59]: // Stay strong. Touch grass.

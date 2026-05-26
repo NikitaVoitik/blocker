@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Punishment Mode — Site Blocker That Shames You</title>
+  <meta name="description" content="Chrome extension that blocks distracting sites and captures shame selfies when you relapse. Escalating roasts, time tracking, 100% private.">
+  <meta name="theme-color" content="#0a0a0a">
+
+  <meta property="og:title" content="Punishment Mode — Site Blocker That Shames You">
+  <meta property="og:description" content="Block distracting sites. Get shamed when you relapse. Shame selfies, escalating roasts, time tracking. 100% private.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="og-image.png">
+
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Vignette overlay -->
+<div class="vignette"></div>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <svg class="nav-logo-icon" viewBox="0 0 128 128" width="28" height="28">
+        <rect width="128" height="128" fill="#0a0a0a"/>
+        <rect x="1" y="1" width="126" height="126" fill="none" stroke="#2a2a2d" stroke-width="2"/>
+        <polygon points="64,30 118,64 64,98 10,64" fill="none" stroke="#E4FF1A" stroke-width="3.5" stroke-linejoin="miter"/>
+        <polygon points="64,42 100,64 64,86 28,64" fill="rgba(228,255,26,0.06)" stroke="#E4FF1A" stroke-width="1.5" stroke-linejoin="miter"/>
+        <rect x="54" y="54" width="20" height="20" fill="#E4FF1A"/>
+        <rect x="59" y="59" width="10" height="10" fill="#0a0a0a"/>
+        <rect x="62" y="62" width="4" height="4" fill="#E4FF1A"/>
+      </svg>
+      <span>Punishment Mode</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a href="https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm" class="btn btn-primary btn-sm nav-cta">
+      Add to Chrome
+    </a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">// CHROME EXTENSION v1.3</div>
+    <h1 class="hero-title" data-text="PUNISHMENT MODE">
+      <span class="hero-title-line">PUNISHMENT</span>
+      <span class="hero-title-line hero-title-line--accent">MODE</span>
+    </h1>
+    <p class="hero-subtitle">
+      Block distracting sites. Get shamed when you relapse.<br>
+      <strong>No mercy. No excuses.</strong>
+    </p>
+    <div class="hero-actions">
+      <a href="https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm" class="btn btn-primary btn-lg">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M21.17 8H12"/><path d="M3.95 6.06L8.54 14"/><path d="M10.88 21.94L15.46 14"/></svg>
+        Add to Chrome — Free
+      </a>
+      <a href="#features" class="btn btn-secondary btn-lg">See How It Works</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-value">100%</span>
+        <span class="hero-stat-label">Private</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">0</span>
+        <span class="hero-stat-label">Data Collected</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">0</span>
+        <span class="hero-stat-label">Servers</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">&infin;</span>
+        <span class="hero-stat-label">Shame</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-screenshot">
+    <div class="screenshot-frame">
+      <div class="screenshot-frame-label">BLOCK PAGE //</div>
+      <img src="store-screenshots/screenshot-1-block-page-webcam.png" alt="Block page showing shame selfie capture" loading="eager" width="1280" height="800">
+      <div class="screenshot-frame-corners">
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trust strip -->
+<section class="trust-strip">
+  <div class="trust-strip-inner">
+    <div class="trust-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="0"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      100% Local Storage
+    </div>
+    <div class="trust-divider"></div>
+    <div class="trust-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      Zero Data Collection
+    </div>
+    <div class="trust-divider"></div>
+    <div class="trust-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      No Cloud. No Accounts.
+    </div>
+    <div class="trust-divider"></div>
+    <div class="trust-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Your Photos Never Leave Your Device
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="how-it-works" id="how-it-works">
+  <div class="section-inner">
+    <div class="section-label">// PROTOCOL</div>
+    <h2 class="section-title">How It Works</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">01</div>
+        <div class="step-content">
+          <h3 class="step-title">Block Sites</h3>
+          <p class="step-desc">Add any distracting site to your blocklist. Twitter, Reddit, TikTok, YouTube Shorts — whatever your poison. The extension intercepts every attempt.</p>
+        </div>
+        <div class="step-visual">
+          <div class="step-terminal">
+            <div class="terminal-line"><span class="t-muted">&gt;</span> block twitter.com</div>
+            <div class="terminal-line"><span class="t-muted">&gt;</span> block reddit.com</div>
+            <div class="terminal-line"><span class="t-muted">&gt;</span> block tiktok.com</div>
+            <div class="terminal-line t-accent">SITES LOCKED. NO TURNING BACK.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">02</div>
+        <div class="step-content">
+          <h3 class="step-title">Get Caught</h3>
+          <p class="step-desc">Try to visit a blocked site and your webcam fires. A shame selfie is captured and stored locally. You see your own face staring back at you alongside a personalized roast.</p>
+        </div>
+        <div class="step-visual">
+          <div class="step-terminal">
+            <div class="terminal-line"><span class="t-danger">!</span> BLOCKED: twitter.com</div>
+            <div class="terminal-line"><span class="t-muted">&gt;</span> capturing evidence...</div>
+            <div class="terminal-line"><span class="t-muted">&gt;</span> photo saved to hall of shame</div>
+            <div class="terminal-line t-danger">"Oh look who's back. Twitter again?"</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">03</div>
+        <div class="step-content">
+          <h3 class="step-title">Face the Evidence</h3>
+          <p class="step-desc">Browse your Hall of Shame gallery. Check your stats — daily attempts, worst days, shame level progression. The data doesn't lie. Neither do the photos.</p>
+        </div>
+        <div class="step-visual">
+          <div class="step-terminal">
+            <div class="terminal-line"><span class="t-muted">SHAME LEVEL:</span> <span class="t-danger">TERMINAL BRAIN ROT</span></div>
+            <div class="terminal-line"><span class="t-muted">TODAY:</span> 7 attempts</div>
+            <div class="terminal-line"><span class="t-muted">PHOTOS:</span> 38 captured</div>
+            <div class="terminal-line"><span class="t-muted">CLEAN STREAK:</span> <span class="t-danger">0 days</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <div class="section-label">// CAPABILITIES</div>
+    <h2 class="section-title">Feature Arsenal</h2>
+
+    <div class="features-grid">
+      <div class="feature-card feature-card--wide">
+        <div class="feature-card-label">BLOCK PAGE //</div>
+        <div class="feature-card-screenshot">
+          <img src="store-screenshots/screenshot-1-block-page-webcam.png" alt="Block page with shame selfie" loading="lazy" width="1280" height="800">
+        </div>
+        <h3 class="feature-card-title">Shame Selfie Capture</h3>
+        <p class="feature-card-desc">Your webcam fires the moment you try visiting a blocked site. See your own disappointed face alongside a personalized roast. Every photo stored in your local Hall of Shame.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card-label">ESCALATION //</div>
+        <div class="feature-card-inner">
+          <h3 class="feature-card-title">Escalating Punishment</h3>
+          <p class="feature-card-desc">Punishment intensifies with every relapse. Screen shake at attempt 13. Glitch distortion at 42. Matrix rain at 67. Full screen chaos at 100+.</p>
+          <div class="escalation-preview">
+            <div class="escalation-level">
+              <span class="escalation-dot" style="background: var(--accent)"></span>
+              <span>Rookie</span>
+            </div>
+            <div class="escalation-level">
+              <span class="escalation-dot" style="background: #ff8c00"></span>
+              <span>Repeat Offender</span>
+            </div>
+            <div class="escalation-level">
+              <span class="escalation-dot" style="background: var(--danger)"></span>
+              <span>Addict</span>
+            </div>
+            <div class="escalation-level">
+              <span class="escalation-dot" style="background: #ff0055"></span>
+              <span>Terminal Brain Rot</span>
+            </div>
+            <div class="escalation-level">
+              <span class="escalation-dot" style="background: #8b00ff"></span>
+              <span>Beyond Saving</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card-label">INTEL //</div>
+        <div class="feature-card-inner">
+          <h3 class="feature-card-title">Personalized Roasts</h3>
+          <p class="feature-card-desc">Every blocked site gets its own custom shame messages. Twitter obsession? Reddit brain? TikTok brain rot? The extension knows exactly what to say.</p>
+          <div class="roast-preview">
+            <div class="roast-line">"Your ancestors didn't survive plagues for you to scroll Reddit."</div>
+            <div class="roast-line">"Back on TikTok? Your attention span is now shorter than a goldfish."</div>
+            <div class="roast-line">"Peak degeneracy documented."</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card-label">TRACKER //</div>
+        <div class="feature-card-screenshot">
+          <img src="store-screenshots/screenshot-4-tracking.png" alt="Time tracking analytics" loading="lazy" width="1280" height="800">
+        </div>
+        <h3 class="feature-card-title">Time Tracking</h3>
+        <p class="feature-card-desc">Monitor exactly how much time you waste. Per-site breakdowns, daily charts, weekly comparisons. Cold, hard data about your habits.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card-label">REPORT //</div>
+        <div class="feature-card-screenshot">
+          <img src="store-screenshots/screenshot-3-shame-report.png" alt="Shame report with statistics" loading="lazy" width="1280" height="800">
+        </div>
+        <h3 class="feature-card-title">Shame Report</h3>
+        <p class="feature-card-desc">Full analytics dashboard. Worst days, clean streaks, attempt history, weekly trends. A 30-day chart of your failures that doesn't lie.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card-label">EVIDENCE //</div>
+        <div class="feature-card-screenshot">
+          <img src="store-screenshots/screenshot-5-gallery.png" alt="Hall of Shame photo gallery" loading="lazy" width="1280" height="800">
+        </div>
+        <h3 class="feature-card-title">Hall of Shame</h3>
+        <p class="feature-card-desc">A curated gallery of your worst moments. Every captured selfie with timestamp and shame caption. Scroll through your collection of poor life choices.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card-label">CONTENT //</div>
+        <div class="feature-card-screenshot shorts-mockup">
+          <div class="shorts-yt-sidebar">
+            <div class="shorts-yt-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--text-muted)"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+              <span>Home</span>
+            </div>
+            <div class="shorts-yt-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--text-muted)"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              <span>Explore</span>
+            </div>
+            <div class="shorts-yt-item shorts-yt-item--blocked">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--danger)"><path d="M10 14.65v-5.3L15 12l-5 2.65zm7.77-4.33c-.77-.32-1.2-.5-1.2-.5L18 9.06c1.84-.96 2.53-3.23 1.56-5.06s-3.24-2.53-5.07-1.56L6 6.94c-1.29.68-2.07 2.04-2 3.49.07 1.42.93 2.67 2.22 3.25.03.01 1.2.5 1.2.5L6 14.93c-1.83.97-2.53 3.24-1.56 5.07.97 1.83 3.24 2.53 5.07 1.56l8.5-4.5c1.29-.68 2.06-2.04 1.99-3.49-.07-1.42-.94-2.68-2.23-3.25z"/></svg>
+              <span>Shorts</span>
+              <div class="shorts-blocked-badge">BLOCKED</div>
+            </div>
+            <div class="shorts-yt-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--text-muted)"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+              <span>Subscriptions</span>
+            </div>
+            <div class="shorts-yt-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--text-muted)"><path d="M4 15h16v-2H4v2zm0 4h16v-2H4v2zm0-8h16V9H4v2zm0-6v2h16V5H4z"/></svg>
+              <span>Library</span>
+            </div>
+          </div>
+          <div class="shorts-yt-main">
+            <div class="shorts-yt-bar"></div>
+            <div class="shorts-yt-grid">
+              <div class="shorts-yt-thumb"></div>
+              <div class="shorts-yt-thumb"></div>
+              <div class="shorts-yt-thumb"></div>
+            </div>
+            <div class="shorts-shelf-blocked">
+              <div class="shorts-shelf-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--danger)"><path d="M10 14.65v-5.3L15 12l-5 2.65zm7.77-4.33c-.77-.32-1.2-.5-1.2-.5L18 9.06c1.84-.96 2.53-3.23 1.56-5.06s-3.24-2.53-5.07-1.56L6 6.94c-1.29.68-2.07 2.04-2 3.49.07 1.42.93 2.67 2.22 3.25.03.01 1.2.5 1.2.5L6 14.93c-1.83.97-2.53 3.24-1.56 5.07.97 1.83 3.24 2.53 5.07 1.56l8.5-4.5c1.29-.68 2.06-2.04 1.99-3.49-.07-1.42-.94-2.68-2.23-3.25z"/></svg>
+                <span>Shorts</span>
+                <span class="shorts-shelf-x">&times;</span>
+              </div>
+              <div class="shorts-shelf-items">
+                <div class="shorts-shelf-card"></div>
+                <div class="shorts-shelf-card"></div>
+                <div class="shorts-shelf-card"></div>
+                <div class="shorts-shelf-card"></div>
+              </div>
+              <div class="shorts-shelf-strikethrough"></div>
+              <div class="shorts-shelf-label">BLOCKED BY PUNISHMENT MODE</div>
+            </div>
+            <div class="shorts-yt-grid">
+              <div class="shorts-yt-thumb"></div>
+              <div class="shorts-yt-thumb"></div>
+              <div class="shorts-yt-thumb"></div>
+            </div>
+          </div>
+        </div>
+        <h3 class="feature-card-title">YouTube Shorts Blocker</h3>
+        <p class="feature-card-desc">Automatically hides the YouTube Shorts shelf and button. Block the most addictive content format without blocking all of YouTube.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Popup showcase -->
+<section class="showcase">
+  <div class="section-inner">
+    <div class="showcase-layout">
+      <div class="showcase-text">
+        <div class="section-label">// COMMAND CENTER</div>
+        <h2 class="section-title">Everything<br>In One Popup</h2>
+        <p class="showcase-desc">Two tabs. Full control. The Blocker tab manages your blocked sites and shows your shame statistics. The Tracker tab monitors time spent on any site you choose.</p>
+        <ul class="showcase-list">
+          <li><span class="showcase-bullet">&rsaquo;</span> Add or remove blocked sites instantly</li>
+          <li><span class="showcase-bullet">&rsaquo;</span> Real-time attempt counters and shame level</li>
+          <li><span class="showcase-bullet">&rsaquo;</span> Per-site time tracking with daily totals</li>
+          <li><span class="showcase-bullet">&rsaquo;</span> Quick access to Hall of Shame and reports</li>
+        </ul>
+        <a href="https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm" class="btn btn-primary">Get Started</a>
+      </div>
+      <div class="showcase-image">
+        <div class="screenshot-frame screenshot-frame--popup">
+          <div class="screenshot-frame-label">EXTENSION POPUP //</div>
+          <img src="store-screenshots/screenshot-2-popup.png" alt="Extension popup interface" loading="lazy" width="1280" height="800">
+          <div class="screenshot-frame-corners">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Privacy -->
+<section class="privacy" id="privacy">
+  <div class="section-inner">
+    <div class="privacy-layout">
+      <div class="privacy-header">
+        <div class="section-label">// SECURITY CLEARANCE</div>
+        <h2 class="section-title">Your Data<br>Never Leaves</h2>
+        <p class="privacy-lead">Everything stays on your device. No cloud. No servers. No accounts. No analytics. Not even cookies.</p>
+      </div>
+      <div class="privacy-grid">
+        <div class="privacy-item">
+          <div class="privacy-item-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="0"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          </div>
+          <h3>Local-Only Storage</h3>
+          <p>All data uses Chrome's built-in local storage API. Photos, settings, stats — nothing is transmitted anywhere.</p>
+        </div>
+        <div class="privacy-item">
+          <div class="privacy-item-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h3>Camera Privacy</h3>
+          <p>Webcam photos are stored locally and never uploaded. Camera access requires explicit permission and can be revoked anytime.</p>
+        </div>
+        <div class="privacy-item">
+          <div class="privacy-item-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>
+          </div>
+          <h3>Zero Tracking</h3>
+          <p>No analytics scripts. No third-party services. No data collection of any kind. The only external load is Google Fonts.</p>
+        </div>
+        <div class="privacy-item">
+          <div class="privacy-item-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          </div>
+          <h3>Clean Uninstall</h3>
+          <p>Remove the extension and all data is permanently gone. No residual cloud data, no orphaned accounts, no trace.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="section-inner">
+    <div class="section-label">// INTERROGATION</div>
+    <h2 class="section-title">FAQ</h2>
+
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary class="faq-question">
+          <span>Can I really not bypass the block?</span>
+          <span class="faq-toggle"></span>
+        </summary>
+        <div class="faq-answer">
+          <p>You can technically remove a site from the blocklist — but the extension tracks that too. The point isn't to make it impossible to access sites, it's to make you <em>feel bad enough</em> about it that you stop. The shame selfie alone is usually enough.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          <span>Do my photos get uploaded anywhere?</span>
+          <span class="faq-toggle"></span>
+        </summary>
+        <div class="faq-answer">
+          <p>Absolutely not. All photos are stored using Chrome's local storage API. They never leave your browser. There is no server, no cloud, no sync. Uninstall the extension and they're gone forever.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          <span>What if I don't want the camera feature?</span>
+          <span class="faq-toggle"></span>
+        </summary>
+        <div class="faq-answer">
+          <p>Camera permission is optional. If you deny it, the extension still blocks sites and shows shame messages — you just won't get the selfie capture. The blocking and time tracking work independently.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          <span>Does it work in Incognito mode?</span>
+          <span class="faq-toggle"></span>
+        </summary>
+        <div class="faq-answer">
+          <p>Yes — if you enable the extension in Incognito mode through Chrome's extension settings. We see you trying to sneak around.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          <span>What sites come pre-blocked?</span>
+          <span class="faq-toggle"></span>
+        </summary>
+        <div class="faq-answer">
+          <p>Twitter/X and YouTube Shorts are blocked by default. You can add any website you want — Reddit, TikTok, Instagram, or anything else that's destroying your productivity. The tracker tab comes pre-loaded with the top 10 social media time-wasters.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          <span>What are the "shame levels"?</span>
+          <span class="faq-toggle"></span>
+        </summary>
+        <div class="faq-answer">
+          <p>Your shame level escalates based on total attempts: <strong>Rookie</strong> (0–9), <strong>Repeat Offender</strong> (10–49), <strong>Addict</strong> (50–99), <strong>Terminal Brain Rot</strong> (100–499), and <strong>Beyond Saving</strong> (500+). Each level unlocks progressively more intense visual effects and roasts.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          <span>Is it free?</span>
+          <span class="faq-toggle"></span>
+        </summary>
+        <div class="faq-answer">
+          <p>Yes. Completely free. No premium tier. No ads. No in-app purchases. Just pure, unfiltered shame.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta">
+  <div class="section-inner">
+    <div class="final-cta-frame">
+      <div class="final-cta-corners">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <h2 class="final-cta-title">Ready to Face<br>Yourself?</h2>
+      <p class="final-cta-desc">Every second you spend thinking about it is a second you could be doom-scrolling.<br>Install now. Block the noise. Get shamed.</p>
+      <a href="https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm" class="btn btn-primary btn-lg">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M21.17 8H12"/><path d="M3.95 6.06L8.54 14"/><path d="M10.88 21.94L15.46 14"/></svg>
+        Add to Chrome — Free
+      </a>
+      <div class="final-cta-note">// Stay strong. Touch grass.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <div class="footer-logo">
+        <svg viewBox="0 0 128 128" width="20" height="20">
+          <rect width="128" height="128" fill="#0a0a0a"/>
+          <polygon points="64,30 118,64 64,98 10,64" fill="none" stroke="#E4FF1A" stroke-width="3.5" stroke-linejoin="miter"/>
+          <rect x="54" y="54" width="20" height="20" fill="#E4FF1A"/>
+          <rect x="59" y="59" width="10" height="10" fill="#0a0a0a"/>
+        </svg>
+        <span>Punishment Mode</span>
+      </div>
+      <p class="footer-copy">&copy; 2026 Punishment Mode. All rights reserved.</p>
+    </div>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="mailto:nikitavoitik2006@gmail.com">Contact</a>
+      <a href="https://chromewebstore.google.com/detail/punishment-mode-site-bloc/mceghokaofdnfiefldgjndlglkgaookm">Chrome Web Store</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('revealed');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.step, .feature-card, .privacy-item, .faq-item, .showcase-layout').forEach(el => {
+  observer.observe(el);
+});
+
+const nav = document.querySelector('.nav');
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+  const current = window.scrollY;
+  nav.classList.toggle('nav--scrolled', current > 60);
+  lastScroll = current;
+}, { passive: true });
+</script>
+
+</body>
+</html>

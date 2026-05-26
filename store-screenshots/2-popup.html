@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--surface:#111113;--border:#2a2a2d;--text:#ededef;--text-muted:#6b6b70;--accent:#E4FF1A;--accent-dim:rgba(228,255,26,0.12);--danger:#FF2D2D;--danger-dim:rgba(255,45,45,0.1);--track:#00D4FF;--track-dim:rgba(0,212,255,0.1)}
+body{background:#050505;min-height:100vh;display:flex;justify-content:center;align-items:center;font-family:'Space Mono',monospace;color:var(--text);overflow:hidden}
+.scene{display:flex;gap:48px;align-items:flex-start}
+.popup-wrapper{position:relative}
+.popup-wrapper::before{content:'EXTENSION POPUP';position:absolute;top:-28px;left:0;font-family:'Bebas Neue',sans-serif;font-size:0.8rem;color:var(--text-muted);letter-spacing:0.2em;opacity:0.4}
+.popup{width:340px;background:var(--bg);border:1px solid var(--border);position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+.popup::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.008) 2px,rgba(255,255,255,0.008) 4px);pointer-events:none;z-index:9999}
+.popup-container{padding:16px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--accent);text-align:center;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;padding-bottom:12px;border-bottom:2px solid var(--accent);position:relative}
+h1::after{content:'v1.3';position:absolute;right:0;bottom:14px;font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--text-muted);letter-spacing:0}
+.tab-switcher{display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border)}
+.tab-btn{flex:1;background:transparent;border:none;color:var(--text-muted);font-family:'Bebas Neue',sans-serif;font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;padding:8px 0;cursor:pointer}
+.tab-btn:first-child{border-right:1px solid var(--border)}
+.tab-btn.active{color:var(--accent);background:var(--accent-dim)}
+.stats-card{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:14px}
+.stat{text-align:center;padding:10px 4px;background:var(--surface)}
+.stat-value{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--accent);line-height:1}
+.stat-label{font-size:0.55rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;display:block}
+.shame-level{text-align:center;padding:8px 12px;border:1px solid var(--border);background:var(--surface);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.shame-level .label{color:var(--text-muted);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em}
+.shame-level .level{color:var(--danger);font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.08em;text-shadow:0 0 8px rgba(255,45,45,0.6)}
+.blocked-sites{margin-bottom:14px}
+.blocked-sites h3{font-family:'Bebas Neue',sans-serif;font-size:0.85rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px}
+.site-item{font-size:0.75rem;color:var(--text);padding:6px 10px;background:var(--surface);border:1px solid var(--border);margin-bottom:-1px;display:flex;align-items:center;justify-content:space-between}
+.site-label::before{content:"×";margin-right:6px;color:var(--danger);font-weight:bold;font-size:0.85rem}
+.site-remove{background:none;border:none;color:var(--text-muted);font-size:1rem;cursor:pointer;padding:0 4px;line-height:1;font-family:'Space Mono',monospace}
+.add-site{display:flex;gap:0;margin-top:6px}
+.add-site input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);padding:7px 10px;font-family:'Space Mono',monospace;font-size:0.7rem;outline:none}
+.btn-add{background:var(--accent);color:#000;border:1px solid var(--accent);padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:0.08em;cursor:pointer;text-transform:uppercase}
+.input-hint{display:block;font-size:0.55rem;color:var(--text-muted);margin-top:4px;opacity:0.7}
+.actions{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.btn{background:var(--accent);color:#000;border:1px solid var(--accent);padding:10px 15px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:0.1em;text-transform:uppercase}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text-muted)}
+.footer{text-align:center;padding-top:10px;border-top:1px solid var(--border)}
+.footer p{font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.15em}
+.branding{max-width:380px;text-align:left}
+.branding h2{font-family:'Bebas Neue',sans-serif;font-size:3.6rem;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;line-height:1;margin-bottom:16px}
+.branding .tagline{font-family:'Space Mono',monospace;font-size:0.9rem;color:var(--text-muted);line-height:1.7;margin-bottom:28px}
+.branding .features{list-style:none;font-size:0.8rem;color:var(--text-muted)}
+.branding .features li{padding:6px 0;border-bottom:1px solid var(--border)}
+.branding .features li::before{content:'>';margin-right:8px;color:var(--accent);font-weight:bold}
+</style>
+</head>
+<body>
+<div class="scene">
+<div class="branding">
+<h2>Punishment<br>Mode</h2>
+<p class="tagline">Block distracting sites.<br>Get shamed when you relapse.<br>No mercy. No excuses.</p>
+<ul class="features">
+<li>Camera-based shame capture</li>
+<li>Escalating punishment levels</li>
+<li>Hall of Shame photo gallery</li>
+<li>Time tracking analytics</li>
+<li>YouTube Shorts auto-hide</li>
+</ul>
+</div>
+<div class="popup-wrapper">
+<div class="popup">
+<div class="popup-container">
+<h1>Punishment Mode</h1>
+<div class="tab-switcher">
+<button class="tab-btn active" data-tab="blocker">Blocker</button>
+<button class="tab-btn" data-tab="tracker">Tracker</button>
+</div>
+<div class="stats-card">
+<div class="stat"><span class="stat-value">142</span><span class="stat-label">Total Attempts</span></div>
+<div class="stat"><span class="stat-value">23</span><span class="stat-label">Last 3 Days</span></div>
+<div class="stat"><span class="stat-value">7</span><span class="stat-label">Today</span></div>
+<div class="stat"><span class="stat-value">38</span><span class="stat-label">Photos Saved</span></div>
+</div>
+<div class="shame-level">
+<span class="label">Shame Level:</span>
+<span class="level">TERMINAL BRAIN ROT</span>
+</div>
+<div class="blocked-sites">
+<h3>Blocked Sites</h3>
+<div class="site-item"><span class="site-label">Twitter / X</span><span class="site-remove">−</span></div>
+<div class="site-item"><span class="site-label">YouTube Shorts</span><span class="site-remove">−</span></div>
+<div class="site-item"><span class="site-label">reddit.com</span><span class="site-remove">−</span></div>
+<div class="site-item"><span class="site-label">instagram.com</span><span class="site-remove">−</span></div>
+<div class="site-item"><span class="site-label">tiktok.com</span><span class="site-remove">−</span></div>
+<div class="add-site">
+<input type="text" placeholder="e.g. reddit.com" />
+<button class="btn-add">Block</button>
+</div>
+</div>
+<div class="actions">
+<button class="btn">View Hall of Shame</button>
+<button class="btn btn-secondary">Shame Report</button>
+</div>
+<div class="footer"><p>// Stay strong. Touch grass.</p></div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

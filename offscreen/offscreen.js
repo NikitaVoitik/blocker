@@ -79,8 +79,10 @@ async function capturePhoto() {
     // Convert to base64
     const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
 
+    cleanup();
     return dataUrl;
   } catch (error) {
+    cleanup();
     console.error('Capture error:', error);
     throw error;
   }
