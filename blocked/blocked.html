@@ -69,6 +69,34 @@
         <p class="gallery-subtitle">A curated collection of your worst moments</p>
         <span class="gallery-count" id="gallery-count">0 photos</span>
       </div>
+
+      <div class="gallery-storage" id="gallery-storage">
+        <div class="storage-row">
+          <div class="storage-block">
+            <span class="storage-label">// Stored</span>
+            <span class="storage-value" id="storage-count">0 / 50</span>
+          </div>
+          <div class="storage-block">
+            <span class="storage-label">// Disk Used</span>
+            <span class="storage-value" id="storage-bytes">0 KB</span>
+          </div>
+          <div class="storage-block">
+            <span class="storage-label">// Capacity</span>
+            <div class="limit-control">
+              <button class="limit-btn" id="limit-decrease" aria-label="Decrease limit">&minus;</button>
+              <input type="number" id="limit-input" class="limit-input" min="5" max="500" step="1" value="50">
+              <button class="limit-btn" id="limit-increase" aria-label="Increase limit">+</button>
+            </div>
+            <span class="storage-hint" id="limit-hint">5 &ndash; 500 photos</span>
+          </div>
+        </div>
+        <div class="storage-actions">
+          <button class="storage-btn storage-btn-apply" id="apply-limit">Apply Capacity</button>
+          <button class="storage-btn storage-btn-danger" id="clear-gallery">Purge Gallery</button>
+        </div>
+        <div class="storage-status" id="storage-status"></div>
+      </div>
+
       <div id="gallery-grid" class="gallery-grid"></div>
       <div id="gallery-empty" class="gallery-empty" style="display: none;">
         <span class="empty-icon">📸</span>

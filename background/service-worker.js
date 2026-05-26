@@ -304,10 +304,37 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 const DB_NAME = 'SelfieShameDB';
 const DB_VERSION = 1;
 const PHOTOS_STORE = 'photos';
-const MAX_PHOTOS = 50;
+const DEFAULT_PHOTO_LIMIT = 50;
+const MIN_PHOTO_LIMIT = 5;
+const MAX_PHOTO_LIMIT = 500;
+
+// Runtime cache of the user-configured photo limit
+let currentPhotoLimit = DEFAULT_PHOTO_LIMIT;
 
 // IndexedDB instance
 let db = null;
+
+async function loadPhotoLimit() {
+  const result = await chrome.storage.local.get('photoLimit');
+  const stored = Number(result.photoLimit);
+  if (Number.isFinite(stored) && stored >= MIN_PHOTO_LIMIT && stored <= MAX_PHOTO_LIMIT) {
+    currentPhotoLimit = Math.floor(stored);
+  } else {
+    currentPhotoLimit = DEFAULT_PHOTO_LIMIT;
+  }
+  return currentPhotoLimit;
+}
+
+async function setPhotoLimit(value) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n < MIN_PHOTO_LIMIT || n > MAX_PHOTO_LIMIT) {
+    return { success: false, error: 'Invalid photo limit', limit: currentPhotoLimit };
+  }
+  currentPhotoLimit = n;
+  await chrome.storage.local.set({ photoLimit: n });
+  await cleanupOldPhotos();
+  return { success: true, limit: n };
+}
 
 // Open IndexedDB
 async function openDatabase() {
@@ -371,9 +398,10 @@ async function getPhotos() {
   });
 }
 
-// Cleanup old photos (keep only MAX_PHOTOS)
+// Cleanup old photos (keep only the most recent currentPhotoLimit)
 async function cleanupOldPhotos() {
   const database = await openDatabase();
+  const limit = currentPhotoLimit;
 
   return new Promise((resolve) => {
     const transaction = database.transaction([PHOTOS_STORE], 'readwrite');
@@ -388,12 +416,11 @@ async function cleanupOldPhotos() {
       const cursor = event.target.result;
       if (cursor) {
         count++;
-        if (count > MAX_PHOTOS) {
+        if (count > limit) {
           toDelete.push(cursor.primaryKey);
         }
         cursor.continue();
       } else {
-        // Delete old photos
         toDelete.forEach(key => store.delete(key));
         resolve();
       }
@@ -401,6 +428,40 @@ async function cleanupOldPhotos() {
 
     request.onerror = () => resolve();
   });
+}
+
+// Clear every photo from storage
+async function clearAllPhotos() {
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction([PHOTOS_STORE], 'readwrite');
+    const store = transaction.objectStore(PHOTOS_STORE);
+    const request = store.clear();
+    request.onsuccess = () => resolve({ success: true });
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Compute storage info for the photo gallery (count + approximate bytes)
+async function getPhotoStorageInfo() {
+  const photos = await getPhotos();
+  let bytes = 0;
+  for (const photo of photos) {
+    if (photo && typeof photo.data === 'string') {
+      // data URL: "data:image/...;base64,<payload>". Decoded size ≈ payload.length * 3 / 4.
+      const commaIdx = photo.data.indexOf(',');
+      const payloadLen = commaIdx >= 0 ? photo.data.length - commaIdx - 1 : photo.data.length;
+      bytes += Math.floor(payloadLen * 3 / 4);
+    }
+  }
+  return {
+    count: photos.length,
+    bytes,
+    limit: currentPhotoLimit,
+    minLimit: MIN_PHOTO_LIMIT,
+    maxLimit: MAX_PHOTO_LIMIT
+  };
 }
 
 // Get today's date key in YYYY-MM-DD format
@@ -808,6 +869,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === 'GET_PHOTO_STORAGE_INFO') {
+    initReady.then(() => getPhotoStorageInfo()).then(sendResponse);
+    return true;
+  }
+
+  if (message.type === 'SET_PHOTO_LIMIT') {
+    initReady.then(() => setPhotoLimit(message.limit)).then(sendResponse);
+    return true;
+  }
+
+  if (message.type === 'CLEAR_PHOTOS') {
+    clearAllPhotos().then(sendResponse).catch(err => sendResponse({ success: false, error: String(err) }));
+    return true;
+  }
+
   if (message.type === 'GET_REPORT_DATA') {
     (async () => {
       const result = await chrome.storage.local.get(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts', 'installDate']);
@@ -946,10 +1022,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local') {
     if (changes.blockedSites) {
-      currentBlockedSites = changes.blockedSites.newValue || [];
+      // newValue is undefined when storage.local.clear() runs; fall back to defaults
+      // so the in-memory cache stays usable. An explicit empty array means the user
+      // removed all entries and is preserved as-is.
+      currentBlockedSites = changes.blockedSites.newValue === undefined
+        ? DEFAULT_SITES
+        : changes.blockedSites.newValue;
     }
     if (changes.trackedSites) {
-      currentTrackedSites = changes.trackedSites.newValue || [];
+      currentTrackedSites = changes.trackedSites.newValue === undefined
+        ? DEFAULT_TRACKED_SITES
+        : changes.trackedSites.newValue;
+    }
+    if (changes.photoLimit) {
+      const n = Number(changes.photoLimit.newValue);
+      if (Number.isFinite(n) && n >= MIN_PHOTO_LIMIT && n <= MAX_PHOTO_LIMIT) {
+        currentPhotoLimit = Math.floor(n);
+      }
     }
   }
 });
@@ -993,6 +1082,7 @@ async function initialize() {
   await openDatabase().catch(console.error);
   await loadBlockedSites();
   await loadTrackedSites();
+  await loadPhotoLimit();
   await syncBlockRules();
 
   const existing = await chrome.alarms.get(RULE_CHECK_ALARM);

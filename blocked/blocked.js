@@ -233,9 +233,89 @@
 
   const galleryCountEl = document.getElementById('gallery-count');
   const galleryEmpty = document.getElementById('gallery-empty');
+  const storageCountEl = document.getElementById('storage-count');
+  const storageBytesEl = document.getElementById('storage-bytes');
+  const storageStatusEl = document.getElementById('storage-status');
+  const limitInput = document.getElementById('limit-input');
+  const limitHintEl = document.getElementById('limit-hint');
+  const limitDecreaseBtn = document.getElementById('limit-decrease');
+  const limitIncreaseBtn = document.getElementById('limit-increase');
+  const applyLimitBtn = document.getElementById('apply-limit');
+  const clearGalleryBtn = document.getElementById('clear-gallery');
+
+  let storageInfo = { count: 0, bytes: 0, limit: 50, minLimit: 5, maxLimit: 500 };
+  let clearArmed = false;
+  let clearArmTimer = null;
+
+  function formatBytes(bytes) {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function getPhotoStorageInfo() {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'GET_PHOTO_STORAGE_INFO' }, (response) => {
+        resolve(response || { count: 0, bytes: 0, limit: 50, minLimit: 5, maxLimit: 500 });
+      });
+    });
+  }
+
+  function setPhotoLimit(limit) {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'SET_PHOTO_LIMIT', limit }, (response) => {
+        resolve(response || { success: false });
+      });
+    });
+  }
+
+  function clearPhotos() {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'CLEAR_PHOTOS' }, (response) => {
+        resolve(response || { success: false });
+      });
+    });
+  }
+
+  function setStorageStatus(message, kind) {
+    storageStatusEl.textContent = message || '';
+    storageStatusEl.classList.remove('is-success', 'is-danger');
+    if (kind === 'success') storageStatusEl.classList.add('is-success');
+    if (kind === 'danger') storageStatusEl.classList.add('is-danger');
+  }
+
+  function clampLimit(value) {
+    const n = Math.floor(Number(value));
+    if (!Number.isFinite(n)) return storageInfo.limit;
+    return Math.max(storageInfo.minLimit, Math.min(storageInfo.maxLimit, n));
+  }
+
+  function renderStorageInfo(info) {
+    storageInfo = info;
+    storageCountEl.textContent = info.count + ' / ' + info.limit;
+    storageBytesEl.textContent = formatBytes(info.bytes);
+    limitInput.min = String(info.minLimit);
+    limitInput.max = String(info.maxLimit);
+    if (document.activeElement !== limitInput) {
+      limitInput.value = String(info.limit);
+    }
+    limitHintEl.textContent = info.minLimit + ' – ' + info.maxLimit + ' photos';
+  }
+
+  function disarmClear() {
+    clearArmed = false;
+    clearGalleryBtn.classList.remove('is-armed');
+    clearGalleryBtn.textContent = 'Purge Gallery';
+    if (clearArmTimer) {
+      clearTimeout(clearArmTimer);
+      clearArmTimer = null;
+    }
+  }
 
   async function loadGallery() {
-    const photos = await getPhotos();
+    const [photos, info] = await Promise.all([getPhotos(), getPhotoStorageInfo()]);
+    renderStorageInfo(info);
     galleryGrid.innerHTML = '';
 
     if (photos.length === 0) {
@@ -277,11 +357,14 @@
   }
 
   galleryBtn.addEventListener('click', async () => {
+    setStorageStatus('');
+    disarmClear();
     await loadGallery();
     galleryModal.style.display = 'flex';
   });
 
   closeGallery.addEventListener('click', () => {
+    disarmClear();
     if (isGalleryOnly) {
       window.close();
       return;
@@ -291,11 +374,79 @@
 
   galleryModal.addEventListener('click', (e) => {
     if (e.target === galleryModal) {
+      disarmClear();
       if (isGalleryOnly) {
         window.close();
         return;
       }
       galleryModal.style.display = 'none';
+    }
+  });
+
+  limitDecreaseBtn.addEventListener('click', () => {
+    limitInput.value = String(clampLimit((parseInt(limitInput.value, 10) || storageInfo.limit) - 5));
+    setStorageStatus('');
+  });
+
+  limitIncreaseBtn.addEventListener('click', () => {
+    limitInput.value = String(clampLimit((parseInt(limitInput.value, 10) || storageInfo.limit) + 5));
+    setStorageStatus('');
+  });
+
+  limitInput.addEventListener('change', () => {
+    limitInput.value = String(clampLimit(limitInput.value));
+  });
+
+  applyLimitBtn.addEventListener('click', async () => {
+    const target = clampLimit(limitInput.value);
+    limitInput.value = String(target);
+    if (target === storageInfo.limit && storageInfo.count <= target) {
+      setStorageStatus('No change applied.', null);
+      return;
+    }
+    applyLimitBtn.disabled = true;
+    const willPrune = storageInfo.count > target;
+    const response = await setPhotoLimit(target);
+    applyLimitBtn.disabled = false;
+    if (response && response.success) {
+      const info = await getPhotoStorageInfo();
+      renderStorageInfo(info);
+      if (willPrune) {
+        await loadGallery();
+        setStorageStatus('Capacity set to ' + target + '. Excess evidence purged.', 'success');
+      } else {
+        setStorageStatus('Capacity set to ' + target + '.', 'success');
+      }
+    } else {
+      setStorageStatus((response && response.error) || 'Could not update capacity.', 'danger');
+    }
+  });
+
+  clearGalleryBtn.addEventListener('click', async () => {
+    if (storageInfo.count === 0) {
+      setStorageStatus('Gallery already empty.', null);
+      return;
+    }
+    if (!clearArmed) {
+      clearArmed = true;
+      clearGalleryBtn.classList.add('is-armed');
+      clearGalleryBtn.textContent = 'Confirm Purge';
+      setStorageStatus('Click again within 8 seconds to destroy all evidence.', 'danger');
+      clearArmTimer = setTimeout(() => {
+        disarmClear();
+        setStorageStatus('Purge cancelled.', null);
+      }, 8000);
+      return;
+    }
+    disarmClear();
+    clearGalleryBtn.disabled = true;
+    const response = await clearPhotos();
+    clearGalleryBtn.disabled = false;
+    if (response && response.success) {
+      await loadGallery();
+      setStorageStatus('Gallery purged. Slate clean.', 'success');
+    } else {
+      setStorageStatus((response && response.error) || 'Purge failed.', 'danger');
     }
   });
 
