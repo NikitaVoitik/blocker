@@ -8,6 +8,7 @@
     "lib": "lib"
   },
   "scripts": {
+    "publish:ext": "bash scripts/publish.sh",
     "test": "npx playwright test",
     "test:tier1": "npx playwright test --project=tier1",
     "test:tier2": "npx playwright test --project=tier2",
