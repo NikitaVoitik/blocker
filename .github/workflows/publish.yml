@@ -44,9 +44,9 @@ jobs:
         id: auth
         run: |
           RESPONSE=$(curl -s -X POST https://oauth2.googleapis.com/token \
-            -d "client_id=${{ secrets.CWS_CLIENT_ID }}" \
-            -d "client_secret=${{ secrets.CWS_CLIENT_SECRET }}" \
-            -d "refresh_token=${{ secrets.CWS_REFRESH_TOKEN }}" \
+            -d "client_id=${{ secrets.CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.CLIENT_SECRET }}" \
+            -d "refresh_token=${{ secrets.REFRESH_TOKEN }}" \
             -d "grant_type=refresh_token")
           TOKEN=$(echo "$RESPONSE" | python3 -c "
           import sys, json
@@ -65,7 +65,7 @@ jobs:
             -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
             -H "x-goog-api-version: 2" \
             -T "dist/blocker-${{ steps.version.outputs.version }}.zip" \
-            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/${{ secrets.CWS_EXTENSION_ID }}")
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/${{ secrets.EXTENSION_ID }}")
           echo "$RESPONSE" | python3 -m json.tool
           STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('uploadState','UNKNOWN'))")
           if [ "$STATUS" != "SUCCESS" ]; then
@@ -78,5 +78,5 @@ jobs:
           curl -s -X POST \
             -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
             -H "x-goog-api-version: 2" \
-            "https://www.googleapis.com/chromewebstore/v1.1/items/${{ secrets.CWS_EXTENSION_ID }}/publish" | python3 -m json.tool
+            "https://www.googleapis.com/chromewebstore/v1.1/items/${{ secrets.EXTENSION_ID }}/publish" | python3 -m json.tool
           echo "Published v${{ steps.version.outputs.version }}"
