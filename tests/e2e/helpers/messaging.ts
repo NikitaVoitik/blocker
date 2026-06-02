@@ -26,6 +26,22 @@ export async function removeTrackedSite(page: Page, siteId: string) {
   return sendMessage(page, { type: 'REMOVE_TRACKED_SITE', siteId });
 }
 
+export async function getTrackedSites(page: Page) {
+  return sendMessage(page, { type: 'GET_TRACKED_SITES' });
+}
+
+export async function setSiteLimit(page: Page, siteId: string, limitSeconds: number) {
+  return sendMessage(page, { type: 'SET_SITE_LIMIT', siteId, limitSeconds });
+}
+
+export async function checkLimits(page: Page): Promise<{ overLimit: string[] }> {
+  return sendMessage(page, { type: 'CHECK_LIMITS' });
+}
+
+export async function getDynamicRules(page: Page): Promise<any[]> {
+  return page.evaluate(async () => (chrome as any).declarativeNetRequest.getDynamicRules());
+}
+
 export async function getStats(page: Page) {
   return sendMessage(page, { type: 'GET_STATS' });
 }

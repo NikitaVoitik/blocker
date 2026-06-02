@@ -10,6 +10,16 @@
   <div class="shame-container">
     <h1 class="shame-title">BLOCKED</h1>
 
+    <div class="limit-banner" id="limit-banner" style="display: none;">
+      <span class="limit-tag">// DAILY ALLOWANCE EXHAUSTED</span>
+      <h2 class="limit-headline">DAILY LIMIT REACHED</h2>
+      <div class="limit-meter" aria-hidden="true"><div class="limit-meter-fill"></div></div>
+      <p class="limit-readout">
+        <span class="limit-site" id="limit-site">this site</span>
+        <span class="limit-numbers"><span id="limit-spent">0m</span> burned / <span id="limit-cap">0m</span> allowed today</span>
+      </p>
+    </div>
+
     <div class="photo-frame" id="photo-frame">
       <canvas id="shame-canvas" width="640" height="480"></canvas>
       <div id="loading-overlay" class="loading-overlay">

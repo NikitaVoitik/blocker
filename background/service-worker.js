@@ -4,6 +4,12 @@ const OFFSCREEN_DOCUMENT_PATH = 'offscreen/offscreen.html';
 const RULE_CHECK_ALARM = 'verify-block-rules';
 const TRACKING_FLUSH_ALARM = 'flush-tracking-time';
 
+// Daily usage limits. Limit-block dynamic rules live in a dedicated ID range so
+// they never collide with the block rules (which start at 1000).
+const LIMIT_RULE_ID_BASE = 100000;
+const MIN_SITE_LIMIT_SECONDS = 60;       // 1 minute
+const MAX_SITE_LIMIT_SECONDS = 86400;    // 24 hours
+
 const DEFAULT_SITES = [
   {
     id: 'twitter',
@@ -92,6 +98,10 @@ let currentTrackedSites = [];
 // Active time tracking state
 let activeTracking = { tabId: null, siteId: null, startTime: null };
 
+// Tracked-site IDs currently over their daily limit (rebuilt by syncLimitRules).
+// Used as an in-memory backup check on navigation without a storage round-trip.
+let overLimitSiteIds = new Set();
+
 // Load blocked sites from storage
 async function loadBlockedSites() {
   const result = await chrome.storage.local.get('blockedSites');
@@ -134,8 +144,22 @@ function getMatchingTrackedSite(url) {
   return null;
 }
 
+// Serialize all dynamic-rule updates. syncBlockRules and syncLimitRules both call
+// chrome.declarativeNetRequest.updateDynamicRules; running them concurrently can clobber
+// each other (read-modify-write on a shared rule set), so funnel both through one chain.
+let ruleUpdateChain = Promise.resolve();
+function withRuleLock(task) {
+  const run = ruleUpdateChain.then(task, task);
+  ruleUpdateChain = run.then(() => {}, () => {});
+  return run;
+}
+
 // Generate dynamic declarativeNetRequest rules from blocked sites
-async function syncBlockRules() {
+function syncBlockRules() {
+  return withRuleLock(_syncBlockRules);
+}
+
+async function _syncBlockRules() {
   const sites = currentBlockedSites;
   const rules = [];
   let ruleId = 1000; // Start high to avoid conflicts with static rules
@@ -159,9 +183,9 @@ async function syncBlockRules() {
     }
   }
 
-  // Get existing dynamic rules to remove them
+  // Remove only existing block-range rules; leave limit rules (>= LIMIT_RULE_ID_BASE) intact
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  const removeRuleIds = existingRules.map(r => r.id);
+  const removeRuleIds = existingRules.filter(r => r.id < LIMIT_RULE_ID_BASE).map(r => r.id);
 
   try {
     await chrome.declarativeNetRequest.updateDynamicRules({
@@ -173,7 +197,7 @@ async function syncBlockRules() {
     await new Promise(resolve => setTimeout(resolve, 500));
     try {
       const retryExisting = await chrome.declarativeNetRequest.getDynamicRules();
-      const retryRemoveIds = retryExisting.map(r => r.id);
+      const retryRemoveIds = retryExisting.filter(r => r.id < LIMIT_RULE_ID_BASE).map(r => r.id);
       await chrome.declarativeNetRequest.updateDynamicRules({
         removeRuleIds: retryRemoveIds,
         addRules: rules
@@ -184,14 +208,174 @@ async function syncBlockRules() {
   }
 }
 
-// Verify that dynamic rules match expected count; re-sync if mismatched
+// Verify that block-range dynamic rules match expected count; re-sync if mismatched
 async function verifyBlockRules() {
   const expectedCount = currentBlockedSites.reduce((sum, site) => sum + site.domains.length, 0);
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  if (existingRules.length !== expectedCount) {
-    console.warn(`[SiteBlocker] Rule mismatch: expected ${expectedCount}, found ${existingRules.length}. Re-syncing...`);
+  const blockRules = existingRules.filter(r => r.id < LIMIT_RULE_ID_BASE);
+  if (blockRules.length !== expectedCount) {
+    console.warn(`[SiteBlocker] Rule mismatch: expected ${expectedCount}, found ${blockRules.length}. Re-syncing...`);
     await syncBlockRules();
   }
+}
+
+// --- Daily usage limits ---
+
+// Full URL of the limit-block page for a site (used for active-tab redirects).
+function limitBlockUrl(siteId) {
+  return chrome.runtime.getURL(`blocked/blocked.html?site=${encodeURIComponent(siteId)}&reason=limit`);
+}
+
+// Today's tracked seconds for a site, read from a trackingData object.
+function getSiteTimeToday(data, siteId) {
+  return (data.time && data.time[siteId + ':' + getTodayKey()]) || 0;
+}
+
+// Tracked sites that have a positive daily limit and have reached it today.
+async function getOverLimitTrackedSites() {
+  const result = await chrome.storage.local.get('trackingData');
+  const data = result.trackingData || { visits: {}, time: {} };
+  const over = [];
+  for (const site of currentTrackedSites) {
+    const limit = Number(site.dailyLimitSeconds);
+    if (Number.isFinite(limit) && limit > 0 && getSiteTimeToday(data, site.id) >= limit) {
+      over.push(site);
+    }
+  }
+  return over;
+}
+
+// Generate dynamic rules that redirect over-limit tracked sites to the limit block page.
+// Only touches the limit ID range so block rules are untouched.
+function syncLimitRules() {
+  return withRuleLock(_syncLimitRules);
+}
+
+async function _syncLimitRules() {
+  const overSites = await getOverLimitTrackedSites();
+  overLimitSiteIds = new Set(overSites.map(s => s.id));
+
+  const rules = [];
+  let ruleId = LIMIT_RULE_ID_BASE;
+  for (const site of overSites) {
+    for (const domain of site.domains) {
+      rules.push({
+        id: ruleId++,
+        priority: 1,
+        action: {
+          type: 'redirect',
+          redirect: {
+            extensionPath: `/blocked/blocked.html?site=${encodeURIComponent(site.id)}&reason=limit`
+          }
+        },
+        condition: {
+          urlFilter: `||${domain}`,
+          resourceTypes: ['main_frame']
+        }
+      });
+    }
+  }
+
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+  const removeRuleIds = existingRules.filter(r => r.id >= LIMIT_RULE_ID_BASE).map(r => r.id);
+
+  try {
+    await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds, addRules: rules });
+  } catch (err) {
+    console.error('[SiteBlocker] Failed to update limit rules, retrying...', err);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      const retryExisting = await chrome.declarativeNetRequest.getDynamicRules();
+      const retryRemoveIds = retryExisting.filter(r => r.id >= LIMIT_RULE_ID_BASE).map(r => r.id);
+      await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: retryRemoveIds, addRules: rules });
+    } catch (retryErr) {
+      console.error('[SiteBlocker] Limit rule retry also failed:', retryErr);
+    }
+  }
+}
+
+// In-memory check: return the over-limit tracked site matching a URL, if any.
+function getMatchingOverLimitSite(url) {
+  try {
+    const parsed = new URL(url);
+    for (const site of currentTrackedSites) {
+      if (overLimitSiteIds.has(site.id) && site.domains.includes(parsed.hostname)) {
+        return site;
+      }
+    }
+  } catch (e) {
+    // Invalid URL
+  }
+  return null;
+}
+
+// If a tracked site is already known to be over its limit, redirect its tab immediately.
+// Cheap in-memory check (no storage/rule work) for the focus/navigation handlers, so a
+// stale over-limit tab gets booted the instant it regains focus instead of on the next alarm.
+async function bootIfOverLimit(tabId, site) {
+  if (site && overLimitSiteIds.has(site.id)) {
+    try {
+      await chrome.tabs.update(tabId, { url: limitBlockUrl(site.id) });
+    } catch (e) {
+      // tab may have closed
+    }
+    return true;
+  }
+  return false;
+}
+
+// Flush time, re-sync limit rules, and boot any open tabs now over their limit.
+async function enforceLimits() {
+  await flushActiveTime();
+  await syncLimitRules();
+
+  if (overLimitSiteIds.size > 0) {
+    try {
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (!tab.id || !tab.url) continue;
+        const site = getMatchingOverLimitSite(tab.url);
+        if (site) {
+          await chrome.tabs.update(tab.id, { url: limitBlockUrl(site.id) });
+          if (activeTracking.tabId === tab.id) {
+            activeTracking = { tabId: tab.id, siteId: null, startTime: null };
+          }
+        }
+      }
+    } catch (e) {
+      // tab query/update can fail transiently (e.g. tab closed mid-iteration)
+    }
+  }
+
+  return [...overLimitSiteIds];
+}
+
+// Set or clear a tracked site's daily limit. limitSeconds = 0 clears it.
+async function setSiteLimit(siteId, limitSeconds) {
+  const sites = [...currentTrackedSites];
+  const idx = sites.findIndex(s => s.id === siteId);
+  if (idx === -1) {
+    return { success: false, error: 'Site not tracked' };
+  }
+
+  const n = Math.floor(Number(limitSeconds));
+  if (!Number.isFinite(n) || n < 0) {
+    return { success: false, error: 'Invalid limit' };
+  }
+
+  const site = { ...sites[idx] };
+  if (n === 0) {
+    delete site.dailyLimitSeconds;
+  } else if (n < MIN_SITE_LIMIT_SECONDS || n > MAX_SITE_LIMIT_SECONDS) {
+    return { success: false, error: 'Limit must be between 1 minute and 24 hours' };
+  } else {
+    site.dailyLimitSeconds = n;
+  }
+  sites[idx] = site;
+
+  await saveTrackedSites(sites);
+  await enforceLimits();
+  return { success: true, sites };
 }
 
 // Check if a URL matches any blocked site
@@ -230,6 +414,13 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
     await chrome.tabs.update(details.tabId, {
       url: chrome.runtime.getURL(`blocked/blocked.html?site=${encodeURIComponent(site.id)}`)
     });
+    return;
+  }
+
+  // Backup for daily-limit blocks (primary path is the dynamic limit rules)
+  const limited = getMatchingOverLimitSite(details.url);
+  if (limited) {
+    await chrome.tabs.update(details.tabId, { url: limitBlockUrl(limited.id) });
   }
 });
 
@@ -251,7 +442,9 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   try {
     const tab = await chrome.tabs.get(activeInfo.tabId);
     const site = tab.url ? getMatchingTrackedSite(tab.url) : null;
-    if (site) {
+    if (site && await bootIfOverLimit(activeInfo.tabId, site)) {
+      activeTracking = { tabId: activeInfo.tabId, siteId: null, startTime: null };
+    } else if (site) {
       activeTracking = { tabId: activeInfo.tabId, siteId: site.id, startTime: Date.now() };
     } else {
       activeTracking = { tabId: activeInfo.tabId, siteId: null, startTime: null };
@@ -273,7 +466,9 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
       await flushActiveTime();
       if (tab && tab.url) {
         const site = getMatchingTrackedSite(tab.url);
-        if (site) {
+        if (site && await bootIfOverLimit(tab.id, site)) {
+          activeTracking = { tabId: tab.id, siteId: null, startTime: null };
+        } else if (site) {
           activeTracking = { tabId: tab.id, siteId: site.id, startTime: Date.now() };
         } else {
           activeTracking = { tabId: tab.id, siteId: null, startTime: null };
@@ -293,7 +488,9 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     await initReady;
     await flushActiveTime();
     const site = getMatchingTrackedSite(changeInfo.url);
-    if (site) {
+    if (site && await bootIfOverLimit(tabId, site)) {
+      activeTracking = { tabId, siteId: null, startTime: null };
+    } else if (site) {
       activeTracking = { tabId, siteId: site.id, startTime: Date.now() };
     } else {
       activeTracking = { tabId, siteId: null, startTime: null };
@@ -688,6 +885,8 @@ async function addTrackedSite(siteEntry) {
 async function removeTrackedSite(siteId) {
   const sites = currentTrackedSites.filter(s => s.id !== siteId);
   await saveTrackedSites(sites);
+  // Drop any limit rule the removed site may have had so it doesn't stay blocked.
+  await syncLimitRules();
   return { success: true, sites };
 }
 
@@ -992,6 +1191,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === 'SET_SITE_LIMIT') {
+    initReady.then(() => setSiteLimit(message.siteId, message.limitSeconds)).then(sendResponse);
+    return true;
+  }
+
+  if (message.type === 'CHECK_LIMITS') {
+    initReady.then(() => enforceLimits()).then(overLimit => sendResponse({ overLimit }));
+    return true;
+  }
+
   if (message.type === 'GET_TRACKING_DATA') {
     getTrackingDataForToday().then(sendResponse);
     return true;
@@ -1038,6 +1247,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
       currentTrackedSites = changes.trackedSites.newValue === undefined
         ? DEFAULT_TRACKED_SITES
         : changes.trackedSites.newValue;
+      // Limits live on tracked-site entries, so re-evaluate them whenever the list changes
+      // (covers external writes / imports). withRuleLock serializes this with other syncs.
+      syncLimitRules();
     }
     if (changes.photoLimit) {
       const n = Number(changes.photoLimit.newValue);
@@ -1078,7 +1290,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
   if (alarm.name === TRACKING_FLUSH_ALARM) {
     await initReady;
-    await flushActiveTime();
+    await enforceLimits();
   }
 });
 
@@ -1089,6 +1301,7 @@ async function initialize() {
   await loadTrackedSites();
   await loadPhotoLimit();
   await syncBlockRules();
+  await syncLimitRules();
 
   const existing = await chrome.alarms.get(RULE_CHECK_ALARM);
   if (!existing) {

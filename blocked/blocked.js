@@ -150,10 +150,48 @@
     '"One day you will run out of tomorrows to start fresh. Today could have been the day. But here you are."'
   ];
 
+  // Roasts shown when a site is blocked for hitting its daily time limit.
+  const limitMessages = [
+    "Sixty minutes. You begged for a limit and still ran straight into the wall.",
+    "Your hour is gone. You spent it here. On this. Was it worth it? You know it wasn't.",
+    "You rationed yourself like an adult and binged like a child. Time's up.",
+    "You set the limit because you knew you couldn't be trusted. You were right.",
+    "That's your daily dose. The machine had to cut you off because you wouldn't.",
+    "An hour of your one and only life, fed into the void. The void says: more, please.",
+    "You hit the ceiling you built yourself. Sit with that before you try to climb over it.",
+    "Limit reached. The only muscle you've trained today is your scrolling thumb.",
+    "You asked to be stopped. Here's the stop. You're welcome.",
+    "Out of time. Not out of life — yet. Go do literally anything else."
+  ];
+
+  const limitQuotes = [
+    '"You drew the line yourself. Then you sprinted toward it like it was a finish line."',
+    '"A limit is a promise to your future self. You just broke it, right on schedule."',
+    '"The clock didn\'t run out on you. You ran it out."',
+    '"You wanted discipline to be a setting you could toggle. It isn\'t. It\'s you. And you blinked."',
+    '"Every day you get a fresh hour and every day you set it on fire by lunch."',
+    '"The cap isn\'t the punishment. The fact that you needed one is."'
+  ];
+
   // Detect which site triggered the block
   function getBlockedSiteId() {
     const params = new URLSearchParams(window.location.search);
     return params.get('site') || null;
+  }
+
+  // True when this block is a daily-limit block (reason=limit), not a relapse on a fully-blocked site.
+  function isLimitBlock() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('reason') === 'limit';
+  }
+
+  // Format seconds as "1h 2m" / "47m" / "<1m"
+  function formatDuration(seconds) {
+    if (!seconds || seconds < 60) return '<1m';
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) return mins > 0 ? hours + 'h ' + mins + 'm' : hours + 'h';
+    return mins + 'm';
   }
 
   function getMessagesForSite(siteId) {
@@ -169,7 +207,8 @@
   }
 
   const blockedSiteId = getBlockedSiteId();
-  const shameMessages = getMessagesForSite(blockedSiteId);
+  const limitBlock = isLimitBlock();
+  const shameMessages = limitBlock ? limitMessages : getMessagesForSite(blockedSiteId);
 
   // Request photo capture from service worker
   async function requestCapture() {
@@ -196,6 +235,44 @@
         resolve(response || []);
       });
     });
+  }
+
+  // Get tracked sites (includes each site's daily limit, if any)
+  async function getTrackedSites() {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'GET_TRACKED_SITES' }, (response) => {
+        resolve(response || []);
+      });
+    });
+  }
+
+  // Get today's tracking data keyed by site id
+  async function getTrackingData() {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'GET_TRACKING_DATA' }, (response) => {
+        resolve(response || {});
+      });
+    });
+  }
+
+  // Reveal and populate the daily-limit banner with the offending site + usage
+  async function setupLimitBanner() {
+    const banner = document.getElementById('limit-banner');
+    if (!banner) return;
+    banner.style.display = 'block';
+
+    try {
+      const [sites, tracking] = await Promise.all([getTrackedSites(), getTrackingData()]);
+      const site = sites.find((s) => s.id === blockedSiteId);
+      const spent = (tracking[blockedSiteId] && tracking[blockedSiteId].time) || 0;
+      const cap = site && Number(site.dailyLimitSeconds) > 0 ? Number(site.dailyLimitSeconds) : 0;
+
+      document.getElementById('limit-site').textContent = (site && (site.label || site.id)) || blockedSiteId || 'this site';
+      document.getElementById('limit-spent').textContent = formatDuration(spent);
+      document.getElementById('limit-cap').textContent = cap ? formatDuration(cap) : '—';
+    } catch (e) {
+      // Banner still shows with its default copy if data fetch fails
+    }
   }
 
 
@@ -322,9 +399,10 @@
       shameTextEl.textContent = shameMessages[Math.max(0, messageIndex)];
     }
 
-    // Update quote
-    const quoteIndex = threeDayCount % insanityQuotes.length;
-    quotesEl.querySelector('.quote').textContent = insanityQuotes[quoteIndex];
+    // Update quote — limit blocks use their own quote set
+    const quoteSet = limitBlock ? limitQuotes : insanityQuotes;
+    const quoteIndex = threeDayCount % quoteSet.length;
+    quotesEl.querySelector('.quote').textContent = quoteSet[quoteIndex];
 
     updateLeaderboard(stats.todayCount);
 
@@ -598,6 +676,10 @@
       await loadGallery();
       galleryModal.style.display = 'flex';
       return;
+    }
+
+    if (limitBlock) {
+      setupLimitBanner();
     }
 
     try {

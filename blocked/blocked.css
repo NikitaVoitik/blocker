@@ -112,6 +112,102 @@ body::after {
   96% { opacity: 0; }
 }
 
+/* Daily-limit banner — shown only when reason=limit */
+.limit-banner {
+  border: 1px solid var(--danger);
+  background: var(--danger-dim);
+  padding: 20px 24px 22px;
+  margin: -16px auto 40px;
+  max-width: 560px;
+  position: relative;
+  text-align: left;
+  animation: textReveal 0.5s ease-out;
+}
+
+.limit-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 9px,
+    rgba(255, 45, 45, 0.05) 9px,
+    rgba(255, 45, 45, 0.05) 10px
+  );
+  pointer-events: none;
+}
+
+.limit-tag {
+  display: block;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  color: var(--danger);
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-bottom: 6px;
+}
+
+.limit-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: var(--danger);
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+
+.limit-meter {
+  height: 8px;
+  background: var(--bg);
+  border: 1px solid var(--danger);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.limit-meter-fill {
+  height: 100%;
+  width: 0;
+  background: var(--danger);
+  box-shadow: 0 0 10px rgba(255, 45, 45, 0.7);
+  animation: limitDeplete 0.9s ease-out 0.2s forwards;
+}
+
+@keyframes limitDeplete {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.limit-readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.limit-readout .limit-site {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.limit-readout .limit-numbers {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.limit-readout .limit-numbers span {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 /* Photo frame */
 .photo-frame {
   position: relative;

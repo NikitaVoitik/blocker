@@ -486,6 +486,172 @@ h1::after {
   margin-bottom: 14px;
 }
 
+/* Tracked-site rows become vertical containers to hold the limit controls */
+.site-item-track {
+  display: block;
+  padding: 8px 10px;
+}
+
+.tracked-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tracked-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Limit chip — toggles the inline editor */
+.limit-chip {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: all 0.1s;
+  line-height: 1.4;
+}
+
+.limit-chip:hover {
+  border-color: var(--track);
+  color: var(--track);
+}
+
+.limit-chip.is-set {
+  border-style: solid;
+  border-color: var(--track);
+  color: var(--track);
+  background: var(--track-dim);
+}
+
+.limit-chip.is-over {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-dim);
+}
+
+/* Usage bar under a limited site */
+.limit-usage {
+  margin-top: 7px;
+}
+
+.limit-usage-track {
+  height: 3px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.limit-usage-fill {
+  height: 100%;
+  background: var(--track);
+  min-width: 0;
+  transition: width 0.2s;
+}
+
+.limit-usage.is-over .limit-usage-fill {
+  background: var(--danger);
+}
+
+.limit-usage-text {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.limit-usage.is-over .limit-usage-text {
+  color: var(--danger);
+}
+
+/* Inline limit editor */
+.limit-editor {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.limit-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.limit-minutes {
+  width: 58px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  outline: none;
+  transition: border-color 0.1s;
+}
+
+.limit-minutes:focus {
+  border-color: var(--track);
+}
+
+.limit-unit {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.limit-editor-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.limit-set,
+.limit-clear {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.limit-set {
+  background: var(--track);
+  color: #000;
+  border: 1px solid var(--track);
+}
+
+.limit-set:hover {
+  background: #33e0ff;
+}
+
+.limit-clear {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.limit-clear:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 /* Removal gauntlet modal */
 .gauntlet-overlay {
   position: fixed;
