@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 import { getTrackingDataForToday } from '../helpers/messaging';
 import { setStorage } from '../helpers/storage';
 
@@ -34,7 +34,10 @@ test.describe('Tier 2: Time Tracking Accuracy', () => {
     await extensionPage.waitForTimeout(500);
 
     const page = await context.newPage();
-    await page.goto('https://www.instagram.com', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.goto('https://www.instagram.com', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
 
     await page.waitForTimeout(3000);
 
@@ -60,11 +63,17 @@ test.describe('Tier 2: Time Tracking Accuracy', () => {
     await extensionPage.waitForTimeout(500);
 
     const redditPage = await context.newPage();
-    await redditPage.goto('https://www.reddit.com', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await redditPage.goto('https://www.reddit.com', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
     await redditPage.waitForTimeout(3000);
 
     const instaPage = await context.newPage();
-    await instaPage.goto('https://www.instagram.com', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await instaPage.goto('https://www.instagram.com', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
     await instaPage.waitForTimeout(3000);
 
     await extensionPage.bringToFront();
@@ -105,13 +114,18 @@ test.describe('Tier 2: Time Tracking Accuracy', () => {
 
   test('30-minute session cap is enforced', async ({ extensionPage }) => {
     const today = new Date();
-    const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const todayKey =
+      today.getFullYear() +
+      '-' +
+      String(today.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(today.getDate()).padStart(2, '0');
 
     await setStorage(extensionPage, {
       trackingData: {
         visits: { [`reddit:${todayKey}`]: 5 },
         time: { [`reddit:${todayKey}`]: 1750 },
-      }
+      },
     });
     await extensionPage.waitForTimeout(500);
 

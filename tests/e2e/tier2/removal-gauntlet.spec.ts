@@ -1,10 +1,12 @@
-import { test, expect } from '../fixtures/extension';
-import { getRemovalLog, addBlockedSite } from '../helpers/messaging';
+import { expect, test } from '../fixtures/extension';
+import { addBlockedSite, getRemovalLog } from '../helpers/messaging';
 import { setStorage } from '../helpers/storage';
 
 test.describe('Tier 2: Removal Gauntlet', () => {
-
-  test('clicking remove opens gauntlet modal with correct site name', async ({ context, extensionId }) => {
+  test('clicking remove opens gauntlet modal with correct site name', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/popup/popup.html`);
 
@@ -85,7 +87,11 @@ test.describe('Tier 2: Removal Gauntlet', () => {
     await page.close();
   });
 
-  test('completing gauntlet removes site and logs removal', async ({ context, extensionId, extensionPage }) => {
+  test('completing gauntlet removes site and logs removal', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     const site = { id: 'gauntlettest.com', label: 'Gauntlet Test', domains: ['gauntlettest.com'] };
     await addBlockedSite(extensionPage, site);
 
@@ -103,8 +109,7 @@ test.describe('Tier 2: Removal Gauntlet', () => {
     await expect(page.locator('#gauntlet-overlay')).toBeHidden();
     await expect(page.locator('#blocked-list')).not.toContainText('Gauntlet Test');
 
-    await expect.poll(() => getRemovalLog(extensionPage), { timeout: 5000 })
-      .toBeTruthy();
+    await expect.poll(() => getRemovalLog(extensionPage), { timeout: 5000 }).toBeTruthy();
     const removalLog = await getRemovalLog(extensionPage);
     const entry = removalLog.find((e: any) => e.siteId === 'gauntlettest.com');
     expect(entry).toBeDefined();
@@ -114,8 +119,16 @@ test.describe('Tier 2: Removal Gauntlet', () => {
     await page.close();
   });
 
-  test('surrendered stat updates after removal', async ({ context, extensionId, extensionPage }) => {
-    const site = { id: 'surrender-stat.com', label: 'Surrender Stat', domains: ['surrender-stat.com'] };
+  test('surrendered stat updates after removal', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
+    const site = {
+      id: 'surrender-stat.com',
+      label: 'Surrender Stat',
+      domains: ['surrender-stat.com'],
+    };
     await addBlockedSite(extensionPage, site);
 
     const page = await context.newPage();
@@ -136,7 +149,11 @@ test.describe('Tier 2: Removal Gauntlet', () => {
     await page.close();
   });
 
-  test('removal log persists across popup reopens', async ({ context, extensionId, extensionPage }) => {
+  test('removal log persists across popup reopens', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     const site = { id: 'persist-test.com', label: 'Persist Test', domains: ['persist-test.com'] };
     await addBlockedSite(extensionPage, site);
 
@@ -158,12 +175,21 @@ test.describe('Tier 2: Removal Gauntlet', () => {
     await page2.close();
   });
 
-  test('coward log section appears on report page', async ({ context, extensionId, extensionPage }) => {
+  test('coward log section appears on report page', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     await setStorage(extensionPage, {
       removalLog: [
-        { siteId: 'twitter', siteLabel: 'Twitter / X', timestamp: Date.now() - 60000, photoId: null },
+        {
+          siteId: 'twitter',
+          siteLabel: 'Twitter / X',
+          timestamp: Date.now() - 60000,
+          photoId: null,
+        },
         { siteId: 'reddit.com', siteLabel: 'reddit.com', timestamp: Date.now(), photoId: null },
-      ]
+      ],
     });
 
     const page = await context.newPage();
@@ -183,7 +209,11 @@ test.describe('Tier 2: Removal Gauntlet', () => {
     await page.close();
   });
 
-  test('coward log shows empty state when no removals', async ({ context, extensionId, extensionPage }) => {
+  test('coward log shows empty state when no removals', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     await setStorage(extensionPage, { removalLog: [] });
 
     const page = await context.newPage();
@@ -227,10 +257,15 @@ test.describe('Tier 2: Removal Gauntlet', () => {
     await page.locator('#gauntlet-continue').click();
     await expect(page.locator('#gauntlet-overlay')).toBeHidden();
 
-    await expect.poll(async () => {
-      const l = await getRemovalLog(msgPage);
-      return l && l.length >= 2;
-    }, { timeout: 5000 }).toBeTruthy();
+    await expect
+      .poll(
+        async () => {
+          const l = await getRemovalLog(msgPage);
+          return l && l.length >= 2;
+        },
+        { timeout: 5000 },
+      )
+      .toBeTruthy();
     const finalLog = await getRemovalLog(msgPage);
     const ids = finalLog.map((e: any) => e.siteId);
     expect(ids).toContain('multi1.com');

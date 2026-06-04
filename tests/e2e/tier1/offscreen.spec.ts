@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 
 // offscreen/offscreen.js normally runs in an offscreen document the service
 // worker creates and then closes, so its __coverage__ is gone before teardown.
@@ -8,7 +8,10 @@ import { test, expect } from '../fixtures/extension';
 declare function capturePhoto(): Promise<string>;
 
 test.describe('Tier 1: offscreen/offscreen.js', () => {
-  test('capturePhoto + CAPTURE_PHOTO/CLEANUP message handlers', async ({ context, extensionId }) => {
+  test('capturePhoto + CAPTURE_PHOTO/CLEANUP message handlers', async ({
+    context,
+    extensionId,
+  }) => {
     const url = `chrome-extension://${extensionId}/offscreen/offscreen.html`;
     const responder = await context.newPage();
     await responder.goto(url);

@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 
 async function gotoExpectBlock(page: any, url: string, timeout = 15_000) {
   try {
@@ -31,16 +31,24 @@ test.describe('Tier 2: Blocking Variants', () => {
 
   // YouTube Shorts blocking depends on not hitting a consent/region redirect.
   // Verify via rule inspection instead of live navigation.
-  test('YouTube Shorts rules exist but regular YouTube is not blocked', async ({ context, extensionPage }) => {
+  test('YouTube Shorts rules exist but regular YouTube is not blocked', async ({
+    context,
+    extensionPage,
+  }) => {
     const rules: any[] = await extensionPage.evaluate(async () => {
       return (chrome as any).declarativeNetRequest.getDynamicRules();
     });
-    const shortsRules = rules.filter((r: any) => r.condition.urlFilter.includes('youtube.com/shorts'));
+    const shortsRules = rules.filter((r: any) =>
+      r.condition.urlFilter.includes('youtube.com/shorts'),
+    );
     expect(shortsRules.length).toBeGreaterThan(0);
 
     // Regular YouTube should NOT be blocked
     const ytPage = await context.newPage();
-    await ytPage.goto('https://www.youtube.com', { waitUntil: 'domcontentloaded', timeout: 15_000 });
+    await ytPage.goto('https://www.youtube.com', {
+      waitUntil: 'domcontentloaded',
+      timeout: 15_000,
+    });
     expect(ytPage.url()).not.toContain('blocked/blocked.html');
     await ytPage.close();
   });

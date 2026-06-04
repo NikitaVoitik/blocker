@@ -1,4 +1,4 @@
-@import url('../assets/fonts/fonts.css');
+@import url("../assets/fonts/fonts.css");
 
 * {
   margin: 0;
@@ -12,25 +12,25 @@
   --border: #2a2a2d;
   --text: #ededef;
   --text-muted: #6b6b70;
-  --accent: #E4FF1A;
+  --accent: #e4ff1a;
   --accent-dim: rgba(228, 255, 26, 0.08);
-  --danger: #FF2D2D;
+  --danger: #ff2d2d;
   --danger-dim: rgba(255, 45, 45, 0.08);
-  --track: #00D4FF;
+  --track: #00d4ff;
   --track-dim: rgba(0, 212, 255, 0.08);
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 13px;
   min-height: 100vh;
   position: relative;
 }
 
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
@@ -66,7 +66,7 @@ body::before {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 1rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -95,7 +95,7 @@ body::before {
 }
 
 h1 {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 2rem;
   color: var(--accent);
   text-align: center;
@@ -112,7 +112,7 @@ h1.tracking-title {
 }
 
 h2 {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 1.1rem;
   color: var(--text-muted);
   letter-spacing: 0.12em;
@@ -121,7 +121,7 @@ h2 {
 }
 
 .chart-subtitle {
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-weight: normal;
   font-size: 0.65rem;
   color: var(--text-muted);
@@ -148,7 +148,7 @@ h2 {
 
 .card-value {
   display: block;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 2.2rem;
   color: var(--accent);
   line-height: 1;
@@ -336,7 +336,7 @@ h2 {
   border: none;
   border-right: 1px solid var(--border);
   color: var(--text-muted);
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 0.6rem;
   padding: 4px 10px;
   cursor: pointer;
@@ -384,7 +384,7 @@ h2 {
 }
 
 .coward-log-stat-value {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 1.4rem;
   color: var(--danger);
 }
@@ -440,7 +440,7 @@ h2 {
 }
 
 .coward-log-badge {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.7rem;
   color: var(--danger);
   letter-spacing: 0.1em;

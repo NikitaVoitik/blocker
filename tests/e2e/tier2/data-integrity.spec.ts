@@ -1,17 +1,26 @@
-import { test, expect } from '../fixtures/extension';
-import { setStorage, getStorage, clearStorage } from '../helpers/storage';
-import { getTrackingDataForToday, getTrackingReportData, getStats } from '../helpers/messaging';
+import { expect, test } from '../fixtures/extension';
+import { getStats, getTrackingDataForToday, getTrackingReportData } from '../helpers/messaging';
+import { getStorage, setStorage } from '../helpers/storage';
 
 test.describe('Tier 2: Data Integrity', () => {
-  test('tracking data persists across page reloads', async ({ context, extensionId, extensionPage }) => {
+  test('tracking data persists across page reloads', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     const today = new Date();
-    const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const todayKey =
+      today.getFullYear() +
+      '-' +
+      String(today.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(today.getDate()).padStart(2, '0');
 
     await setStorage(extensionPage, {
       trackingData: {
         visits: { [`reddit:${todayKey}`]: 10 },
         time: { [`reddit:${todayKey}`]: 300 },
-      }
+      },
     });
 
     await extensionPage.close();
@@ -28,12 +37,17 @@ test.describe('Tier 2: Data Integrity', () => {
   test('attempt stats reflect storage values', async ({ extensionPage }) => {
     await extensionPage.evaluate(async () => {
       const today = new Date().toDateString();
-      const todayKey = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
+      const todayKey =
+        new Date().getFullYear() +
+        '-' +
+        String(new Date().getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(new Date().getDate()).padStart(2, '0');
       await chrome.storage.local.set({
         attemptCount: 25,
         todayDate: today,
         todayCount: 7,
-        dailyCounts: { [todayKey]: 7 }
+        dailyCounts: { [todayKey]: 7 },
       });
     });
 
@@ -44,13 +58,18 @@ test.describe('Tier 2: Data Integrity', () => {
 
   test('report data includes 30-day breakdown', async ({ extensionPage }) => {
     const today = new Date();
-    const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const todayKey =
+      today.getFullYear() +
+      '-' +
+      String(today.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(today.getDate()).padStart(2, '0');
 
     await setStorage(extensionPage, {
       trackingData: {
         visits: { [`reddit:${todayKey}`]: 5, [`instagram:${todayKey}`]: 3 },
         time: { [`reddit:${todayKey}`]: 600, [`instagram:${todayKey}`]: 300 },
-      }
+      },
     });
     await extensionPage.waitForTimeout(500);
 
@@ -63,17 +82,27 @@ test.describe('Tier 2: Data Integrity', () => {
 
   test('old data beyond 30 days gets pruned on write', async ({ extensionPage }) => {
     const today = new Date();
-    const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const todayKey =
+      today.getFullYear() +
+      '-' +
+      String(today.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(today.getDate()).padStart(2, '0');
 
     const oldDate = new Date(today);
     oldDate.setDate(oldDate.getDate() - 40);
-    const oldKey = oldDate.getFullYear() + '-' + String(oldDate.getMonth() + 1).padStart(2, '0') + '-' + String(oldDate.getDate()).padStart(2, '0');
+    const oldKey =
+      oldDate.getFullYear() +
+      '-' +
+      String(oldDate.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(oldDate.getDate()).padStart(2, '0');
 
     await setStorage(extensionPage, {
       trackingData: {
         visits: { [`reddit:${todayKey}`]: 1, [`reddit:${oldKey}`]: 99 },
         time: { [`reddit:${todayKey}`]: 100, [`reddit:${oldKey}`]: 9999 },
-      }
+      },
     });
 
     const page = await extensionPage.context().newPage();

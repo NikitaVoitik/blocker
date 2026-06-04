@@ -28,7 +28,7 @@ const shameLevels = [
   { min: 3, name: 'Repeat Offender', class: 'level-2' },
   { min: 6, name: 'Addict', class: 'level-3' },
   { min: 10, name: 'Terminal Brain Rot', class: 'level-4' },
-  { min: 20, name: 'Beyond Saving', class: 'level-5' }
+  { min: 20, name: 'Beyond Saving', class: 'level-5' },
 ];
 
 function getShameLevel(count) {
@@ -50,8 +50,8 @@ function formatTime(seconds) {
   if (seconds < 60) return '<1m';
   const hours = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) return hours + 'h ' + mins + 'm';
-  return mins + 'm';
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
 }
 
 // --- Tab switching ---
@@ -60,9 +60,11 @@ const tabBtns = document.querySelectorAll('.tab-btn');
 const tabBlocker = document.getElementById('tab-blocker');
 const tabTracker = document.getElementById('tab-tracker');
 
-tabBtns.forEach(btn => {
+tabBtns.forEach((btn) => {
   btn.addEventListener('click', async () => {
-    tabBtns.forEach(b => b.classList.remove('active'));
+    tabBtns.forEach((b) => {
+      b.classList.remove('active');
+    });
     btn.classList.add('active');
     const tab = btn.dataset.tab;
     tabBlocker.style.display = tab === 'blocker' ? '' : 'none';
@@ -94,7 +96,7 @@ async function setRestriction(siteId, mode, minutes) {
     msg.dailyLimitSeconds = m * 60;
   }
   const result = await chrome.runtime.sendMessage(msg);
-  if (result && result.success) await loadRestrictions();
+  if (result?.success) await loadRestrictions();
   return result;
 }
 
@@ -130,8 +132,11 @@ function renderPresetSuggestions(presets) {
     addBtn.textContent = '+';
     addBtn.title = 'Add';
     addBtn.addEventListener('click', async () => {
-      const result = await chrome.runtime.sendMessage({ type: 'ADD_BLOCKED_SITE', site: { ...preset, mode: 'always' } });
-      if (result && result.success) await loadRestrictions();
+      const result = await chrome.runtime.sendMessage({
+        type: 'ADD_BLOCKED_SITE',
+        site: { ...preset, mode: 'always' },
+      });
+      if (result?.success) await loadRestrictions();
     });
 
     item.appendChild(label);
@@ -167,10 +172,10 @@ function renderRestrictions(sites) {
     const seg = document.createElement('div');
     seg.className = 'mode-seg';
     const alwaysBtn = document.createElement('button');
-    alwaysBtn.className = 'mode-opt' + (!isLimit ? ' active' : '');
+    alwaysBtn.className = `mode-opt${!isLimit ? ' active' : ''}`;
     alwaysBtn.textContent = 'Always';
     const limitBtn = document.createElement('button');
-    limitBtn.className = 'mode-opt' + (isLimit ? ' active' : '');
+    limitBtn.className = `mode-opt${isLimit ? ' active' : ''}`;
     limitBtn.textContent = 'Limit';
     seg.appendChild(alwaysBtn);
     seg.appendChild(limitBtn);
@@ -190,16 +195,16 @@ function renderRestrictions(sites) {
     // Usage bar (limit mode only)
     if (isLimit && cap > 0) {
       const usage = document.createElement('div');
-      usage.className = 'limit-usage' + (over ? ' is-over' : '');
+      usage.className = `limit-usage${over ? ' is-over' : ''}`;
       const barTrack = document.createElement('div');
       barTrack.className = 'limit-usage-track';
       const fill = document.createElement('div');
       fill.className = 'limit-usage-fill';
-      fill.style.width = Math.min(100, (used / cap) * 100) + '%';
+      fill.style.width = `${Math.min(100, (used / cap) * 100)}%`;
       barTrack.appendChild(fill);
       const text = document.createElement('span');
       text.className = 'limit-usage-text';
-      text.textContent = formatTime(used) + ' / ' + formatLimitShort(cap) + (over ? ' · OVER' : '');
+      text.textContent = `${formatTime(used)} / ${formatLimitShort(cap)}${over ? ' · OVER' : ''}`;
       usage.appendChild(barTrack);
       usage.appendChild(text);
       item.appendChild(usage);
@@ -229,12 +234,14 @@ function renderRestrictions(sites) {
     setBtn.className = 'limit-set';
     setBtn.textContent = isLimit ? 'Update' : 'Set';
     const apply = () => {
-      let m = parseInt(input.value, 10);
+      let m = Number.parseInt(input.value, 10);
       if (!Number.isFinite(m)) m = 60;
       setRestriction(site.id, 'limit', m);
     };
     setBtn.addEventListener('click', apply);
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') apply(); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') apply();
+    });
     editorActions.appendChild(setBtn);
     editor.appendChild(inputRow);
     editor.appendChild(editorActions);
@@ -259,24 +266,24 @@ async function addSite() {
   if (!raw.trim()) return;
 
   const hostname = extractHostname(raw);
-  if (!hostname || !hostname.includes('.')) return;
+  if (!hostname?.includes('.')) return;
 
   const id = hostname.replace(/^www\./, '');
   const domains = [hostname];
   if (!hostname.startsWith('www.')) {
-    domains.push('www.' + hostname);
+    domains.push(`www.${hostname}`);
   }
 
   const site = { id, label: id, domains, builtin: false, mode: addMode };
   if (addMode === 'limit') {
     const minsEl = document.getElementById('add-limit-input');
-    let m = parseInt(minsEl && minsEl.value, 10);
+    let m = Number.parseInt(minsEl?.value, 10);
     if (!Number.isFinite(m)) m = 60;
     site.dailyLimitSeconds = Math.max(1, Math.min(1440, m)) * 60;
   }
 
   const result = await chrome.runtime.sendMessage({ type: 'ADD_BLOCKED_SITE', site });
-  if (result && result.success) {
+  if (result?.success) {
     siteInput.value = '';
     await loadRestrictions();
   }
@@ -286,18 +293,18 @@ const GAUNTLET_STEPS = [
   {
     title: 'REMOVING {site}? COWARD.',
     body: 'You blocked this site for a reason. Giving up already?',
-    continueLabel: 'Continue'
+    continueLabel: 'Continue',
   },
   {
     title: "YOU'RE REALLY GIVING UP?",
     body: 'This goes on your permanent record. Every surrender is tracked.',
-    continueLabel: 'Continue'
+    continueLabel: 'Continue',
   },
   {
     title: 'LAST CHANCE.',
     body: 'Your shame selfie is about to be taken. Everyone will know you caved.',
-    continueLabel: 'Remove'
-  }
+    continueLabel: 'Remove',
+  },
 ];
 
 let gauntletState = null;
@@ -343,10 +350,10 @@ async function advanceGauntlet() {
   let photoId = null;
   try {
     const capture = await chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO' });
-    if (capture && capture.success) {
-      photoId = 'removal_' + siteId + '_' + Date.now();
+    if (capture?.success) {
+      photoId = `removal_${siteId}_${Date.now()}`;
     }
-  } catch (e) {
+  } catch (_e) {
     // Camera denied or failed — proceed without photo
   }
 
@@ -354,11 +361,11 @@ async function advanceGauntlet() {
     type: 'LOG_REMOVAL',
     siteId,
     siteLabel,
-    photoId
+    photoId,
   });
 
   const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId });
-  if (result && result.success) {
+  if (result?.success) {
     await loadRestrictions();
     await loadRemovalStats();
   }
@@ -384,7 +391,7 @@ async function loadStats() {
 
     const level = getShameLevel(threeDayCount);
     shameLevelEl.textContent = level.name;
-    shameLevelContainer.className = 'shame-level ' + level.class;
+    shameLevelContainer.className = `shame-level ${level.class}`;
   } catch (error) {
     console.error('Failed to load stats:', error);
   }
@@ -401,9 +408,9 @@ async function loadTrackedSites() {
 // Compact daily-limit label: 3600 -> "1h", 1800 -> "30m", 5400 -> "1h 30m"
 function formatLimitShort(seconds) {
   const m = Math.round(seconds / 60);
-  if (m >= 60 && m % 60 === 0) return (m / 60) + 'h';
-  if (m < 60) return Math.max(1, m) + 'm';
-  return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+  if (m >= 60 && m % 60 === 0) return `${m / 60}h`;
+  if (m < 60) return `${Math.max(1, m)}m`;
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
 
 async function loadAvailableTrackingPresets() {
@@ -439,7 +446,7 @@ function renderTrackingPresetSuggestions(presets) {
     addBtn.title = 'Add';
     addBtn.addEventListener('click', async () => {
       const result = await chrome.runtime.sendMessage({ type: 'ADD_TRACKED_SITE', site: preset });
-      if (result && result.success) {
+      if (result?.success) {
         await loadTrackedSites();
         await loadTrackingData();
       }
@@ -474,8 +481,11 @@ function renderTrackedSites(sites) {
     removeBtn.textContent = '×';
     removeBtn.title = 'Remove';
     removeBtn.addEventListener('click', async () => {
-      const result = await chrome.runtime.sendMessage({ type: 'REMOVE_TRACKED_SITE', siteId: site.id });
-      if (result && result.success) await reloadTracker();
+      const result = await chrome.runtime.sendMessage({
+        type: 'REMOVE_TRACKED_SITE',
+        siteId: site.id,
+      });
+      if (result?.success) await reloadTracker();
     });
 
     item.appendChild(label);
@@ -512,7 +522,7 @@ async function loadTrackingData() {
 function renderTrackedBreakdown(entries) {
   trackedBreakdownEl.innerHTML = '';
 
-  const active = entries.filter(e => e.visits > 0 || e.time > 0);
+  const active = entries.filter((e) => e.visits > 0 || e.time > 0);
   if (active.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'breakdown-empty';
@@ -521,7 +531,7 @@ function renderTrackedBreakdown(entries) {
     return;
   }
 
-  const maxTime = Math.max(1, ...active.map(e => e.time));
+  const maxTime = Math.max(1, ...active.map((e) => e.time));
 
   for (const entry of active) {
     const row = document.createElement('div');
@@ -533,13 +543,13 @@ function renderTrackedBreakdown(entries) {
 
     const stats = document.createElement('span');
     stats.className = 'breakdown-stats';
-    stats.textContent = entry.visits + ' · ' + formatTime(entry.time);
+    stats.textContent = `${entry.visits} · ${formatTime(entry.time)}`;
 
     const barTrack = document.createElement('div');
     barTrack.className = 'breakdown-bar-track';
     const bar = document.createElement('div');
     bar.className = 'breakdown-bar';
-    bar.style.width = (entry.time / maxTime) * 100 + '%';
+    bar.style.width = `${(entry.time / maxTime) * 100}%`;
     barTrack.appendChild(bar);
 
     row.appendChild(label);
@@ -554,23 +564,23 @@ async function addTrackedSite() {
   if (!raw.trim()) return;
 
   const hostname = extractHostname(raw);
-  if (!hostname || !hostname.includes('.')) return;
+  if (!hostname?.includes('.')) return;
 
   const id = hostname.replace(/^www\./, '');
   const domains = [hostname];
   if (!hostname.startsWith('www.')) {
-    domains.push('www.' + hostname);
+    domains.push(`www.${hostname}`);
   }
 
   const site = {
     id,
     label: id,
     domains,
-    builtin: false
+    builtin: false,
   };
 
   const result = await chrome.runtime.sendMessage({ type: 'ADD_TRACKED_SITE', site });
-  if (result && result.success) {
+  if (result?.success) {
     trackSiteInput.value = '';
     await loadTrackedSites();
     await loadTrackingData();
@@ -579,7 +589,7 @@ async function addTrackedSite() {
 
 async function loadRemovalStats() {
   const log = await chrome.runtime.sendMessage({ type: 'GET_REMOVAL_LOG' });
-  surrenderedEl.textContent = (log && log.length) || 0;
+  surrenderedEl.textContent = log?.length || 0;
 }
 
 // --- Event listeners ---
@@ -595,7 +605,9 @@ const addLimitWrap = document.getElementById('add-limit-wrap');
 addModeBtns.forEach((btn) => {
   btn.addEventListener('click', () => {
     addMode = btn.dataset.addmode;
-    addModeBtns.forEach((b) => b.classList.toggle('active', b === btn));
+    addModeBtns.forEach((b) => {
+      b.classList.toggle('active', b === btn);
+    });
     if (addLimitWrap) addLimitWrap.style.display = addMode === 'limit' ? 'flex' : 'none';
   });
 });
@@ -607,25 +619,25 @@ trackSiteInput.addEventListener('keydown', (e) => {
 
 viewGalleryBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('blocked/blocked.html?gallery=true')
+    url: chrome.runtime.getURL('blocked/blocked.html?gallery=true'),
   });
 });
 
 viewReportBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('report/report.html')
+    url: chrome.runtime.getURL('report/report.html'),
   });
 });
 
 testBlockBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('blocked/blocked.html')
+    url: chrome.runtime.getURL('blocked/blocked.html'),
   });
 });
 
 viewTrackingReportBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('report/report.html?tab=tracking')
+    url: chrome.runtime.getURL('report/report.html?tab=tracking'),
   });
 });
 
@@ -642,7 +654,7 @@ async function initWhatsNew() {
   let seen;
   try {
     ({ seenWhatsNew: seen } = await chrome.storage.local.get('seenWhatsNew'));
-  } catch (e) {
+  } catch (_e) {
     seen = null;
   }
   if (seen === WHATS_NEW_KEY) return; // already dismissed this announcement
@@ -651,7 +663,9 @@ async function initWhatsNew() {
     banner.hidden = true;
     try {
       await chrome.storage.local.set({ seenWhatsNew: WHATS_NEW_KEY });
-    } catch (e) { /* best-effort: banner just reappears next open */ }
+    } catch (_e) {
+      /* best-effort: banner just reappears next open */
+    }
   }
 
   // Tapping the banner jumps to the Tracker tab (where limits are set), then dismisses.

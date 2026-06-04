@@ -1,10 +1,19 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 import { setStorage } from '../helpers/storage';
 
 test.describe('Tier 2: Report Page', () => {
-  test('report page loads and shows shame stats', async ({ context, extensionId, extensionPage }) => {
+  test('report page loads and shows shame stats', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     const today = new Date();
-    const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const todayKey =
+      today.getFullYear() +
+      '-' +
+      String(today.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(today.getDate()).padStart(2, '0');
     await setStorage(extensionPage, {
       attemptCount: 15,
       todayDate: today.toDateString(),
@@ -22,14 +31,23 @@ test.describe('Tier 2: Report Page', () => {
     await page.close();
   });
 
-  test('report page tracking tab loads via URL param', async ({ context, extensionId, extensionPage }) => {
+  test('report page tracking tab loads via URL param', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     const today = new Date();
-    const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const todayKey =
+      today.getFullYear() +
+      '-' +
+      String(today.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(today.getDate()).padStart(2, '0');
     await setStorage(extensionPage, {
       trackingData: {
         visits: { [`reddit:${todayKey}`]: 7 },
         time: { [`reddit:${todayKey}`]: 1200 },
-      }
+      },
     });
 
     const page = await context.newPage();

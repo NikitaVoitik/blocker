@@ -41,11 +41,7 @@
 
   "content_scripts": [
     {
-      "matches": [
-        "*://youtube.com/*",
-        "*://www.youtube.com/*",
-        "*://m.youtube.com/*"
-      ],
+      "matches": ["*://youtube.com/*", "*://www.youtube.com/*", "*://m.youtube.com/*"],
       "css": ["content/youtube-shorts.css"],
       "js": ["content/youtube-shorts.js"],
       "run_at": "document_start"

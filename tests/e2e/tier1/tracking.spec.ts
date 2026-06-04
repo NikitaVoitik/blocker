@@ -1,6 +1,5 @@
-import { test, expect } from '../fixtures/extension';
-import { getTrackingDataForToday, addTrackedSite, removeTrackedSite } from '../helpers/messaging';
-import { getTrackingData } from '../helpers/storage';
+import { expect, test } from '../fixtures/extension';
+import { addTrackedSite, getTrackingDataForToday, removeTrackedSite } from '../helpers/messaging';
 
 test.describe('Tier 1: Time Tracking', () => {
   test('default tracked sites are loaded', async ({ extensionPage }) => {
@@ -41,7 +40,11 @@ test.describe('Tier 1: Time Tracking', () => {
   });
 
   test('adding a custom tracked site works', async ({ extensionPage }) => {
-    const site = { id: 'news.ycombinator.com', label: 'Hacker News', domains: ['news.ycombinator.com'] };
+    const site = {
+      id: 'news.ycombinator.com',
+      label: 'Hacker News',
+      domains: ['news.ycombinator.com'],
+    };
     const result = await addTrackedSite(extensionPage, site);
     expect(result.success).toBe(true);
 

@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 import { checkLimits, getDynamicRules, getRestrictionSites } from '../helpers/messaging';
 import { setStorage } from '../helpers/storage';
 
@@ -7,13 +7,22 @@ const ITERATIONS = 120;
 
 function todayKey(): string {
   const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return (
+    d.getFullYear() +
+    '-' +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
 }
 
 const SITES = [
   { id: 'reddit', domains: ['reddit.com', 'www.reddit.com', 'old.reddit.com'] },
   { id: 'instagram', domains: ['instagram.com', 'www.instagram.com'] },
-  { id: 'facebook', domains: ['facebook.com', 'www.facebook.com', 'web.facebook.com', 'm.facebook.com'] },
+  {
+    id: 'facebook',
+    domains: ['facebook.com', 'www.facebook.com', 'web.facebook.com', 'm.facebook.com'],
+  },
   { id: 'linkedin', domains: ['linkedin.com', 'www.linkedin.com'] },
   { id: 'pinterest', domains: ['pinterest.com', 'www.pinterest.com'] },
   { id: 'tiktok', domains: ['tiktok.com', 'www.tiktok.com'] },
@@ -21,12 +30,17 @@ const SITES = [
 
 // Wait until the service worker's cache reflects the limit restrictions we just wrote.
 async function waitForLimits(page: any, expected: Record<string, number>) {
-  await expect.poll(async () => {
-    const sites = await getRestrictionSites(page);
-    const map: Record<string, number> = {};
-    for (const s of sites) if (s.mode === 'limit') map[s.id] = Number(s.dailyLimitSeconds) || 0;
-    return JSON.stringify(map);
-  }, { timeout: 5000 }).toBe(JSON.stringify(expected));
+  await expect
+    .poll(
+      async () => {
+        const sites = await getRestrictionSites(page);
+        const map: Record<string, number> = {};
+        for (const s of sites) if (s.mode === 'limit') map[s.id] = Number(s.dailyLimitSeconds) || 0;
+        return JSON.stringify(map);
+      },
+      { timeout: 5000 },
+    )
+    .toBe(JSON.stringify(expected));
 }
 
 test.describe('Tier 3: Daily Limit Stress', () => {
@@ -44,19 +58,31 @@ test.describe('Tier 3: Daily Limit Stress', () => {
         const hasLimit = Math.random() < 0.7;
         const limitSec = hasLimit ? 60 + Math.floor(Math.random() * 3600) : 0;
         if (limitSec > 0) {
-          blocked.push({ id: s.id, label: s.id, domains: s.domains, builtin: false, mode: 'limit', dailyLimitSeconds: limitSec });
+          blocked.push({
+            id: s.id,
+            label: s.id,
+            domains: s.domains,
+            builtin: false,
+            mode: 'limit',
+            dailyLimitSeconds: limitSec,
+          });
           expectedLimits[s.id] = limitSec;
         }
         const cap = limitSec > 0 ? limitSec : 3600;
         const r = Math.random();
         let t: number;
-        if (r < 0.4) t = cap + Math.floor(Math.random() * 100); // likely over (if limited)
-        else if (r < 0.8) t = Math.floor(Math.random() * cap);  // under
+        if (r < 0.4)
+          t = cap + Math.floor(Math.random() * 100); // likely over (if limited)
+        else if (r < 0.8)
+          t = Math.floor(Math.random() * cap); // under
         else t = 0;
         time[`${s.id}:${tk}`] = t;
       }
 
-      await setStorage(extensionPage, { blockedSites: blocked, trackingData: { visits: {}, time } });
+      await setStorage(extensionPage, {
+        blockedSites: blocked,
+        trackingData: { visits: {}, time },
+      });
       await waitForLimits(extensionPage, expectedLimits);
 
       const res = await checkLimits(extensionPage);
@@ -87,7 +113,7 @@ test.describe('Tier 3: Daily Limit Stress', () => {
 
       // reason=limit <=> id in the limit range (no cross-contamination with always-block rules).
       for (const r of rules) {
-        const isLimit = ((r.action.redirect && r.action.redirect.extensionPath) || '').includes('reason=limit');
+        const isLimit = (r.action.redirect?.extensionPath || '').includes('reason=limit');
         if (isLimit) expect(r.id, ctx).toBeGreaterThanOrEqual(LIMIT_RULE_ID_BASE);
         else expect(r.id, ctx).toBeLessThan(LIMIT_RULE_ID_BASE);
       }

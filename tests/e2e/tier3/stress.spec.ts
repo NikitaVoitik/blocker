@@ -1,5 +1,10 @@
-import { test, expect } from '../fixtures/extension';
-import { addBlockedSite, removeBlockedSite, addTrackedSite, removeTrackedSite } from '../helpers/messaging';
+import { expect, test } from '../fixtures/extension';
+import {
+  addBlockedSite,
+  addTrackedSite,
+  removeBlockedSite,
+  removeTrackedSite,
+} from '../helpers/messaging';
 
 test.describe('Tier 3: Many Sites Stress', () => {
   test('50 blocked sites all redirect correctly', async ({ context, extensionPage }) => {
@@ -40,7 +45,7 @@ test.describe('Tier 3: Many Sites Stress', () => {
     await extensionPage.waitForTimeout(2000);
   });
 
-  test('50 tracked sites all count visits', async ({ context, extensionPage }) => {
+  test('50 tracked sites all count visits', async ({ extensionPage }) => {
     test.setTimeout(10 * 60 * 1000);
 
     const sites = [];

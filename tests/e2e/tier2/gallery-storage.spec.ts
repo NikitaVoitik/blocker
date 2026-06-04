@@ -1,35 +1,45 @@
-import { test, expect, type Page } from '../fixtures/extension';
+import { expect, type Page, test } from '../fixtures/extension';
 import { sendMessage } from '../helpers/messaging';
 
 // 1x1 transparent PNG data URL — small but representative of the data: URL format
 const TINY_PNG_DATA_URL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkAAIAAAoAAv/lxKUAAAAASUVORK5CYII=';
 
-async function seedPhotos(page: Page, count: number, dataUrl: string = TINY_PNG_DATA_URL): Promise<void> {
-  await page.evaluate(async ({ n, data }) => {
-    await new Promise<void>((resolve, reject) => {
-      const req = indexedDB.open('SelfieShameDB', 1);
-      req.onupgradeneeded = () => {
-        const database = req.result;
-        if (!database.objectStoreNames.contains('photos')) {
-          const store = database.createObjectStore('photos', { keyPath: 'id', autoIncrement: true });
-          store.createIndex('timestamp', 'timestamp', { unique: false });
-        }
-      };
-      req.onsuccess = () => {
-        const db = req.result;
-        const tx = db.transaction(['photos'], 'readwrite');
-        const store = tx.objectStore('photos');
-        const base = Date.now();
-        for (let i = 0; i < n; i++) {
-          store.add({ data, timestamp: base - (n - i) * 1000 });
-        }
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      };
-      req.onerror = () => reject(req.error);
-    });
-  }, { n: count, data: dataUrl });
+async function seedPhotos(
+  page: Page,
+  count: number,
+  dataUrl: string = TINY_PNG_DATA_URL,
+): Promise<void> {
+  await page.evaluate(
+    async ({ n, data }) => {
+      await new Promise<void>((resolve, reject) => {
+        const req = indexedDB.open('SelfieShameDB', 1);
+        req.onupgradeneeded = () => {
+          const database = req.result;
+          if (!database.objectStoreNames.contains('photos')) {
+            const store = database.createObjectStore('photos', {
+              keyPath: 'id',
+              autoIncrement: true,
+            });
+            store.createIndex('timestamp', 'timestamp', { unique: false });
+          }
+        };
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction(['photos'], 'readwrite');
+          const store = tx.objectStore('photos');
+          const base = Date.now();
+          for (let i = 0; i < n; i++) {
+            store.add({ data, timestamp: base - (n - i) * 1000 });
+          }
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        };
+        req.onerror = () => reject(req.error);
+      });
+    },
+    { n: count, data: dataUrl },
+  );
 }
 
 async function getPhotoCount(page: Page): Promise<number> {
@@ -63,14 +73,19 @@ test.describe('Tier 2: Gallery Storage', () => {
     // Poll until any in-flight auto-capture has landed AND the store is empty,
     // observed twice in a row. CLEAR_PHOTOS goes through the SW (which holds the
     // canonical DB handle) so it can't race with the SW's own writes.
-    await expect.poll(async () => {
-      await sendMessage(extensionPage, { type: 'CLEAR_PHOTOS' });
-      await extensionPage.waitForTimeout(250);
-      const first = await getPhotoCount(extensionPage);
-      await extensionPage.waitForTimeout(250);
-      const second = await getPhotoCount(extensionPage);
-      return first === 0 && second === 0;
-    }, { timeout: 10_000, intervals: [200, 400, 800] }).toBe(true);
+    await expect
+      .poll(
+        async () => {
+          await sendMessage(extensionPage, { type: 'CLEAR_PHOTOS' });
+          await extensionPage.waitForTimeout(250);
+          const first = await getPhotoCount(extensionPage);
+          await extensionPage.waitForTimeout(250);
+          const second = await getPhotoCount(extensionPage);
+          return first === 0 && second === 0;
+        },
+        { timeout: 10_000, intervals: [200, 400, 800] },
+      )
+      .toBe(true);
   });
 
   test('GET_PHOTO_STORAGE_INFO returns defaults when empty', async ({ extensionPage }) => {
@@ -83,7 +98,9 @@ test.describe('Tier 2: Gallery Storage', () => {
     expect(info.maxLimit).toBe(500);
   });
 
-  test('GET_PHOTO_STORAGE_INFO reports seeded photos with non-zero bytes', async ({ extensionPage }) => {
+  test('GET_PHOTO_STORAGE_INFO reports seeded photos with non-zero bytes', async ({
+    extensionPage,
+  }) => {
     await seedPhotos(extensionPage, 3);
     const info = await sendMessage(extensionPage, { type: 'GET_PHOTO_STORAGE_INFO' });
     expect(info.count).toBe(3);
@@ -140,7 +157,11 @@ test.describe('Tier 2: Gallery Storage', () => {
     expect(info.bytes).toBe(0);
   });
 
-  test('gallery page renders storage panel with seeded data', async ({ context, extensionId, extensionPage }) => {
+  test('gallery page renders storage panel with seeded data', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     await seedPhotos(extensionPage, 6);
 
     const page = await context.newPage();
@@ -155,7 +176,10 @@ test.describe('Tier 2: Gallery Storage', () => {
     await page.close();
   });
 
-  test('minus button decreases the limit input by 5 and clamps to min', async ({ context, extensionId }) => {
+  test('minus button decreases the limit input by 5 and clamps to min', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/blocked/blocked.html?gallery=true`);
 
@@ -173,7 +197,10 @@ test.describe('Tier 2: Gallery Storage', () => {
     await page.close();
   });
 
-  test('plus button increases the limit input by 5 and clamps to max', async ({ context, extensionId }) => {
+  test('plus button increases the limit input by 5 and clamps to max', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/blocked/blocked.html?gallery=true`);
 
@@ -187,7 +214,11 @@ test.describe('Tier 2: Gallery Storage', () => {
     await page.close();
   });
 
-  test('Apply Capacity persists the new limit and prunes the gallery', async ({ context, extensionId, extensionPage }) => {
+  test('Apply Capacity persists the new limit and prunes the gallery', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     await seedPhotos(extensionPage, 12);
 
     const page = await context.newPage();
@@ -208,7 +239,11 @@ test.describe('Tier 2: Gallery Storage', () => {
     await page.close();
   });
 
-  test('Purge Gallery requires confirmation click and then wipes photos', async ({ context, extensionId, extensionPage }) => {
+  test('Purge Gallery requires confirmation click and then wipes photos', async ({
+    context,
+    extensionId,
+    extensionPage,
+  }) => {
     await seedPhotos(extensionPage, 4);
 
     const page = await context.newPage();

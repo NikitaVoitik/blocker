@@ -1,19 +1,33 @@
-import { test, expect } from '../fixtures/extension';
-import { checkLimits, getDynamicRules, addBlockedSite, removeBlockedSite } from '../helpers/messaging';
-import { setStorage, getBlockedSites } from '../helpers/storage';
+import { expect, test } from '../fixtures/extension';
+import {
+  addBlockedSite,
+  checkLimits,
+  getDynamicRules,
+  removeBlockedSite,
+} from '../helpers/messaging';
+import { getBlockedSites, setStorage } from '../helpers/storage';
 
 const LIMIT_RULE_ID_BASE = 100000;
 const ROUNDS = 80;
 
 function todayKey(): string {
   const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return (
+    d.getFullYear() +
+    '-' +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
 }
 
 const TRACKED = [
   { id: 'reddit', domains: ['reddit.com', 'www.reddit.com', 'old.reddit.com'] },
   { id: 'instagram', domains: ['instagram.com', 'www.instagram.com'] },
-  { id: 'facebook', domains: ['facebook.com', 'www.facebook.com', 'web.facebook.com', 'm.facebook.com'] },
+  {
+    id: 'facebook',
+    domains: ['facebook.com', 'www.facebook.com', 'web.facebook.com', 'm.facebook.com'],
+  },
   { id: 'linkedin', domains: ['linkedin.com', 'www.linkedin.com'] },
 ];
 
@@ -26,7 +40,9 @@ const EXTRA_BLOCKED = [
 ];
 
 test.describe('Tier 3: Limit/Block Rule Contention', () => {
-  test('concurrent limit + always-block updates never collide, duplicate, or cross ID ranges', async ({ extensionPage }) => {
+  test('concurrent limit + always-block updates never collide, duplicate, or cross ID ranges', async ({
+    extensionPage,
+  }) => {
     test.setTimeout(20 * 60 * 1000);
     const tk = todayKey();
 
@@ -39,12 +55,24 @@ test.describe('Tier 3: Limit/Block Rule Contention', () => {
       // block syncs (ADD/REMOVE_BLOCKED_SITE) contend on updateDynamicRules.
       const ops: Promise<any>[] = [];
       for (const s of TRACKED) {
-        ops.push(Math.random() < 0.5
-          ? addBlockedSite(extensionPage, { id: s.id, label: s.id, domains: s.domains, mode: 'limit', dailyLimitSeconds: 60 })
-          : removeBlockedSite(extensionPage, s.id));
+        ops.push(
+          Math.random() < 0.5
+            ? addBlockedSite(extensionPage, {
+                id: s.id,
+                label: s.id,
+                domains: s.domains,
+                mode: 'limit',
+                dailyLimitSeconds: 60,
+              })
+            : removeBlockedSite(extensionPage, s.id),
+        );
       }
       for (const b of EXTRA_BLOCKED) {
-        ops.push(Math.random() < 0.5 ? addBlockedSite(extensionPage, b) : removeBlockedSite(extensionPage, b.id));
+        ops.push(
+          Math.random() < 0.5
+            ? addBlockedSite(extensionPage, b)
+            : removeBlockedSite(extensionPage, b.id),
+        );
       }
       ops.push(checkLimits(extensionPage));
       await Promise.all(ops);
@@ -56,8 +84,9 @@ test.describe('Tier 3: Limit/Block Rule Contention', () => {
       expect(new Set(ids).size, ctx).toBe(ids.length); // no duplicate rule ids
 
       for (const rule of rules) {
-        const isLimit = ((rule.action.redirect && rule.action.redirect.extensionPath) || '').includes('reason=limit');
-        if (isLimit) expect(rule.id, `${ctx} (limit rule)`).toBeGreaterThanOrEqual(LIMIT_RULE_ID_BASE);
+        const isLimit = (rule.action.redirect?.extensionPath || '').includes('reason=limit');
+        if (isLimit)
+          expect(rule.id, `${ctx} (limit rule)`).toBeGreaterThanOrEqual(LIMIT_RULE_ID_BASE);
         else expect(rule.id, `${ctx} (block rule)`).toBeLessThan(LIMIT_RULE_ID_BASE);
       }
     }

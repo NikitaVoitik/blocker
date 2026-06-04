@@ -1,11 +1,11 @@
-(function () {
+(() => {
   const shameLevels = [
     { min: 0, label: 'Clean' },
     { min: 1, label: 'Rookie' },
     { min: 3, label: 'Repeat Offender' },
     { min: 6, label: 'Addict' },
     { min: 10, label: 'Terminal Brain Rot' },
-    { min: 20, label: 'Beyond Saving' }
+    { min: 20, label: 'Beyond Saving' },
   ];
 
   function getShameLevel(threeDayCount) {
@@ -18,15 +18,15 @@
 
   function formatDate(dateStr) {
     const parts = dateStr.split('-');
-    return parts[1] + '/' + parts[2];
+    return `${parts[1]}/${parts[2]}`;
   }
 
   function formatTime(seconds) {
     if (seconds < 60) return '<1m';
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) return hours + 'h ' + mins + 'm';
-    return mins + 'm';
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
   }
 
   // --- Tab switching ---
@@ -36,9 +36,11 @@
   const reportTracking = document.getElementById('report-tracking');
   let trackingLoaded = false;
 
-  tabBtns.forEach(btn => {
+  tabBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
-      tabBtns.forEach(b => b.classList.remove('active'));
+      tabBtns.forEach((b) => {
+        b.classList.remove('active');
+      });
       btn.classList.add('active');
       const tab = btn.dataset.tab;
       reportShame.style.display = tab === 'shame' ? '' : 'none';
@@ -53,7 +55,9 @@
   // Auto-select tracking tab if URL param says so
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('tab') === 'tracking') {
-    tabBtns.forEach(b => b.classList.remove('active'));
+    tabBtns.forEach((b) => {
+      b.classList.remove('active');
+    });
     document.querySelector('[data-tab="tracking"]').classList.add('active');
     reportShame.style.display = 'none';
     reportTracking.style.display = '';
@@ -66,7 +70,7 @@
   function renderDailyChart(dailyBreakdown) {
     const container = document.getElementById('daily-chart');
     const axis = document.getElementById('chart-axis');
-    const maxCount = Math.max(1, ...dailyBreakdown.map(d => d.count));
+    const maxCount = Math.max(1, ...dailyBreakdown.map((d) => d.count));
 
     for (let i = 0; i < dailyBreakdown.length; i++) {
       const entry = dailyBreakdown[i];
@@ -77,7 +81,7 @@
         bar.classList.add('bar-zero');
       } else {
         const heightPct = (entry.count / maxCount) * 100;
-        bar.style.height = heightPct + '%';
+        bar.style.height = `${heightPct}%`;
         const opacity = 0.4 + (entry.count / maxCount) * 0.6;
         bar.style.backgroundColor = `rgba(255, 51, 51, ${opacity})`;
       }
@@ -105,7 +109,7 @@
   function renderWeeklyChart(weeklySummaries) {
     const container = document.getElementById('weekly-chart');
     const labels = ['This Week', 'Last Week', '2 Weeks Ago', '3 Weeks Ago'];
-    const maxTotal = Math.max(1, ...weeklySummaries.map(w => w.total));
+    const maxTotal = Math.max(1, ...weeklySummaries.map((w) => w.total));
 
     for (let i = 0; i < weeklySummaries.length; i++) {
       const week = weeklySummaries[i];
@@ -122,7 +126,7 @@
       const bar = document.createElement('div');
       bar.className = 'week-bar';
       const widthPct = (week.total / maxTotal) * 100;
-      bar.style.width = widthPct + '%';
+      bar.style.width = `${widthPct}%`;
       const opacity = week.total > 0 ? 0.4 + (week.total / maxTotal) * 0.6 : 0;
       bar.style.backgroundColor = `rgba(255, 51, 51, ${opacity})`;
 
@@ -145,12 +149,15 @@
     document.getElementById('thirty-day-count').textContent = data.thirtyDayCount;
     document.getElementById('all-time-count').textContent = data.allTimeCount;
 
-    const worstLabel = data.worstDay.count > 0
-      ? formatDate(data.worstDay.date) + ' (' + data.worstDay.count + ')'
-      : 'None';
+    const worstLabel =
+      data.worstDay.count > 0
+        ? `${formatDate(data.worstDay.date)} (${data.worstDay.count})`
+        : 'None';
     document.getElementById('worst-day').textContent = worstLabel;
-    document.getElementById('current-streak').textContent = data.currentCleanStreak + ' day' + (data.currentCleanStreak !== 1 ? 's' : '');
-    document.getElementById('longest-streak').textContent = data.longestCleanStreak + ' day' + (data.longestCleanStreak !== 1 ? 's' : '');
+    document.getElementById('current-streak').textContent =
+      `${data.currentCleanStreak} day${data.currentCleanStreak !== 1 ? 's' : ''}`;
+    document.getElementById('longest-streak').textContent =
+      `${data.longestCleanStreak} day${data.longestCleanStreak !== 1 ? 's' : ''}`;
     document.getElementById('photo-count').textContent = data.photoCount;
     document.getElementById('shame-level').textContent = getShameLevel(data.threeDayCount);
 
@@ -255,15 +262,16 @@
 
     // Insights
     document.getElementById('track-most-time').textContent = data.mostTimeSite
-      ? data.mostTimeSite.label + ' (' + formatTime(data.mostTimeSite.time) + ')'
+      ? `${data.mostTimeSite.label} (${formatTime(data.mostTimeSite.time)})`
       : 'None';
     document.getElementById('track-most-visited').textContent = data.mostVisited
-      ? data.mostVisited.label + ' (' + data.mostVisited.visits + ' visits)'
+      ? `${data.mostVisited.label} (${data.mostVisited.visits} visits)`
       : 'None';
     document.getElementById('track-avg-daily').textContent = formatTime(data.avgDailyTime);
-    document.getElementById('track-worst-day').textContent = data.worstDay.time > 0
-      ? formatDate(data.worstDay.date) + ' (' + formatTime(data.worstDay.time) + ')'
-      : 'None';
+    document.getElementById('track-worst-day').textContent =
+      data.worstDay.time > 0
+        ? `${formatDate(data.worstDay.date)} (${formatTime(data.worstDay.time)})`
+        : 'None';
     document.getElementById('track-month-visits').textContent = data.monthVisits;
 
     renderTrackingDailyChart(data.dailyBreakdown);
@@ -271,14 +279,19 @@
     renderTrackingWeeklyChart(data.weeklySummaries);
 
     // Period switcher for site breakdown
-    document.querySelectorAll('.period-btn').forEach(btn => {
+    document.querySelectorAll('.period-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.period-btn').forEach((b) => {
+          b.classList.remove('active');
+        });
         btn.classList.add('active');
         const period = btn.dataset.period;
-        const breakdownData = period === 'week' ? cachedTrackingData.siteBreakdownWeek
-          : period === 'month' ? cachedTrackingData.siteBreakdownMonth
-          : cachedTrackingData.siteBreakdownToday;
+        const breakdownData =
+          period === 'week'
+            ? cachedTrackingData.siteBreakdownWeek
+            : period === 'month'
+              ? cachedTrackingData.siteBreakdownMonth
+              : cachedTrackingData.siteBreakdownToday;
         renderSiteTimeBreakdown(breakdownData);
       });
     });
@@ -287,7 +300,7 @@
   function renderTrackingDailyChart(dailyBreakdown) {
     const container = document.getElementById('tracking-daily-chart');
     const axis = document.getElementById('tracking-chart-axis');
-    const maxTime = Math.max(1, ...dailyBreakdown.map(d => d.time));
+    const maxTime = Math.max(1, ...dailyBreakdown.map((d) => d.time));
 
     for (let i = 0; i < dailyBreakdown.length; i++) {
       const entry = dailyBreakdown[i];
@@ -298,7 +311,7 @@
         bar.classList.add('bar-zero');
       } else {
         const heightPct = (entry.time / maxTime) * 100;
-        bar.style.height = heightPct + '%';
+        bar.style.height = `${heightPct}%`;
         const opacity = 0.4 + (entry.time / maxTime) * 0.6;
         bar.style.backgroundColor = `rgba(51, 153, 255, ${opacity})`;
       }
@@ -327,7 +340,7 @@
     const container = document.getElementById('site-time-breakdown');
     const emptyEl = document.getElementById('site-breakdown-empty');
     container.innerHTML = '';
-    const active = siteBreakdown.filter(s => s.time > 0 || s.visits > 0);
+    const active = siteBreakdown.filter((s) => s.time > 0 || s.visits > 0);
 
     if (active.length === 0) {
       emptyEl.style.display = '';
@@ -335,7 +348,7 @@
     }
     emptyEl.style.display = 'none';
 
-    const maxTime = Math.max(1, ...active.map(s => s.time));
+    const maxTime = Math.max(1, ...active.map((s) => s.time));
 
     for (const site of active) {
       const row = document.createElement('div');
@@ -351,7 +364,7 @@
       const bar = document.createElement('div');
       bar.className = 'week-bar';
       const widthPct = site.time > 0 ? (site.time / maxTime) * 100 : 0;
-      bar.style.width = widthPct + '%';
+      bar.style.width = `${widthPct}%`;
       const opacity = site.time > 0 ? 0.4 + (site.time / maxTime) * 0.6 : 0;
       bar.style.backgroundColor = `rgba(51, 153, 255, ${opacity})`;
       track.appendChild(bar);
@@ -370,7 +383,7 @@
   function renderTrackingWeeklyChart(weeklySummaries) {
     const container = document.getElementById('tracking-weekly-chart');
     const labels = ['This Week', 'Last Week', '2 Weeks Ago', '3 Weeks Ago'];
-    const maxTime = Math.max(1, ...weeklySummaries.map(w => w.time));
+    const maxTime = Math.max(1, ...weeklySummaries.map((w) => w.time));
 
     for (let i = 0; i < weeklySummaries.length; i++) {
       const week = weeklySummaries[i];
@@ -387,7 +400,7 @@
       const bar = document.createElement('div');
       bar.className = 'week-bar';
       const widthPct = week.time > 0 ? (week.time / maxTime) * 100 : 0;
-      bar.style.width = widthPct + '%';
+      bar.style.width = `${widthPct}%`;
       const opacity = week.time > 0 ? 0.4 + (week.time / maxTime) * 0.6 : 0;
       bar.style.backgroundColor = `rgba(51, 153, 255, ${opacity})`;
       track.appendChild(bar);

@@ -1,8 +1,8 @@
 // Runs once after the coverage test run: aggregate every raw __coverage__ dump
 // written by the fixture and generate the reports.
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const { CoverageReport } = require('monocart-coverage-reports');
 const coverageOptions = require('./coverage-options.cjs');
 
@@ -32,5 +32,7 @@ module.exports = async () => {
   }
 
   await mcr.generate();
-  console.log(`[coverage] aggregated ${added} dump(s) → ${path.join(coverageOptions.outputDir, 'index.html')}`);
+  console.log(
+    `[coverage] aggregated ${added} dump(s) → ${path.join(coverageOptions.outputDir, 'index.html')}`,
+  );
 };

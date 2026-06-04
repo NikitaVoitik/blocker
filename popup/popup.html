@@ -19,8 +19,8 @@
     </div>
 
     <div class="tab-switcher">
-      <button class="tab-btn active" data-tab="blocker">Blocker</button>
-      <button class="tab-btn" data-tab="tracker">Tracker</button>
+      <button type="button" class="tab-btn active" data-tab="blocker">Blocker</button>
+      <button type="button" class="tab-btn" data-tab="tracker">Tracker</button>
     </div>
 
     <div class="tab-content" id="tab-blocker">
@@ -66,16 +66,16 @@
               <input type="number" id="add-limit-input" class="limit-minutes" min="1" max="1440" step="1" value="60" />
               <span class="limit-unit">min/day</span>
             </div>
-            <button id="add-site-btn" class="btn-add">Add</button>
+            <button type="button" id="add-site-btn" class="btn-add">Add</button>
           </div>
         </div>
         <span class="input-hint">Always blocks every visit; Limit blocks after N minutes of use per day. Enter a domain, not a page.</span>
       </div>
 
       <div class="actions">
-        <button id="view-gallery" class="btn">View Hall of Shame</button>
-        <button id="view-report" class="btn btn-secondary">Shame Report</button>
-        <button id="test-block" class="btn btn-secondary">Test Block Page</button>
+        <button type="button" id="view-gallery" class="btn">View Hall of Shame</button>
+        <button type="button" id="view-report" class="btn btn-secondary">Shame Report</button>
+        <button type="button" id="test-block" class="btn btn-secondary">Test Block Page</button>
       </div>
     </div>
 
@@ -101,13 +101,13 @@
         <div id="tracked-list"></div>
         <div class="add-site">
           <input type="text" id="track-site-input" placeholder="e.g. discord.com" />
-          <button id="add-track-btn" class="btn-add btn-add-track">Track</button>
+          <button type="button" id="add-track-btn" class="btn-add btn-add-track">Track</button>
         </div>
         <span class="input-hint">Track time on any site. To cap a site's usage, set a Limit in the Blocker tab.</span>
       </div>
 
       <div class="actions">
-        <button id="view-tracking-report" class="btn btn-secondary btn-track">Full Report</button>
+        <button type="button" id="view-tracking-report" class="btn btn-secondary btn-track">Full Report</button>
       </div>
     </div>
 
@@ -122,8 +122,8 @@
       <h2 class="gauntlet-title" id="gauntlet-title"></h2>
       <p class="gauntlet-body" id="gauntlet-body"></p>
       <div class="gauntlet-actions">
-        <button class="gauntlet-btn gauntlet-btn-continue" id="gauntlet-continue">Continue</button>
-        <button class="gauntlet-btn gauntlet-btn-cancel" id="gauntlet-cancel">Cancel</button>
+        <button type="button" class="gauntlet-btn gauntlet-btn-continue" id="gauntlet-continue">Continue</button>
+        <button type="button" class="gauntlet-btn gauntlet-btn-cancel" id="gauntlet-cancel">Cancel</button>
       </div>
     </div>
   </div>

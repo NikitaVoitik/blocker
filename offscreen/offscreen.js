@@ -8,11 +8,11 @@ const ctx = canvas.getContext('2d');
 let stream = null;
 
 // Listen for capture requests from service worker
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'CAPTURE_PHOTO') {
     capturePhoto()
-      .then(data => sendResponse({ success: true, data }))
-      .catch(err => sendResponse({ success: false, error: err.message }));
+      .then((data) => sendResponse({ success: true, data }))
+      .catch((err) => sendResponse({ success: false, error: err.message }));
     return true; // Keep channel open for async response
   }
 
@@ -31,9 +31,9 @@ async function capturePhoto() {
         video: {
           width: { ideal: 640 },
           height: { ideal: 480 },
-          facingMode: 'user'
+          facingMode: 'user',
         },
-        audio: false
+        audio: false,
       });
       video.srcObject = stream;
     }
@@ -51,7 +51,7 @@ async function capturePhoto() {
         resolve();
       };
 
-      const onError = (e) => {
+      const onError = (_e) => {
         video.removeEventListener('loadeddata', onLoaded);
         video.removeEventListener('error', onError);
         reject(new Error('Video failed to load'));
@@ -69,7 +69,7 @@ async function capturePhoto() {
     });
 
     // Small delay to ensure frame is rendered
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Capture frame to canvas
     canvas.width = video.videoWidth || 640;
@@ -90,7 +90,9 @@ async function capturePhoto() {
 
 function cleanup() {
   if (stream) {
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach((track) => {
+      track.stop();
+    });
     stream = null;
   }
   video.srcObject = null;

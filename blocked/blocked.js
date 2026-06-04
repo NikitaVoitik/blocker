@@ -1,5 +1,5 @@
 // Blocked page logic
-(async function() {
+(async () => {
   const canvas = document.getElementById('shame-canvas');
   const ctx = canvas.getContext('2d');
   const loadingOverlay = document.getElementById('loading-overlay');
@@ -17,26 +17,26 @@
 
   const siteMessages = {
     twitter: [
-      "You have nothing interesting to say. Neither does anyone else on there.",
+      'You have nothing interesting to say. Neither does anyone else on there.',
       "You're refreshing a feed that doesn't know you exist. Let that sink in.",
-      "Every second on Twitter makes you dumber, angrier, and more alone. You know this.",
+      'Every second on Twitter makes you dumber, angrier, and more alone. You know this.',
       "You want to scroll Twitter because real life requires effort and you're too weak for effort right now.",
-      "Nobody remembers your tweets. Nobody cares about your likes. You are screaming into a void that actively makes you worse.",
+      'Nobody remembers your tweets. Nobody cares about your likes. You are screaming into a void that actively makes you worse.',
       "You're about to spend 45 minutes being angry at strangers and then wonder why you feel awful.",
       "The algorithm knows you can't look away. It's designed for people exactly like you. Weak ones.",
-      "You could read a book, learn a skill, call a friend. Instead you chose the outrage machine. Again.",
-      "Nothing on that timeline will matter in an hour. But the time you waste on it is gone forever.",
-      "You keep going back like the engagement bait will fill whatever hole you're trying to fill. It won't."
+      'You could read a book, learn a skill, call a friend. Instead you chose the outrage machine. Again.',
+      'Nothing on that timeline will matter in an hour. But the time you waste on it is gone forever.',
+      "You keep going back like the engagement bait will fill whatever hole you're trying to fill. It won't.",
     ],
     'youtube-shorts': [
       "You're feeding yourself digital junk food because you can't handle 10 seconds of silence with your own thoughts.",
       "A grown adult, sitting there, watching 15-second clips on repeat like a lab rat pressing a lever. That's you.",
-      "Every short you watch trains your brain to need more stimulation and give less effort. You are making yourself useless.",
+      'Every short you watch trains your brain to need more stimulation and give less effort. You are making yourself useless.',
       "You don't even enjoy these. You just can't stop. That's not entertainment, that's a compulsion.",
       "Your attention span is already destroyed and you're here to finish the job.",
       "Fifteen seconds at a time, over and over, until an hour disappears. You won't even remember a single one.",
       "You swipe because thinking feels too hard now. That's what these did to you.",
-      "Somewhere a developer is celebrating their engagement metrics. You are the metric."
+      'Somewhere a developer is celebrating their engagement metrics. You are the metric.',
     ],
     youtube: [
       "You told yourself you'd watch one video. You and I both know that's not how this ends.",
@@ -45,98 +45,98 @@
       "You're about to autoplay your way through the entire afternoon and then complain you had no time.",
       "Every 'just one more' is a lie you tell yourself. You've never watched just one more.",
       "The rabbit hole is calling. You always answer. That's the problem.",
-      "You could actually do the thing you keep watching tutorials about. But watching feels easier than trying.",
-      "Congratulations, you're about to trade real progress for the illusion of learning."
+      'You could actually do the thing you keep watching tutorials about. But watching feels easier than trying.',
+      "Congratulations, you're about to trade real progress for the illusion of learning.",
     ],
     reddit: [
       "You're reading strangers argue about things that don't matter so you can avoid doing things that do.",
       "You tell yourself you're 'learning' on Reddit. You're not. You're hiding.",
       "Another hour of reading other people's lives because building your own feels too hard.",
-      "Reddit is where you go to feel smart without actually doing anything smart.",
+      'Reddit is where you go to feel smart without actually doing anything smart.',
       "You're about to read a thread, form a strong opinion, and then do absolutely nothing with it.",
       "The front page is not news. It's a curated distraction machine and you fell for it again.",
-      "Upvotes are not accomplishments. Comments are not conversations. None of this is real.",
-      "You already know what's on there. The same recycled takes. And you still can't resist."
+      'Upvotes are not accomplishments. Comments are not conversations. None of this is real.',
+      "You already know what's on there. The same recycled takes. And you still can't resist.",
     ],
     instagram: [
       "You're watching people live the life you want while doing absolutely nothing to build your own.",
-      "Every minute on Instagram widens the gap between who you are and who you pretend to be.",
+      'Every minute on Instagram widens the gap between who you are and who you pretend to be.',
       "You scroll through other people's highlights to numb the fact that your own life feels empty.",
       "You're comparing your behind-the-scenes to everyone else's highlight reel. And losing. On purpose.",
-      "Nothing you see on there is real. But the time you lose staring at it is.",
+      'Nothing you see on there is real. But the time you lose staring at it is.',
       "You don't even follow people you know anymore. You're just watching strangers perform happiness.",
-      "The explore page is an endless pit and you were about to jump in with both feet. Again.",
-      "Every scroll teaches the algorithm what keeps you trapped. You're training your own cage."
+      'The explore page is an endless pit and you were about to jump in with both feet. Again.',
+      "Every scroll teaches the algorithm what keeps you trapped. You're training your own cage.",
     ],
     tiktok: [
       "You can't focus on anything for more than 30 seconds anymore and you're about to make it worse.",
-      "TikTok has rewired your brain into needing constant stimulation and you keep crawling back for more.",
+      'TikTok has rewired your brain into needing constant stimulation and you keep crawling back for more.',
       "You've already lost hours of your life to this app today. Hours you'll never get back. And here you are, trying again.",
       "Your dopamine receptors are fried and you're reaching for the thing that fried them.",
       "You'll open it for 'just a second' and surface an hour later with nothing to show for it. You know this.",
-      "The For You page knows you better than you know yourself. That should terrify you, not comfort you.",
+      'The For You page knows you better than you know yourself. That should terrify you, not comfort you.',
       "Every session makes it harder to do anything that requires actual sustained attention. You're choosing to get worse.",
-      "You are voluntarily making yourself dumber, one swipe at a time."
+      'You are voluntarily making yourself dumber, one swipe at a time.',
     ],
     facebook: [
       "It's not 2012 anymore. There's nothing left for you there and you know it.",
       "You're about to scroll through acquaintances' life updates and call it socializing.",
       "The only people still posting are the ones you muted years ago. And you're going back anyway.",
       "Facebook is where you go when you've already exhausted every other distraction. Rock bottom of boredom.",
-      "You're not staying connected. You're staring at people you don't talk to anymore."
+      "You're not staying connected. You're staring at people you don't talk to anymore.",
     ],
     linkedin: [
       "You're not networking. You're procrastinating with a professional veneer.",
       "Reading other people's career wins is not a career strategy. It's self-torture.",
       "Another humble-brag post about someone's promotion won't get you one. Actual work might.",
       "You're about to spend 30 minutes on LinkedIn and call it 'professional development.'",
-      "The feed is just corporate Instagram. Inspirational quotes over stock photos. You're better than this."
+      "The feed is just corporate Instagram. Inspirational quotes over stock photos. You're better than this.",
     ],
     twitch: [
       "You're about to watch someone else play a game instead of doing literally anything with your own life.",
       "Hours of watching someone else have fun. That's your plan. Think about that.",
       "The streamer doesn't know you exist. Your subscription is not a friendship.",
-      "You could be building, learning, creating. Instead you chose to be an audience member for your own wasted evening.",
-      "Every hour you watch is an hour you could have spent on something that actually moves your life forward."
+      'You could be building, learning, creating. Instead you chose to be an audience member for your own wasted evening.',
+      'Every hour you watch is an hour you could have spent on something that actually moves your life forward.',
     ],
     discord: [
       "You don't have 'just one quick message.' You have two hours of aimless chatting ahead of you.",
       "You're about to open seventeen channels and read none of them properly.",
-      "The server will still be there after you finish your actual responsibilities. Go handle those first.",
+      'The server will still be there after you finish your actual responsibilities. Go handle those first.',
       "You're substituting real human connection with group chat noise. And you know the difference.",
-      "Nothing in those channels is urgent. Nothing. Go do your work."
+      'Nothing in those channels is urgent. Nothing. Go do your work.',
     ],
     pinterest: [
       "You're saving ideas you'll never act on. That's not inspiration, that's avoidance.",
-      "Your boards have hundreds of pins and zero finished projects. Think about why.",
+      'Your boards have hundreds of pins and zero finished projects. Think about why.',
       "Collecting aesthetic images is not a personality. It's procrastination with a mood board.",
-      "You plan and save and curate and never, ever execute. Pinterest is where ambition goes to die.",
-      "Every pin is a tiny lie you tell yourself — that you'll get to it someday."
+      'You plan and save and curate and never, ever execute. Pinterest is where ambition goes to die.',
+      "Every pin is a tiny lie you tell yourself — that you'll get to it someday.",
     ],
     netflix: [
       "You already watched three episodes today. The plot can wait. Your life can't.",
       "Binge-watching is not self-care. It's hiding from everything you need to do.",
       "The show will still be there tomorrow. Your deadlines won't.",
       "You're about to lose an entire evening to a screen. Again. Is this really how you want to spend your time?",
-      "Auto-play is counting on you being too passive to hit stop. Prove it wrong for once."
+      'Auto-play is counting on you being too passive to hit stop. Prove it wrong for once.',
     ],
     default: [
       "You installed this blocker because you know you're too weak to stop on your own. And you're proving yourself right.",
       "The fact that you're seeing this screen means you failed. Again. How many times is it now?",
       "You promised yourself you'd stop. That promise meant nothing. Just like the last one.",
-      "This is you choosing the thing that makes your life worse over literally anything else. Think about that.",
+      'This is you choosing the thing that makes your life worse over literally anything else. Think about that.',
       "Everyone else is building something with their time. You're here, trying to get past a wall you built yourself.",
-      "You set this up because you were disgusted with yourself. Remember that feeling? You should. It was today.",
+      'You set this up because you were disgusted with yourself. Remember that feeling? You should. It was today.',
       "You're not even enjoying it when you get there. You're just avoiding the discomfort of doing something real.",
       "The version of you that installed this blocker would be ashamed of what you're doing right now.",
-      "How many times are you going to do this before you admit you have a real problem?",
-      "You are watching your own life waste away and your response is to open this site again.",
+      'How many times are you going to do this before you admit you have a real problem?',
+      'You are watching your own life waste away and your response is to open this site again.',
       "You blocked this site for a reason. That reason hasn't changed. You have. You got weaker.",
-      "The urge will pass in about ten minutes. You just have to not be pathetic for ten minutes. Can you manage that?",
+      'The urge will pass in about ten minutes. You just have to not be pathetic for ten minutes. Can you manage that?',
       "Every time you try to visit this page, you're choosing short-term comfort over long-term growth. Every single time.",
       "You're not bored. You're uncomfortable with silence. And instead of sitting with it, you run here.",
-      "Close this tab. Stand up. Do one push-up. That's more than you were about to accomplish."
-    ]
+      "Close this tab. Stand up. Do one push-up. That's more than you were about to accomplish.",
+    ],
   };
 
   const insanityQuotes = [
@@ -147,21 +147,21 @@
     '"You will look back on these wasted hours with genuine regret. But not yet. Not until it\'s too late."',
     '"Your discipline is a muscle and you have let it atrophy into nothing. This is the proof."',
     '"The gap between your potential and your reality is filled with exactly this \u2014 mindless scrolling."',
-    '"One day you will run out of tomorrows to start fresh. Today could have been the day. But here you are."'
+    '"One day you will run out of tomorrows to start fresh. Today could have been the day. But here you are."',
   ];
 
   // Roasts shown when a site is blocked for hitting its daily time limit.
   const limitMessages = [
-    "Sixty minutes. You begged for a limit and still ran straight into the wall.",
+    'Sixty minutes. You begged for a limit and still ran straight into the wall.',
     "Your hour is gone. You spent it here. On this. Was it worth it? You know it wasn't.",
     "You rationed yourself like an adult and binged like a child. Time's up.",
     "You set the limit because you knew you couldn't be trusted. You were right.",
     "That's your daily dose. The machine had to cut you off because you wouldn't.",
-    "An hour of your one and only life, fed into the void. The void says: more, please.",
-    "You hit the ceiling you built yourself. Sit with that before you try to climb over it.",
+    'An hour of your one and only life, fed into the void. The void says: more, please.',
+    'You hit the ceiling you built yourself. Sit with that before you try to climb over it.',
     "Limit reached. The only muscle you've trained today is your scrolling thumb.",
     "You asked to be stopped. Here's the stop. You're welcome.",
-    "Out of time. Not out of life — yet. Go do literally anything else."
+    'Out of time. Not out of life — yet. Go do literally anything else.',
   ];
 
   const limitQuotes = [
@@ -170,7 +170,7 @@
     '"The clock didn\'t run out on you. You ran it out."',
     '"You wanted discipline to be a setting you could toggle. It isn\'t. It\'s you. And you blinked."',
     '"Every day you get a fresh hour and every day you set it on fire by lunch."',
-    '"The cap isn\'t the punishment. The fact that you needed one is."'
+    '"The cap isn\'t the punishment. The fact that you needed one is."',
   ];
 
   // Detect which site triggered the block
@@ -190,8 +190,8 @@
     if (!seconds || seconds < 60) return '<1m';
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) return mins > 0 ? hours + 'h ' + mins + 'm' : hours + 'h';
-    return mins + 'm';
+    if (hours > 0) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    return `${mins}m`;
   }
 
   function getMessagesForSite(siteId) {
@@ -256,16 +256,16 @@
       const sites = await getRestrictionSites();
       const site = sites.find((s) => s.id === blockedSiteId);
       const spent = (site && Number(site.usageTodaySeconds)) || 0;
-      const cap = (site && Number(site.dailyLimitSeconds) > 0) ? Number(site.dailyLimitSeconds) : 0;
+      const cap = site && Number(site.dailyLimitSeconds) > 0 ? Number(site.dailyLimitSeconds) : 0;
 
-      document.getElementById('limit-site').textContent = (site && (site.label || site.id)) || blockedSiteId || 'this site';
+      document.getElementById('limit-site').textContent =
+        (site && (site.label || site.id)) || blockedSiteId || 'this site';
       document.getElementById('limit-spent').textContent = formatDuration(spent);
       document.getElementById('limit-cap').textContent = cap ? formatDuration(cap) : '—';
-    } catch (e) {
+    } catch (_e) {
       // Banner still shows with its default copy if data fetch fails
     }
   }
-
 
   // Update shame level styling
   function updateShameLevel(count) {
@@ -326,7 +326,7 @@
   ];
 
   function seededRandom(seed) {
-    let x = Math.sin(seed) * 10000;
+    const x = Math.sin(seed) * 10000;
     return x - Math.floor(x);
   }
 
@@ -354,16 +354,16 @@
     all.sort((a, b) => b.count - a.count);
 
     const top = all.slice(0, 5);
-    const youInTop = top.some(e => e.isYou);
+    const youInTop = top.some((e) => e.isYou);
     if (!youInTop) {
-      const youIndex = all.findIndex(e => e.isYou);
+      const youIndex = all.findIndex((e) => e.isYou);
       top[top.length - 1] = all[youIndex];
     }
 
     list.innerHTML = '';
-    top.forEach(entry => {
+    top.forEach((entry) => {
       const li = document.createElement('li');
-      li.className = 'leaderboard-entry' + (entry.isYou ? ' you' : '');
+      li.className = `leaderboard-entry${entry.isYou ? ' you' : ''}`;
       const nameSpan = document.createElement('span');
       nameSpan.className = 'entry-name';
       nameSpan.textContent = entry.name;
@@ -407,29 +407,31 @@
   const milestoneThresholds = [1000, 500, 404, 250, 100, 75, 67, 42, 13];
 
   function applyMilestoneEffect(count) {
-    milestoneThresholds.forEach(n => container.classList.remove('milestone-' + n));
+    milestoneThresholds.forEach((n) => {
+      container.classList.remove(`milestone-${n}`);
+    });
     if (milestoneThresholds.includes(count)) {
-      container.classList.add('milestone-' + count);
+      container.classList.add(`milestone-${count}`);
     }
   }
 
   // Gallery functionality
   const roastCaptions = [
-    "Exhibit A in the case against your willpower",
-    "This is what rock bottom looks like",
-    "Your parents would be so proud",
-    "Frame this one for the therapist",
-    "Evidence that screen time warnings exist for a reason",
-    "Not your best angle. Then again, none of them are.",
-    "Caught in 4K. Again.",
-    "Even your webcam is judging you.",
-    "Another one for the cringe compilation.",
-    "Future you is going to hate present you.",
-    "Proof that self-control is just a myth.",
-    "This photo has more regret than a Monday morning.",
-    "You look exactly how your browser history feels.",
-    "Screenshot this and send it to your accountability partner.",
-    "Day N of pretending you'll stop tomorrow."
+    'Exhibit A in the case against your willpower',
+    'This is what rock bottom looks like',
+    'Your parents would be so proud',
+    'Frame this one for the therapist',
+    'Evidence that screen time warnings exist for a reason',
+    'Not your best angle. Then again, none of them are.',
+    'Caught in 4K. Again.',
+    'Even your webcam is judging you.',
+    'Another one for the cringe compilation.',
+    'Future you is going to hate present you.',
+    'Proof that self-control is just a myth.',
+    'This photo has more regret than a Monday morning.',
+    'You look exactly how your browser history feels.',
+    'Screenshot this and send it to your accountability partner.',
+    "Day N of pretending you'll stop tomorrow.",
   ];
 
   function getCaptionForIndex(index) {
@@ -456,9 +458,9 @@
 
   function formatBytes(bytes) {
     if (!bytes) return '0 KB';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   }
 
   function getPhotoStorageInfo() {
@@ -500,14 +502,14 @@
 
   function renderStorageInfo(info) {
     storageInfo = info;
-    storageCountEl.textContent = info.count + ' / ' + info.limit;
+    storageCountEl.textContent = `${info.count} / ${info.limit}`;
     storageBytesEl.textContent = formatBytes(info.bytes);
     limitInput.min = String(info.minLimit);
     limitInput.max = String(info.maxLimit);
     if (document.activeElement !== limitInput) {
       limitInput.value = String(info.limit);
     }
-    limitHintEl.textContent = info.minLimit + ' – ' + info.maxLimit + ' photos';
+    limitHintEl.textContent = `${info.minLimit} – ${info.maxLimit} photos`;
   }
 
   function disarmClear() {
@@ -539,7 +541,7 @@
     photos.reverse().forEach((photo, index) => {
       const item = document.createElement('div');
       item.className = 'gallery-item';
-      item.style.animationDelay = (index * 0.06) + 's';
+      item.style.animationDelay = `${index * 0.06}s`;
 
       const img = document.createElement('img');
       img.src = photo.data;
@@ -549,7 +551,7 @@
 
       const captionText = document.createElement('div');
       captionText.className = 'caption-text';
-      captionText.textContent = '"' + getCaptionForIndex(index) + '"';
+      captionText.textContent = `"${getCaptionForIndex(index)}"`;
 
       const timestamp = document.createElement('div');
       timestamp.className = 'timestamp';
@@ -591,12 +593,16 @@
   });
 
   limitDecreaseBtn.addEventListener('click', () => {
-    limitInput.value = String(clampLimit((parseInt(limitInput.value, 10) || storageInfo.limit) - 5));
+    limitInput.value = String(
+      clampLimit((Number.parseInt(limitInput.value, 10) || storageInfo.limit) - 5),
+    );
     setStorageStatus('');
   });
 
   limitIncreaseBtn.addEventListener('click', () => {
-    limitInput.value = String(clampLimit((parseInt(limitInput.value, 10) || storageInfo.limit) + 5));
+    limitInput.value = String(
+      clampLimit((Number.parseInt(limitInput.value, 10) || storageInfo.limit) + 5),
+    );
     setStorageStatus('');
   });
 
@@ -615,17 +621,17 @@
     const willPrune = storageInfo.count > target;
     const response = await setPhotoLimit(target);
     applyLimitBtn.disabled = false;
-    if (response && response.success) {
+    if (response?.success) {
       const info = await getPhotoStorageInfo();
       renderStorageInfo(info);
       if (willPrune) {
         await loadGallery();
-        setStorageStatus('Capacity set to ' + target + '. Excess evidence purged.', 'success');
+        setStorageStatus(`Capacity set to ${target}. Excess evidence purged.`, 'success');
       } else {
-        setStorageStatus('Capacity set to ' + target + '.', 'success');
+        setStorageStatus(`Capacity set to ${target}.`, 'success');
       }
     } else {
-      setStorageStatus((response && response.error) || 'Could not update capacity.', 'danger');
+      setStorageStatus(response?.error || 'Could not update capacity.', 'danger');
     }
   });
 
@@ -649,11 +655,11 @@
     clearGalleryBtn.disabled = true;
     const response = await clearPhotos();
     clearGalleryBtn.disabled = false;
-    if (response && response.success) {
+    if (response?.success) {
       await loadGallery();
       setStorageStatus('Gallery purged. Slate clean.', 'success');
     } else {
-      setStorageStatus((response && response.error) || 'Purge failed.', 'danger');
+      setStorageStatus(response?.error || 'Purge failed.', 'danger');
     }
   });
 
@@ -676,7 +682,7 @@
     try {
       const response = await requestCapture();
 
-      if (response && response.success && response.data) {
+      if (response?.success && response.data) {
         displayPhoto(response.data);
       } else {
         showError();

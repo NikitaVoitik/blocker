@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 import { getTrackingDataForToday } from '../helpers/messaging';
 import { clearStorage } from '../helpers/storage';
 

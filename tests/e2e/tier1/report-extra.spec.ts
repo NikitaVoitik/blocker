@@ -1,9 +1,15 @@
-import { test, expect, type Page } from '../fixtures/extension';
+import { expect, type Page, test } from '../fixtures/extension';
 import { setStorage } from '../helpers/storage';
 
 function todayKey(): string {
   const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return (
+    d.getFullYear() +
+    '-' +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
 }
 
 async function seedPhoto(page: Page): Promise<number> {
@@ -21,7 +27,9 @@ async function seedPhoto(page: Page): Promise<number> {
         req.onsuccess = () => {
           const db = req.result;
           const tx = db.transaction(['photos'], 'readwrite');
-          const r = tx.objectStore('photos').add({ data: 'data:image/png;base64,AAAA', timestamp: Date.now() });
+          const r = tx
+            .objectStore('photos')
+            .add({ data: 'data:image/png;base64,AAAA', timestamp: Date.now() });
           r.onsuccess = () => resolve(r.result as number);
           r.onerror = () => reject(r.error);
         };
@@ -44,7 +52,10 @@ test.describe('Tier 1: report.js extra branches', () => {
     await page.close();
   });
 
-  test('coward log renders a photo thumbnail when the photoId matches', async ({ context, extensionId }) => {
+  test('coward log renders a photo thumbnail when the photoId matches', async ({
+    context,
+    extensionId,
+  }) => {
     const seed = await context.newPage();
     await seed.goto(reportUrl(extensionId)); // extension origin for IndexedDB + storage
     const photoId = await seedPhoto(seed);
@@ -59,11 +70,17 @@ test.describe('Tier 1: report.js extra branches', () => {
     await seed.close();
   });
 
-  test('tracking period switcher renders week and month breakdowns', async ({ context, extensionId }) => {
+  test('tracking period switcher renders week and month breakdowns', async ({
+    context,
+    extensionId,
+  }) => {
     const seed = await context.newPage();
     await seed.goto(reportUrl(extensionId));
     await setStorage(seed, {
-      trackingData: { visits: { ['reddit:' + todayKey()]: 5 }, time: { ['reddit:' + todayKey()]: 240 } },
+      trackingData: {
+        visits: { [`reddit:${todayKey()}`]: 5 },
+        time: { [`reddit:${todayKey()}`]: 240 },
+      },
     });
 
     const page = await context.newPage();
@@ -76,7 +93,10 @@ test.describe('Tier 1: report.js extra branches', () => {
     await seed.close();
   });
 
-  test('tracking report shows the empty site-breakdown state with no activity', async ({ context, extensionId }) => {
+  test('tracking report shows the empty site-breakdown state with no activity', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(reportUrl(extensionId, '?tab=tracking'));
     await expect(page.locator('#site-breakdown-empty')).toBeVisible();

@@ -1,5 +1,5 @@
-import { test, expect, type Page } from '../fixtures/extension';
-import { setSiteRestriction, removeBlockedSite, removeTrackedSite } from '../helpers/messaging';
+import { expect, type Page, test } from '../fixtures/extension';
+import { removeBlockedSite, removeTrackedSite, setSiteRestriction } from '../helpers/messaging';
 import { setStorage } from '../helpers/storage';
 
 // popup.js exposes its top-level helpers on window (classic script).
@@ -10,7 +10,13 @@ declare function formatLimitShort(n: number): string;
 
 function todayKey(): string {
   const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return (
+    d.getFullYear() +
+    '-' +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
 }
 
 test.describe('Tier 1: popup.js UI + helpers', () => {
@@ -25,9 +31,18 @@ test.describe('Tier 1: popup.js UI + helpers', () => {
     const popup = await openPopup(context, extensionId);
     const r = await popup.evaluate(() => ({
       shame: [0, 1, 3, 6, 10, 20, 999].map((n) => getShameLevel(n).name),
-      host: [extractHostname('  HTTPS://WWW.Example.com/path?x=1'), extractHostname('reddit.com'), extractHostname('')],
+      host: [
+        extractHostname('  HTTPS://WWW.Example.com/path?x=1'),
+        extractHostname('reddit.com'),
+        extractHostname(''),
+      ],
       time: [formatTime(0), formatTime(59), formatTime(90), formatTime(3700), formatTime(7260)],
-      lim: [formatLimitShort(30), formatLimitShort(1800), formatLimitShort(3600), formatLimitShort(5400)],
+      lim: [
+        formatLimitShort(30),
+        formatLimitShort(1800),
+        formatLimitShort(3600),
+        formatLimitShort(5400),
+      ],
     }));
     expect(r.shame[0]).toBe('Clean');
     expect(r.shame[6]).toBe('Beyond Saving');
@@ -37,10 +52,15 @@ test.describe('Tier 1: popup.js UI + helpers', () => {
     await popup.close();
   });
 
-  test('limit restriction: usage bar, editor toggle/update, switch to Always', async ({ context, extensionId }) => {
+  test('limit restriction: usage bar, editor toggle/update, switch to Always', async ({
+    context,
+    extensionId,
+  }) => {
     const popup = await openPopup(context, extensionId);
     await setSiteRestriction(popup, 'twitter', 'limit', 600);
-    await setStorage(popup, { trackingData: { visits: {}, time: { ['twitter:' + todayKey()]: 700 } } });
+    await setStorage(popup, {
+      trackingData: { visits: {}, time: { [`twitter:${todayKey()}`]: 700 } },
+    });
     await popup.reload();
 
     const item = popup.locator('.restriction-item', { hasText: 'Twitter' });
@@ -71,7 +91,10 @@ test.describe('Tier 1: popup.js UI + helpers', () => {
     await popup.close();
   });
 
-  test('add-row: Limit mode toggle and adding a limited custom site', async ({ context, extensionId }) => {
+  test('add-row: Limit mode toggle and adding a limited custom site', async ({
+    context,
+    extensionId,
+  }) => {
     const popup = await openPopup(context, extensionId);
     await popup.locator('[data-addmode="limit"]').click();
     await expect(popup.locator('#add-limit-wrap')).toBeVisible();
@@ -90,11 +113,17 @@ test.describe('Tier 1: popup.js UI + helpers', () => {
     await popup.close();
   });
 
-  test('tracker tab: breakdown, presets, add/remove tracked sites', async ({ context, extensionId }) => {
+  test('tracker tab: breakdown, presets, add/remove tracked sites', async ({
+    context,
+    extensionId,
+  }) => {
     const popup = await openPopup(context, extensionId);
     await removeTrackedSite(popup, 'instagram'); // instagram becomes a tracking preset
     await setStorage(popup, {
-      trackingData: { visits: { ['facebook:' + todayKey()]: 4 }, time: { ['facebook:' + todayKey()]: 180 } },
+      trackingData: {
+        visits: { [`facebook:${todayKey()}`]: 4 },
+        time: { [`facebook:${todayKey()}`]: 180 },
+      },
     });
     await popup.reload();
 

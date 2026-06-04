@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 
 // setup/setup.js drives the first-run camera-permission flow. The test env uses
 // a fake media device (auto-granted), so we cover the success/skip/close paths
@@ -21,7 +21,10 @@ test.describe('Tier 1: setup/setup.js', () => {
     await page.close();
   });
 
-  test('skip jumps straight to done and records no permission', async ({ context, extensionId }) => {
+  test('skip jumps straight to done and records no permission', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(setupUrl(extensionId));
 

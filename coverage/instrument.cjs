@@ -6,8 +6,8 @@
 // MV3 forbids eval/new Function under CSP, so we instrument with
 // coverageGlobalScopeFunc:false + coverageGlobalScope:'globalThis'.
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const { createInstrumenter } = require('istanbul-lib-instrument');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -15,9 +15,17 @@ const INSTRUMENTED_DIR = path.join(ROOT, 'coverage', '.instrumented');
 
 // Everything the unpacked extension needs at runtime.
 const COPY = [
-  'manifest.json', 'rules.json',
-  'background', 'blocked', 'popup', 'report',
-  'lib', 'setup', 'offscreen', 'content', 'assets',
+  'manifest.json',
+  'rules.json',
+  'background',
+  'blocked',
+  'popup',
+  'report',
+  'lib',
+  'setup',
+  'offscreen',
+  'content',
+  'assets',
 ];
 
 // The source files we measure (relative to repo root).
@@ -47,7 +55,7 @@ function buildInstrumented() {
     coverageVariable: '__coverage__',
     coverageGlobalScope: 'globalThis',
     coverageGlobalScopeFunc: false, // CSP-safe: no `new Function`
-    esModules: false,               // plain classic scripts
+    esModules: false, // plain classic scripts
     compact: false,
     produceSourceMap: false,
   });

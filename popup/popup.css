@@ -1,4 +1,4 @@
-@import url('../assets/fonts/fonts.css');
+@import url("../assets/fonts/fonts.css");
 
 * {
   margin: 0;
@@ -12,11 +12,11 @@
   --border: #2a2a2d;
   --text: #ededef;
   --text-muted: #6b6b70;
-  --accent: #E4FF1A;
+  --accent: #e4ff1a;
   --accent-dim: rgba(228, 255, 26, 0.12);
-  --danger: #FF2D2D;
+  --danger: #ff2d2d;
   --danger-dim: rgba(255, 45, 45, 0.1);
-  --track: #00D4FF;
+  --track: #00d4ff;
   --track-dim: rgba(0, 212, 255, 0.1);
 }
 
@@ -24,14 +24,14 @@ body {
   width: 320px;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 12px;
   position: relative;
   overflow-x: hidden;
 }
 
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
@@ -53,7 +53,7 @@ body::before {
 }
 
 h1 {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 1.6rem;
   color: var(--accent);
   text-align: center;
@@ -66,11 +66,11 @@ h1 {
 }
 
 h1::after {
-  content: 'v1.3';
+  content: "v1.3";
   position: absolute;
   right: 0;
   bottom: 14px;
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 0.5rem;
   color: var(--text-muted);
   letter-spacing: 0;
@@ -101,7 +101,7 @@ h1::after {
   flex-shrink: 0;
   background: var(--accent);
   color: #000;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -118,7 +118,7 @@ h1::after {
 }
 
 .whats-new-title {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.95rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -127,7 +127,7 @@ h1::after {
 }
 
 .whats-new-desc {
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 0.65rem;
   color: var(--text-muted);
   line-height: 1.3;
@@ -138,7 +138,7 @@ h1::after {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 0.8rem;
   line-height: 1;
   padding: 2px 4px;
@@ -163,7 +163,7 @@ h1::after {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -210,7 +210,7 @@ h1::after {
 
 .stat-value {
   display: block;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 1.6rem;
   color: var(--accent);
   line-height: 1;
@@ -251,17 +251,28 @@ h1::after {
 
 .shame-level .level {
   color: var(--accent);
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 1rem;
   letter-spacing: 0.08em;
 }
 
 /* Shame level colors */
-.shame-level.level-1 .level { color: var(--text-muted); }
-.shame-level.level-2 .level { color: #FFB800; }
-.shame-level.level-3 .level { color: #FF6B00; }
-.shame-level.level-4 .level { color: var(--danger); }
-.shame-level.level-5 .level { color: var(--danger); text-shadow: 0 0 8px rgba(255, 45, 45, 0.6); }
+.shame-level.level-1 .level {
+  color: var(--text-muted);
+}
+.shame-level.level-2 .level {
+  color: #ffb800;
+}
+.shame-level.level-3 .level {
+  color: #ff6b00;
+}
+.shame-level.level-4 .level {
+  color: var(--danger);
+}
+.shame-level.level-5 .level {
+  color: var(--danger);
+  text-shadow: 0 0 8px rgba(255, 45, 45, 0.6);
+}
 
 /* Blocked sites */
 .blocked-sites {
@@ -271,7 +282,7 @@ h1::after {
 .blocked-sites h3,
 .tracked-sites h3,
 .tracked-breakdown h3 {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.85rem;
   color: var(--text-muted);
   letter-spacing: 0.12em;
@@ -313,7 +324,7 @@ h1::after {
   padding: 0 4px;
   line-height: 1;
   transition: color 0.1s;
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
 }
 
 .site-remove:hover {
@@ -333,7 +344,7 @@ h1::after {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 7px 10px;
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 0.7rem;
   outline: none;
   transition: border-color 0.1s;
@@ -356,7 +367,7 @@ h1::after {
   color: #000;
   border: 1px solid var(--accent);
   padding: 7px 14px;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -399,7 +410,7 @@ h1::after {
   border: 1px solid var(--accent);
   padding: 10px 15px;
   cursor: pointer;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.9rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -449,7 +460,7 @@ h1::after {
 
 /* Preset suggestions */
 .preset-suggestions h3 {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.75rem;
   color: var(--text-muted);
   letter-spacing: 0.1em;
@@ -478,7 +489,7 @@ h1::after {
   padding: 0 4px;
   line-height: 1;
   transition: color 0.1s;
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
 }
 
 .preset-add:hover {
@@ -592,7 +603,7 @@ h1::after {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -626,7 +637,7 @@ h1::after {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 7px 10px;
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 0.7rem;
   outline: none;
   transition: border-color 0.1s;
@@ -717,7 +728,7 @@ h1::after {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 5px 6px;
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 0.7rem;
   outline: none;
   transition: border-color 0.1s;
@@ -740,7 +751,7 @@ h1::after {
 }
 
 .limit-set {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -777,7 +788,7 @@ h1::after {
 }
 
 .gauntlet-step {
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-size: 0.6rem;
   color: var(--text-muted);
   letter-spacing: 0.1em;
@@ -785,7 +796,7 @@ h1::after {
 }
 
 .gauntlet-title {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 1.3rem;
   color: var(--danger);
   letter-spacing: 0.1em;
@@ -811,7 +822,7 @@ h1::after {
 .gauntlet-btn {
   flex: 1;
   padding: 10px 12px;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;

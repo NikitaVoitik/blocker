@@ -1,8 +1,8 @@
 // Runs once before the coverage test run: clear stale artifacts and build the
 // instrumented copy of the extension that tests will load.
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const { buildInstrumented } = require('./instrument.cjs');
 
 module.exports = async () => {

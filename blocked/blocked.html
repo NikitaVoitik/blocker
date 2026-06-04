@@ -54,7 +54,7 @@
       </ol>
     </div>
 
-    <button id="view-gallery" class="gallery-btn">
+    <button type="button" id="view-gallery" class="gallery-btn">
       View Hall of Shame
     </button>
   </div>
@@ -81,16 +81,16 @@
           <div class="storage-block">
             <span class="storage-label">// Capacity</span>
             <div class="limit-control">
-              <button class="limit-btn" id="limit-decrease" aria-label="Decrease limit">&minus;</button>
+              <button type="button" class="limit-btn" id="limit-decrease" aria-label="Decrease limit">&minus;</button>
               <input type="number" id="limit-input" class="limit-input" min="5" max="500" step="1" value="50">
-              <button class="limit-btn" id="limit-increase" aria-label="Increase limit">+</button>
+              <button type="button" class="limit-btn" id="limit-increase" aria-label="Increase limit">+</button>
             </div>
             <span class="storage-hint" id="limit-hint">5 &ndash; 500 photos</span>
           </div>
         </div>
         <div class="storage-actions">
-          <button class="storage-btn storage-btn-apply" id="apply-limit">Apply Capacity</button>
-          <button class="storage-btn storage-btn-danger" id="clear-gallery">Purge Gallery</button>
+          <button type="button" class="storage-btn storage-btn-apply" id="apply-limit">Apply Capacity</button>
+          <button type="button" class="storage-btn storage-btn-danger" id="clear-gallery">Purge Gallery</button>
         </div>
         <div class="storage-status" id="storage-status"></div>
       </div>

@@ -1,10 +1,13 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 
 // content/youtube-shorts.js only injects on youtube.com, so it never runs in the
 // test env. Load it into an extension page seeded with matching nodes to cover
 // the initial sweep and the MutationObserver re-sweep.
 test.describe('Tier 1: content/youtube-shorts.js', () => {
-  test('removeShorts hides matching elements on load and as they appear', async ({ context, extensionId }) => {
+  test('removeShorts hides matching elements on load and as they appear', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/offscreen/offscreen.html`);
 
@@ -22,8 +25,12 @@ test.describe('Tier 1: content/youtube-shorts.js', () => {
     await page.addScriptTag({ url: `chrome-extension://${extensionId}/content/youtube-shorts.js` });
 
     // Initial pass hid the shelf, left the plain div alone.
-    expect(await page.locator('#shelf').evaluate((el) => (el as HTMLElement).style.display)).toBe('none');
-    expect(await page.locator('#keep').evaluate((el) => (el as HTMLElement).style.display)).toBe('');
+    expect(await page.locator('#shelf').evaluate((el) => (el as HTMLElement).style.display)).toBe(
+      'none',
+    );
+    expect(await page.locator('#keep').evaluate((el) => (el as HTMLElement).style.display)).toBe(
+      '',
+    );
 
     // A dynamically-added shorts node gets hidden by the observer.
     await page.evaluate(() => {

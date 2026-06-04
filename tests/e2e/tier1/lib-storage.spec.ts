@@ -1,11 +1,14 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 
 // lib/storage.js (ShameStorage) is a standalone IndexedDB helper not used by any
 // page. Load it into an extension page and drive its public methods.
 declare const shameStorage: any;
 
 test.describe('Tier 1: lib/storage.js (ShameStorage)', () => {
-  test('open (incl. cached handle), getPhotos, getPhotoCount, clearPhotos', async ({ context, extensionId }) => {
+  test('open (incl. cached handle), getPhotos, getPhotoCount, clearPhotos', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/offscreen/offscreen.html`);
     await page.addScriptTag({ url: `chrome-extension://${extensionId}/lib/storage.js` });

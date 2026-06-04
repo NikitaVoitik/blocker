@@ -1,7 +1,10 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 
-test.describe('Tier 1: What\'s New banner', () => {
-  test('shows on first open, jumps to Tracker tab, and stays dismissed after', async ({ context, extensionId }) => {
+test.describe("Tier 1: What's New banner", () => {
+  test('shows on first open, jumps to Tracker tab, and stays dismissed after', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/popup/popup.html`);
 
@@ -24,7 +27,10 @@ test.describe('Tier 1: What\'s New banner', () => {
     await page2.close();
   });
 
-  test('✕ dismisses the banner without leaving the Blocker tab', async ({ context, extensionId }) => {
+  test('✕ dismisses the banner without leaving the Blocker tab', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/popup/popup.html`);
 

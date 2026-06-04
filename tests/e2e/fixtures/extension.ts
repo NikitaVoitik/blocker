@@ -1,6 +1,6 @@
-import { test as base, chromium, type BrowserContext, type Page } from '@playwright/test';
-import path from 'path';
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { type BrowserContext, test as base, chromium, type Page } from '@playwright/test';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../');
 

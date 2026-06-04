@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 
 // lib/filters.js (OverlayFilters) is shipped as a web-accessible resource but
 // isn't wired into any page, so it never runs during normal flows. Load it into
@@ -55,7 +55,13 @@ test.describe('Tier 1: lib/filters.js (OverlayFilters)', () => {
       ctx.fillStyle = '#fff';
       ctx.fillRect(0, 0, 64, 64);
       OverlayFilters.applyTextOverlay(c, 'SHAME');
-      OverlayFilters.applyTextOverlay(c, 'X', { font: '12px monospace', color: '#0f0', strokeColor: '#fff', y: 10, align: 'left' });
+      OverlayFilters.applyTextOverlay(c, 'X', {
+        font: '12px monospace',
+        color: '#0f0',
+        strokeColor: '#fff',
+        y: 10,
+        align: 'left',
+      });
       OverlayFilters.applyGrayscale(c);
       OverlayFilters.applyRedTint(c);
       OverlayFilters.applyRedTint(c, 0.5);

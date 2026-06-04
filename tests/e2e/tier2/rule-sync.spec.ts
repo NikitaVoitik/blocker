@@ -1,5 +1,5 @@
-import { test, expect } from '../fixtures/extension';
-import { addBlockedSite, removeBlockedSite, getDynamicRules } from '../helpers/messaging';
+import { expect, test } from '../fixtures/extension';
+import { addBlockedSite, getDynamicRules, removeBlockedSite } from '../helpers/messaging';
 
 const LIMIT_RULE_ID_BASE = 100000;
 
@@ -28,7 +28,11 @@ test.describe('Tier 2: Rule Sync', () => {
   test('adding a site creates new rules immediately', async ({ extensionPage }) => {
     const before = await blockRuleCount(extensionPage);
 
-    const site = { id: 'test-sync.com', label: 'Test Sync', domains: ['test-sync.com', 'www.test-sync.com'] };
+    const site = {
+      id: 'test-sync.com',
+      label: 'Test Sync',
+      domains: ['test-sync.com', 'www.test-sync.com'],
+    };
     await addBlockedSite(extensionPage, site);
 
     await expect.poll(() => blockRuleCount(extensionPage), { timeout: 5000 }).toBe(before + 2);

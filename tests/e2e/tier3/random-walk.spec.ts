@@ -1,11 +1,19 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 import { getTrackingDataForToday } from '../helpers/messaging';
 import { clearStorage } from '../helpers/storage';
 
 const WALK_DURATION_MS = 60 * 60 * 1000; // 1 hour
 const BLOCKED_URLS = ['https://twitter.com', 'https://x.com'];
-const TRACKED_URLS = ['https://www.reddit.com', 'https://www.instagram.com', 'https://www.facebook.com'];
-const NEUTRAL_URLS = ['https://www.google.com', 'https://www.wikipedia.org', 'https://www.github.com'];
+const TRACKED_URLS = [
+  'https://www.reddit.com',
+  'https://www.instagram.com',
+  'https://www.facebook.com',
+];
+const NEUTRAL_URLS = [
+  'https://www.google.com',
+  'https://www.wikipedia.org',
+  'https://www.github.com',
+];
 const ALL_URLS = [...BLOCKED_URLS, ...TRACKED_URLS, ...NEUTRAL_URLS];
 
 function randomChoice<T>(arr: T[]): T {
@@ -17,7 +25,7 @@ function randomInt(min: number, max: number): number {
 }
 
 test.describe('Tier 3: Random Walk', () => {
-  test('data consistency after random navigation patterns', async ({ context, extensionId, extensionPage }) => {
+  test('data consistency after random navigation patterns', async ({ context, extensionPage }) => {
     test.setTimeout(WALK_DURATION_MS + 5 * 60 * 1000);
 
     await clearStorage(extensionPage);
@@ -40,7 +48,7 @@ test.describe('Tier 3: Random Walk', () => {
               if (page.url().includes('blocked/blocked.html')) {
                 blockedRedirectCount++;
               }
-            } catch (e) {
+            } catch (_e) {
               // Navigation timeout is acceptable
             }
             openPages.push({ page, url });
@@ -67,12 +75,15 @@ test.describe('Tier 3: Random Walk', () => {
             const idx = randomInt(0, openPages.length - 1);
             const url = randomChoice(ALL_URLS);
             try {
-              await openPages[idx].page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+              await openPages[idx].page.goto(url, {
+                waitUntil: 'domcontentloaded',
+                timeout: 15_000,
+              });
               openPages[idx].url = url;
               if (openPages[idx].page.url().includes('blocked/blocked.html')) {
                 blockedRedirectCount++;
               }
-            } catch (e) {
+            } catch (_e) {
               // Navigation timeout is acceptable
             }
           }
@@ -96,7 +107,7 @@ test.describe('Tier 3: Random Walk', () => {
 
     const data = await getTrackingDataForToday(extensionPage);
 
-    for (const [siteId, stats] of Object.entries(data) as [string, any][]) {
+    for (const [_siteId, stats] of Object.entries(data) as [string, any][]) {
       expect(stats.time).toBeGreaterThanOrEqual(0);
       expect(stats.visits).toBeGreaterThanOrEqual(0);
       const maxPossibleSeconds = Math.ceil((Date.now() - startTime) / 1000);

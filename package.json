@@ -13,13 +13,18 @@
     "test:tier1": "npx playwright test --project=tier1",
     "test:tier2": "npx playwright test --project=tier2",
     "test:tier3": "npx playwright test --project=tier3",
-    "coverage": "COVERAGE=1 DISPLAY=:99 npx playwright test --config=playwright.coverage.config.ts"
+    "coverage": "COVERAGE=1 DISPLAY=:99 npx playwright test --config=playwright.coverage.config.ts",
+    "format": "biome format --write",
+    "lint": "biome lint",
+    "check": "biome check",
+    "check:fix": "biome check --write"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
     "@playwright/test": "^1.59.1",
     "istanbul-lib-instrument": "^6.0.3",
     "monocart-coverage-reports": "^2.12.12",

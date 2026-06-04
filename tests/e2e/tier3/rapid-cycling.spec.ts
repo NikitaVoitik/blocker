@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 import { getTrackingDataForToday } from '../helpers/messaging';
 import { clearStorage } from '../helpers/storage';
 
@@ -12,7 +12,10 @@ const SITES = [
 ];
 
 test.describe('Tier 3: Rapid Tab Cycling', () => {
-  test('no double-counting or lost time during rapid switching', async ({ context, extensionPage }) => {
+  test('no double-counting or lost time during rapid switching', async ({
+    context,
+    extensionPage,
+  }) => {
     test.setTimeout(30 * 60 * 1000);
 
     await clearStorage(extensionPage);
@@ -45,7 +48,10 @@ test.describe('Tier 3: Rapid Tab Cycling', () => {
       expect(visits).toBeGreaterThanOrEqual(0);
     }
 
-    const totalTime = Object.values(data).reduce((sum: number, site: any) => sum + (site.time || 0), 0);
+    const totalTime = Object.values(data).reduce(
+      (sum: number, site: any) => sum + (site.time || 0),
+      0,
+    );
     expect(totalTime).toBeLessThanOrEqual(30 * 60);
     expect(totalTime).toBeGreaterThan(0);
 

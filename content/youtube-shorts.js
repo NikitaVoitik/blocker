@@ -9,7 +9,7 @@ const SHORTS_SELECTORS = [
   'ytd-mini-guide-entry-renderer:has(a[href="/shorts"])',
   'ytd-rich-item-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"])',
   'ytd-compact-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"])',
-  'ytd-grid-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"])'
+  'ytd-grid-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"])',
 ];
 
 const COMBINED_SELECTOR = SHORTS_SELECTORS.join(', ');
@@ -28,5 +28,5 @@ removeShorts();
 const observer = new MutationObserver(removeShorts);
 observer.observe(document.documentElement, {
   childList: true,
-  subtree: true
+  subtree: true,
 });

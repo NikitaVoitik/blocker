@@ -1,9 +1,15 @@
-import { test, expect, type Page } from '../fixtures/extension';
+import { expect, type Page, test } from '../fixtures/extension';
 import { setStorage } from '../helpers/storage';
 
 function todayKey(): string {
   const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return (
+    d.getFullYear() +
+    '-' +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
 }
 
 async function seedStats(page: Page, attempt: number, count: number): Promise<void> {
@@ -62,7 +68,10 @@ test.describe('Tier 1: blocked.js shame view', () => {
     await seed.close();
   });
 
-  test('capture returning failure renders the dark-mirror error state', async ({ context, extensionId }) => {
+  test('capture returning failure renders the dark-mirror error state', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.addInitScript(() => {
       const orig = chrome.runtime.sendMessage.bind(chrome.runtime);
@@ -81,7 +90,10 @@ test.describe('Tier 1: blocked.js shame view', () => {
     await page.close();
   });
 
-  test('capture throwing is caught and also shows the error state', async ({ context, extensionId }) => {
+  test('capture throwing is caught and also shows the error state', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.addInitScript(() => {
       const orig = chrome.runtime.sendMessage.bind(chrome.runtime);
@@ -95,7 +107,10 @@ test.describe('Tier 1: blocked.js shame view', () => {
     await page.close();
   });
 
-  test('gallery opens from the shame page and closes via button and backdrop', async ({ context, extensionId }) => {
+  test('gallery opens from the shame page and closes via button and backdrop', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.goto(blockedUrl(extensionId, '?site=twitter'));
 
@@ -114,7 +129,10 @@ test.describe('Tier 1: blocked.js shame view', () => {
     await page.close();
   });
 
-  test('gallery-only mode closes the tab via button and backdrop', async ({ context, extensionId }) => {
+  test('gallery-only mode closes the tab via button and backdrop', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await context.newPage();
     await page.addInitScript(() => {
       (window as any).__closeCount = 0;
@@ -132,7 +150,10 @@ test.describe('Tier 1: blocked.js shame view', () => {
     await page.close();
   });
 
-  test('formatBytes MB branch + apply no-change and no-prune statuses', async ({ context, extensionId }) => {
+  test('formatBytes MB branch + apply no-change and no-prune statuses', async ({
+    context,
+    extensionId,
+  }) => {
     const seed = await context.newPage();
     await seed.goto(blockedUrl(extensionId, '?gallery=true'));
     // One large photo so storage size crosses 1 MB → formatBytes MB branch.
@@ -149,7 +170,10 @@ test.describe('Tier 1: blocked.js shame view', () => {
         req.onsuccess = () => {
           const db = req.result;
           const tx = db.transaction(['photos'], 'readwrite');
-          tx.objectStore('photos').add({ data: 'data:image/png;base64,' + 'A'.repeat(1_600_000), timestamp: Date.now() });
+          tx.objectStore('photos').add({
+            data: `data:image/png;base64,${'A'.repeat(1_600_000)}`,
+            timestamp: Date.now(),
+          });
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
         };
@@ -174,7 +198,10 @@ test.describe('Tier 1: blocked.js shame view', () => {
     await seed.close();
   });
 
-  test('arming purge then leaving it cancels after the timeout', async ({ context, extensionId }) => {
+  test('arming purge then leaving it cancels after the timeout', async ({
+    context,
+    extensionId,
+  }) => {
     const seed = await context.newPage();
     await seed.goto(blockedUrl(extensionId, '?gallery=true'));
     await seed.evaluate(async () => {
@@ -190,7 +217,10 @@ test.describe('Tier 1: blocked.js shame view', () => {
         req.onsuccess = () => {
           const db = req.result;
           const tx = db.transaction(['photos'], 'readwrite');
-          tx.objectStore('photos').add({ data: 'data:image/png;base64,AAAA', timestamp: Date.now() });
+          tx.objectStore('photos').add({
+            data: 'data:image/png;base64,AAAA',
+            timestamp: Date.now(),
+          });
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
         };

@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 import { addBlockedSite, removeBlockedSite } from '../helpers/messaging';
 
 async function gotoExpectBlock(page: any, url: string, timeout = 15_000) {
@@ -41,16 +41,25 @@ test.describe('Tier 1: Blocking', () => {
   });
 
   test('adding a custom site blocks it', async ({ context, extensionPage }) => {
-    const site = { id: 'example.com', label: 'Example', domains: ['example.com', 'www.example.com'] };
+    const site = {
+      id: 'example.com',
+      label: 'Example',
+      domains: ['example.com', 'www.example.com'],
+    };
     const result = await addBlockedSite(extensionPage, site);
     expect(result.success).toBe(true);
 
-    await expect.poll(async () => {
-      const rules: any[] = await extensionPage.evaluate(async () => {
-        return (chrome as any).declarativeNetRequest.getDynamicRules();
-      });
-      return rules.some((r: any) => r.condition.urlFilter.includes('example.com'));
-    }, { timeout: 5000 }).toBe(true);
+    await expect
+      .poll(
+        async () => {
+          const rules: any[] = await extensionPage.evaluate(async () => {
+            return (chrome as any).declarativeNetRequest.getDynamicRules();
+          });
+          return rules.some((r: any) => r.condition.urlFilter.includes('example.com'));
+        },
+        { timeout: 5000 },
+      )
+      .toBe(true);
 
     const page = await context.newPage();
     await gotoExpectBlock(page, 'https://example.com');
@@ -65,17 +74,26 @@ test.describe('Tier 1: Blocking', () => {
     expect(result.success).toBe(true);
 
     // Wait for rules to sync, then verify they're actually gone
-    await expect.poll(async () => {
-      const rules: any[] = await extensionPage.evaluate(async () => {
-        return (chrome as any).declarativeNetRequest.getDynamicRules();
-      });
-      return rules.some((r: any) =>
-        r.condition.urlFilter.includes('twitter.com') || r.condition.urlFilter.includes('x.com')
-      );
-    }, { timeout: 5000 }).toBe(false);
+    await expect
+      .poll(
+        async () => {
+          const rules: any[] = await extensionPage.evaluate(async () => {
+            return (chrome as any).declarativeNetRequest.getDynamicRules();
+          });
+          return rules.some(
+            (r: any) =>
+              r.condition.urlFilter.includes('twitter.com') ||
+              r.condition.urlFilter.includes('x.com'),
+          );
+        },
+        { timeout: 5000 },
+      )
+      .toBe(false);
 
     const page = await context.newPage();
-    await page.goto('https://www.twitter.com', { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
+    await page
+      .goto('https://www.twitter.com', { waitUntil: 'domcontentloaded', timeout: 15_000 })
+      .catch(() => {});
     await page.waitForTimeout(3000);
     expect(page.url()).not.toContain('blocked/blocked.html');
     await page.close();
@@ -84,16 +102,28 @@ test.describe('Tier 1: Blocking', () => {
     const site = {
       id: 'twitter',
       label: 'Twitter / X',
-      domains: ['twitter.com', 'x.com', 'www.twitter.com', 'www.x.com', 'mobile.twitter.com', 'mobile.x.com'],
-      builtin: true
+      domains: [
+        'twitter.com',
+        'x.com',
+        'www.twitter.com',
+        'www.x.com',
+        'mobile.twitter.com',
+        'mobile.x.com',
+      ],
+      builtin: true,
     };
     await addBlockedSite(extensionPage, site);
-    await expect.poll(async () => {
-      const rules: any[] = await extensionPage.evaluate(async () => {
-        return (chrome as any).declarativeNetRequest.getDynamicRules();
-      });
-      return rules.some((r: any) => r.condition.urlFilter.includes('twitter.com'));
-    }, { timeout: 5000 }).toBe(true);
+    await expect
+      .poll(
+        async () => {
+          const rules: any[] = await extensionPage.evaluate(async () => {
+            return (chrome as any).declarativeNetRequest.getDynamicRules();
+          });
+          return rules.some((r: any) => r.condition.urlFilter.includes('twitter.com'));
+        },
+        { timeout: 5000 },
+      )
+      .toBe(true);
   });
 
   test('non-blocked sites load normally', async ({ context }) => {

@@ -20,9 +20,9 @@ enableBtn.addEventListener('click', async () => {
       video: {
         width: { ideal: 640 },
         height: { ideal: 480 },
-        facingMode: 'user'
+        facingMode: 'user',
       },
-      audio: false
+      audio: false,
     });
 
     // Show preview
@@ -41,7 +41,6 @@ enableBtn.addEventListener('click', async () => {
     setTimeout(() => {
       showDone();
     }, 2000);
-
   } catch (error) {
     console.error('Permission error:', error);
     errorMsg.classList.add('show');
@@ -60,7 +59,9 @@ skipBtn.addEventListener('click', async () => {
 closeBtn.addEventListener('click', () => {
   // Stop stream if active
   if (stream) {
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach((track) => {
+      track.stop();
+    });
   }
   window.close();
 });
@@ -68,7 +69,9 @@ closeBtn.addEventListener('click', () => {
 function showDone() {
   // Stop stream
   if (stream) {
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach((track) => {
+      track.stop();
+    });
     stream = null;
   }
 
@@ -79,6 +82,8 @@ function showDone() {
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
   if (stream) {
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach((track) => {
+      track.stop();
+    });
   }
 });

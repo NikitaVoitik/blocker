@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 
 test.describe('Tier 1: Popup', () => {
   test('popup opens and displays both tabs', async ({ context, extensionId }) => {
