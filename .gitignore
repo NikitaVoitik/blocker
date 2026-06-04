@@ -3,3 +3,6 @@ dist/
 playwright-report/
 test-results/
 .env
+coverage/.instrumented/
+coverage/.raw/
+coverage/report/

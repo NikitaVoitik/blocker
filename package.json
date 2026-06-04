@@ -12,7 +12,8 @@
     "test": "npx playwright test",
     "test:tier1": "npx playwright test --project=tier1",
     "test:tier2": "npx playwright test --project=tier2",
-    "test:tier3": "npx playwright test --project=tier3"
+    "test:tier3": "npx playwright test --project=tier3",
+    "coverage": "COVERAGE=1 DISPLAY=:99 npx playwright test --config=playwright.coverage.config.ts"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +21,8 @@
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "istanbul-lib-instrument": "^6.0.3",
+    "monocart-coverage-reports": "^2.12.12",
     "typescript": "^6.0.3"
   }
 }
