@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures/extension';
-import { checkLimits, getDynamicRules, getTrackedSites } from '../helpers/messaging';
+import { checkLimits, getDynamicRules, getRestrictionSites } from '../helpers/messaging';
 import { setStorage } from '../helpers/storage';
 
 const LIMIT_RULE_ID_BASE = 100000;
@@ -19,12 +19,12 @@ const SITES = [
   { id: 'tiktok', domains: ['tiktok.com', 'www.tiktok.com'] },
 ];
 
-// Wait until the service worker's in-memory cache reflects the trackedSites we just wrote.
-async function waitForLimitsApplied(page: any, expected: Record<string, number>) {
+// Wait until the service worker's cache reflects the limit restrictions we just wrote.
+async function waitForLimits(page: any, expected: Record<string, number>) {
   await expect.poll(async () => {
-    const sites = await getTrackedSites(page);
+    const sites = await getRestrictionSites(page);
     const map: Record<string, number> = {};
-    for (const s of sites) map[s.id] = Number(s.dailyLimitSeconds) || 0;
+    for (const s of sites) if (s.mode === 'limit') map[s.id] = Number(s.dailyLimitSeconds) || 0;
     return JSON.stringify(map);
   }, { timeout: 5000 }).toBe(JSON.stringify(expected));
 }
@@ -35,19 +35,18 @@ test.describe('Tier 3: Daily Limit Stress', () => {
     const tk = todayKey();
 
     for (let i = 0; i < ITERATIONS; i++) {
-      // Randomize limits (0 = no limit) and today's usage for each site.
-      const trackedSites: any[] = [];
+      // Randomize which sites carry a limit restriction (and its cap) + today's usage.
+      const blocked: any[] = [];
       const expectedLimits: Record<string, number> = {};
       const time: Record<string, number> = {};
 
       for (const s of SITES) {
         const hasLimit = Math.random() < 0.7;
         const limitSec = hasLimit ? 60 + Math.floor(Math.random() * 3600) : 0;
-        const entry: any = { id: s.id, label: s.id, domains: s.domains, builtin: true };
-        if (limitSec > 0) entry.dailyLimitSeconds = limitSec;
-        trackedSites.push(entry);
-        expectedLimits[s.id] = limitSec;
-
+        if (limitSec > 0) {
+          blocked.push({ id: s.id, label: s.id, domains: s.domains, builtin: false, mode: 'limit', dailyLimitSeconds: limitSec });
+          expectedLimits[s.id] = limitSec;
+        }
         const cap = limitSec > 0 ? limitSec : 3600;
         const r = Math.random();
         let t: number;
@@ -57,16 +56,16 @@ test.describe('Tier 3: Daily Limit Stress', () => {
         time[`${s.id}:${tk}`] = t;
       }
 
-      await setStorage(extensionPage, { trackedSites, trackingData: { visits: {}, time } });
-      await waitForLimitsApplied(extensionPage, expectedLimits);
+      await setStorage(extensionPage, { blockedSites: blocked, trackingData: { visits: {}, time } });
+      await waitForLimits(extensionPage, expectedLimits);
 
       const res = await checkLimits(extensionPage);
       const overReturned = [...new Set(res.overLimit || [])].sort();
 
-      // Independently compute the expected over-limit set + rule count.
+      // Independently compute expected over-limit set + rule count.
       const expectedOver: string[] = [];
       let expectedRuleCount = 0;
-      for (const s of trackedSites) {
+      for (const s of blocked) {
         const cap = Number(s.dailyLimitSeconds) || 0;
         const used = time[`${s.id}:${tk}`] || 0;
         if (cap > 0 && used >= cap) {
@@ -78,27 +77,24 @@ test.describe('Tier 3: Daily Limit Stress', () => {
 
       const rules = await getDynamicRules(extensionPage);
       const limitRules = rules.filter((r: any) => r.id >= LIMIT_RULE_ID_BASE);
-      const blockRules = rules.filter((r: any) => r.id < LIMIT_RULE_ID_BASE);
       const ctx = `iter ${i} limits=${JSON.stringify(expectedLimits)} time=${JSON.stringify(time)}`;
 
-      // The reported over-limit set must match the independent computation.
       expect(overReturned, ctx).toEqual(expectedOver);
-
-      // Exactly one rule per domain of each over-limit site.
       expect(limitRules.length, ctx).toBe(expectedRuleCount);
 
-      // No duplicate rule ids anywhere.
       const ids = rules.map((r: any) => r.id);
       expect(new Set(ids).size, ctx).toBe(ids.length);
 
-      // Block rules never leak into the limit id range and vice versa.
-      for (const r of blockRules) expect(r.id, ctx).toBeLessThan(LIMIT_RULE_ID_BASE);
+      // reason=limit <=> id in the limit range (no cross-contamination with always-block rules).
+      for (const r of rules) {
+        const isLimit = ((r.action.redirect && r.action.redirect.extensionPath) || '').includes('reason=limit');
+        if (isLimit) expect(r.id, ctx).toBeGreaterThanOrEqual(LIMIT_RULE_ID_BASE);
+        else expect(r.id, ctx).toBeLessThan(LIMIT_RULE_ID_BASE);
+      }
 
-      // Every limit rule points at the limit block page and belongs to an over-limit site.
       for (const r of limitRules) {
-        expect(r.action.redirect.extensionPath, ctx).toContain('reason=limit');
         const belongsToOver = expectedOver.some((id) => {
-          const site = trackedSites.find((s) => s.id === id);
+          const site = blocked.find((s) => s.id === id);
           return site.domains.some((d: string) => r.condition.urlFilter.includes(d));
         });
         expect(belongsToOver, ctx).toBe(true);

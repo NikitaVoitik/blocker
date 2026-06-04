@@ -10,8 +10,15 @@ export async function sendMessage(page: Page, message: Record<string, any>): Pro
   }, message);
 }
 
-export async function addBlockedSite(page: Page, site: { id: string; label: string; domains: string[]; builtin?: boolean }) {
+export async function addBlockedSite(
+  page: Page,
+  site: { id: string; label: string; domains: string[]; builtin?: boolean; mode?: string; dailyLimitSeconds?: number }
+) {
   return sendMessage(page, { type: 'ADD_BLOCKED_SITE', site });
+}
+
+export async function getBlockedSites(page: Page) {
+  return sendMessage(page, { type: 'GET_BLOCKED_SITES' });
 }
 
 export async function removeBlockedSite(page: Page, siteId: string) {
@@ -30,8 +37,16 @@ export async function getTrackedSites(page: Page) {
   return sendMessage(page, { type: 'GET_TRACKED_SITES' });
 }
 
-export async function setSiteLimit(page: Page, siteId: string, limitSeconds: number) {
-  return sendMessage(page, { type: 'SET_SITE_LIMIT', siteId, limitSeconds });
+export async function setSiteRestriction(page: Page, siteId: string, mode: 'off' | 'always' | 'limit', dailyLimitSeconds?: number) {
+  return sendMessage(page, { type: 'SET_SITE_RESTRICTION', siteId, mode, dailyLimitSeconds });
+}
+
+export async function getRestrictionSites(page: Page): Promise<any[]> {
+  return sendMessage(page, { type: 'GET_RESTRICTION_SITES' });
+}
+
+export async function getAnalyticsSites(page: Page): Promise<any[]> {
+  return sendMessage(page, { type: 'GET_ANALYTICS_SITES' });
 }
 
 export async function checkLimits(page: Page): Promise<{ overLimit: string[] }> {

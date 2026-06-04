@@ -1,5 +1,8 @@
 import { test, expect } from '../fixtures/extension';
-import { addTrackedSite, getTrackedSites, setSiteLimit, getDynamicRules } from '../helpers/messaging';
+import {
+  addBlockedSite, removeBlockedSite, setSiteRestriction, getRestrictionSites,
+  getDynamicRules, checkLimits
+} from '../helpers/messaging';
 import { setStorage } from '../helpers/storage';
 
 const LIMIT_RULE_ID_BASE = 100000;
@@ -9,11 +12,17 @@ function todayKey(): string {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
-const EXAMPLE_SITE = { id: 'example.com', label: 'Example', domains: ['example.com', 'www.example.com'] };
+const EX = { id: 'example.com', label: 'Example', domains: ['example.com', 'www.example.com'] };
 
-async function hasExampleLimitRule(page: any): Promise<boolean> {
-  const rules = await getDynamicRules(page);
-  return rules.some((r: any) => r.id >= LIMIT_RULE_ID_BASE && r.condition.urlFilter.includes('example.com'));
+function hasExLimitRule(rules: any[]): boolean {
+  return rules.some((r) => r.id >= LIMIT_RULE_ID_BASE && r.condition.urlFilter.includes('example.com'));
+}
+function hasExBlockRule(rules: any[]): boolean {
+  return rules.some((r) => r.id < LIMIT_RULE_ID_BASE && r.condition.urlFilter.includes('example.com'));
+}
+async function findEx(page: any) {
+  const sites = await getRestrictionSites(page);
+  return sites.find((s: any) => s.id === 'example.com');
 }
 
 async function gotoExpectBlock(page: any, url: string, timeout = 15_000) {
@@ -25,48 +34,35 @@ async function gotoExpectBlock(page: any, url: string, timeout = 15_000) {
   await expect.poll(() => page.url(), { timeout }).toContain('blocked/blocked.html');
 }
 
-test.describe('Tier 1: Daily Limits', () => {
-  test('setting a daily limit on a tracked site persists', async ({ extensionPage }) => {
-    await addTrackedSite(extensionPage, EXAMPLE_SITE);
-    const res = await setSiteLimit(extensionPage, 'example.com', 3600);
+test.describe('Tier 1: Restrictions & Limits', () => {
+  test('an always-block restriction persists and blocks every visit', async ({ context, extensionPage }) => {
+    const res = await addBlockedSite(extensionPage, { ...EX, mode: 'always' });
     expect(res.success).toBe(true);
 
-    const sites = await getTrackedSites(extensionPage);
-    const site = sites.find((s: any) => s.id === 'example.com');
-    expect(site.dailyLimitSeconds).toBe(3600);
+    const s = await findEx(extensionPage);
+    expect(s.mode).toBe('always');
+
+    await expect.poll(async () => hasExBlockRule(await getDynamicRules(extensionPage)), { timeout: 5000 }).toBe(true);
+
+    const page = await context.newPage();
+    await gotoExpectBlock(page, 'https://example.com');
+    expect(page.url()).toContain('site=example.com');
+    expect(page.url()).not.toContain('reason=limit');
+    await page.close();
   });
 
-  test('clearing a daily limit removes it', async ({ extensionPage }) => {
-    await addTrackedSite(extensionPage, EXAMPLE_SITE);
-    await setSiteLimit(extensionPage, 'example.com', 3600);
-
-    const res = await setSiteLimit(extensionPage, 'example.com', 0);
-    expect(res.success).toBe(true);
-
-    const sites = await getTrackedSites(extensionPage);
-    const site = sites.find((s: any) => s.id === 'example.com');
-    expect(site.dailyLimitSeconds === undefined || site.dailyLimitSeconds === 0).toBe(true);
-  });
-
-  test('invalid limits are rejected', async ({ extensionPage }) => {
-    await addTrackedSite(extensionPage, EXAMPLE_SITE);
-
-    const tooSmall = await setSiteLimit(extensionPage, 'example.com', 30); // below 60s minimum
-    expect(tooSmall.success).toBe(false);
-
-    const tooBig = await setSiteLimit(extensionPage, 'example.com', 90000); // above 24h maximum
-    expect(tooBig.success).toBe(false);
-
-    const unknown = await setSiteLimit(extensionPage, 'not-tracked.example', 3600);
-    expect(unknown.success).toBe(false);
-  });
-
-  test('a site under its limit is not blocked', async ({ context, extensionPage }) => {
-    await addTrackedSite(extensionPage, EXAMPLE_SITE);
+  test('a limit restriction persists; under the cap it is allowed and makes no block rule', async ({ context, extensionPage }) => {
+    await addBlockedSite(extensionPage, { ...EX, mode: 'limit', dailyLimitSeconds: 3600 });
     await setStorage(extensionPage, { trackingData: { visits: {}, time: { [`example.com:${todayKey()}`]: 60 } } });
-    await setSiteLimit(extensionPage, 'example.com', 3600); // 1m used of 60m → under
+    await checkLimits(extensionPage);
 
-    expect(await hasExampleLimitRule(extensionPage)).toBe(false);
+    const s = await findEx(extensionPage);
+    expect(s.mode).toBe('limit');
+    expect(s.dailyLimitSeconds).toBe(3600);
+
+    const rules = await getDynamicRules(extensionPage);
+    expect(hasExBlockRule(rules), 'limit-mode site must never get an always-block rule').toBe(false);
+    expect(hasExLimitRule(rules), 'under the cap → no limit rule yet').toBe(false);
 
     const page = await context.newPage();
     await page.goto('https://example.com', { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
@@ -75,14 +71,13 @@ test.describe('Tier 1: Daily Limits', () => {
     await page.close();
   });
 
-  test('a site that has reached its limit is blocked with reason=limit', async ({ context, extensionPage }) => {
-    await addTrackedSite(extensionPage, EXAMPLE_SITE);
+  test('a limit restriction over its cap blocks with reason=limit', async ({ context, extensionPage }) => {
+    await addBlockedSite(extensionPage, { ...EX, mode: 'limit', dailyLimitSeconds: 3600 });
     await setStorage(extensionPage, { trackingData: { visits: {}, time: { [`example.com:${todayKey()}`]: 3700 } } });
+    await checkLimits(extensionPage);
 
-    const res = await setSiteLimit(extensionPage, 'example.com', 3600); // over the limit
-    expect(res.success).toBe(true);
-
-    await expect.poll(() => hasExampleLimitRule(extensionPage), { timeout: 5000 }).toBe(true);
+    await expect.poll(async () => hasExLimitRule(await getDynamicRules(extensionPage)), { timeout: 5000 }).toBe(true);
+    expect(hasExBlockRule(await getDynamicRules(extensionPage))).toBe(false);
 
     const page = await context.newPage();
     await gotoExpectBlock(page, 'https://example.com');
@@ -91,42 +86,65 @@ test.describe('Tier 1: Daily Limits', () => {
     await page.close();
   });
 
-  test('the limit block page renders the DAILY LIMIT banner with site + usage', async ({ context, extensionPage, extensionId }) => {
-    // reddit is a default tracked site (label "Reddit"); give it a limit and over-limit usage.
-    await setSiteLimit(extensionPage, 'reddit', 3600);
-    await setStorage(extensionPage, { trackingData: { visits: {}, time: { [`reddit:${todayKey()}`]: 4200 } } }); // 1h10m
+  test('toggling Always ⇄ Limit moves the rules between ranges', async ({ extensionPage }) => {
+    await addBlockedSite(extensionPage, { ...EX, mode: 'always' });
+    await expect.poll(async () => hasExBlockRule(await getDynamicRules(extensionPage)), { timeout: 5000 }).toBe(true);
 
-    const page = await context.newPage();
-    await page.goto(`chrome-extension://${extensionId}/blocked/blocked.html?site=reddit&reason=limit`, {
-      waitUntil: 'domcontentloaded'
-    });
+    // → Limit (under cap): block rule disappears, no limit rule
+    await setStorage(extensionPage, { trackingData: { visits: {}, time: { [`example.com:${todayKey()}`]: 0 } } });
+    await setSiteRestriction(extensionPage, 'example.com', 'limit', 3600);
+    await expect.poll(async () => hasExBlockRule(await getDynamicRules(extensionPage)), { timeout: 5000 }).toBe(false);
+    expect(hasExLimitRule(await getDynamicRules(extensionPage))).toBe(false);
+    expect((await findEx(extensionPage)).mode).toBe('limit');
 
-    // The banner only appears in reason=limit mode, so its presence proves the limit branch ran.
-    await expect(page.locator('#limit-banner')).toBeVisible();
-    await expect(page.locator('.limit-headline')).toHaveText('DAILY LIMIT REACHED');
-    await expect(page.locator('#limit-site')).toHaveText('Reddit');
-    await expect(page.locator('#limit-cap')).toHaveText('1h');
-    await expect(page.locator('#limit-spent')).toHaveText('1h 10m');
-
-    // And a roast is shown (limitMessages set, since the banner confirms limit mode).
-    await expect.poll(async () => ((await page.locator('#shame-text').textContent()) || '').trim().length)
-      .toBeGreaterThan(0);
-    await page.close();
+    // → Always again: block rule returns
+    await setSiteRestriction(extensionPage, 'example.com', 'always');
+    await expect.poll(async () => hasExBlockRule(await getDynamicRules(extensionPage)), { timeout: 5000 }).toBe(true);
+    expect((await findEx(extensionPage)).mode).toBe('always');
   });
 
-  test('clearing the limit unblocks a previously over-limit site', async ({ context, extensionPage }) => {
-    await addTrackedSite(extensionPage, EXAMPLE_SITE);
-    await setStorage(extensionPage, { trackingData: { visits: {}, time: { [`example.com:${todayKey()}`]: 3700 } } });
-    await setSiteLimit(extensionPage, 'example.com', 3600);
-    await expect.poll(() => hasExampleLimitRule(extensionPage), { timeout: 5000 }).toBe(true);
+  test('removing a restriction clears its rules', async ({ context, extensionPage }) => {
+    await addBlockedSite(extensionPage, { ...EX, mode: 'always' });
+    await expect.poll(async () => hasExBlockRule(await getDynamicRules(extensionPage)), { timeout: 5000 }).toBe(true);
 
-    await setSiteLimit(extensionPage, 'example.com', 0);
-    await expect.poll(() => hasExampleLimitRule(extensionPage), { timeout: 5000 }).toBe(false);
+    await removeBlockedSite(extensionPage, 'example.com');
+    await expect.poll(async () => hasExBlockRule(await getDynamicRules(extensionPage)), { timeout: 5000 }).toBe(false);
 
     const page = await context.newPage();
     await page.goto('https://example.com', { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
     await page.waitForTimeout(1500);
     expect(page.url()).not.toContain('blocked/blocked.html');
+    await page.close();
+  });
+
+  test('invalid limits are rejected', async ({ extensionPage }) => {
+    await addBlockedSite(extensionPage, { ...EX, mode: 'always' });
+
+    const tooSmall = await setSiteRestriction(extensionPage, 'example.com', 'limit', 30); // below 60s floor
+    expect(tooSmall.success).toBe(false);
+
+    const tooBig = await setSiteRestriction(extensionPage, 'example.com', 'limit', 90000); // above 24h
+    expect(tooBig.success).toBe(false);
+
+    const unknown = await setSiteRestriction(extensionPage, 'not-a-site.example', 'limit', 3600);
+    expect(unknown.success).toBe(false);
+  });
+
+  test('the limit block page renders the DAILY LIMIT banner with site + usage', async ({ context, extensionPage, extensionId }) => {
+    await addBlockedSite(extensionPage, { ...EX, mode: 'limit', dailyLimitSeconds: 3600 });
+    await setStorage(extensionPage, { trackingData: { visits: {}, time: { [`example.com:${todayKey()}`]: 4200 } } }); // 1h10m
+    await checkLimits(extensionPage);
+
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/blocked/blocked.html?site=example.com&reason=limit`, {
+      waitUntil: 'domcontentloaded'
+    });
+
+    await expect(page.locator('#limit-banner')).toBeVisible();
+    await expect(page.locator('.limit-headline')).toHaveText('DAILY LIMIT REACHED');
+    await expect(page.locator('#limit-site')).toHaveText('Example');
+    await expect(page.locator('#limit-cap')).toHaveText('1h');
+    await expect(page.locator('#limit-spent')).toHaveText('1h 10m');
     await page.close();
   });
 });

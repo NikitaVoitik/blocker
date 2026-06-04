@@ -44,13 +44,23 @@
       </div>
 
       <div class="blocked-sites">
-        <h3>Blocked Sites</h3>
+        <h3>Restricted Sites</h3>
         <div id="blocked-list"></div>
-        <div class="add-site">
+        <div class="add-restriction">
           <input type="text" id="site-input" placeholder="e.g. reddit.com" />
-          <button id="add-site-btn" class="btn-add">Block</button>
+          <div class="add-row">
+            <div class="mode-seg add-mode-seg">
+              <button type="button" class="mode-opt active" data-addmode="always">Always</button>
+              <button type="button" class="mode-opt" data-addmode="limit">Limit</button>
+            </div>
+            <div class="add-limit-wrap" id="add-limit-wrap" style="display: none;">
+              <input type="number" id="add-limit-input" class="limit-minutes" min="1" max="1440" step="1" value="60" />
+              <span class="limit-unit">min/day</span>
+            </div>
+            <button id="add-site-btn" class="btn-add">Add</button>
+          </div>
         </div>
-        <span class="input-hint">Enter a domain, not a specific page (e.g. reddit.com, not reddit.com/r/funny)</span>
+        <span class="input-hint">Always blocks every visit; Limit blocks after N minutes of use per day. Enter a domain, not a page.</span>
       </div>
 
       <div class="actions">
@@ -84,7 +94,7 @@
           <input type="text" id="track-site-input" placeholder="e.g. discord.com" />
           <button id="add-track-btn" class="btn-add btn-add-track">Track</button>
         </div>
-        <span class="input-hint">Track time on any site — set a daily limit to auto-block it once you hit it</span>
+        <span class="input-hint">Track time on any site. To cap a site's usage, set a Limit in the Blocker tab.</span>
       </div>
 
       <div class="actions">

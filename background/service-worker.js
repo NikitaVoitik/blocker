@@ -129,15 +129,43 @@ async function saveTrackedSites(sites) {
   await chrome.storage.local.set({ trackedSites: sites });
 }
 
-// Check if a URL matches any tracked site
+// Restrictions configured with a daily limit (mode:'limit' entries on the blocked list).
+function getLimitSites() {
+  return currentBlockedSites.filter(s => s.mode === 'limit' && Number(s.dailyLimitSeconds) > 0);
+}
+
+// Effective set of time-tracked sites: analytics-only tracked sites PLUS limit-mode
+// restrictions (which must be tracked to enforce their cap), de-duped by id.
+function getEffectiveTrackedSites() {
+  const byId = new Map();
+  for (const s of currentTrackedSites) byId.set(s.id, s);
+  for (const s of getLimitSites()) if (!byId.has(s.id)) byId.set(s.id, s);
+  return [...byId.values()];
+}
+
+// True when a parsed URL matches a site entry (handles pathOnly entries like youtube-shorts).
+function urlMatchesSite(parsed, site) {
+  if (site.pathOnly) {
+    for (const domain of site.domains) {
+      const [host, ...pathParts] = domain.split('/');
+      const path = '/' + pathParts.join('/');
+      if (parsed.hostname === host && parsed.pathname.startsWith(path)) return true;
+    }
+    return false;
+  }
+  return site.domains.includes(parsed.hostname);
+}
+
+// Check if a URL matches any time-tracked site (analytics or limit-mode restriction).
+// pathOnly entries (e.g. youtube.com/shorts) are more specific than a host-only entry for the
+// same host (e.g. youtube.com), so they must win — otherwise a /shorts visit would accrue to
+// the host-only site and a Shorts limit would never fill.
 function getMatchingTrackedSite(url) {
   try {
     const parsed = new URL(url);
-    for (const site of currentTrackedSites) {
-      if (site.domains.includes(parsed.hostname)) {
-        return site;
-      }
-    }
+    const sites = getEffectiveTrackedSites();
+    for (const site of sites) if (site.pathOnly && urlMatchesSite(parsed, site)) return site;
+    for (const site of sites) if (!site.pathOnly && urlMatchesSite(parsed, site)) return site;
   } catch (e) {
     // Invalid URL
   }
@@ -165,6 +193,8 @@ async function _syncBlockRules() {
   let ruleId = 1000; // Start high to avoid conflicts with static rules
 
   for (const site of sites) {
+    // Limit-mode restrictions are blocked only once over their cap (via limit rules), not always.
+    if (site.mode === 'limit') continue;
     for (const domain of site.domains) {
       rules.push({
         id: ruleId++,
@@ -210,7 +240,9 @@ async function _syncBlockRules() {
 
 // Verify that block-range dynamic rules match expected count; re-sync if mismatched
 async function verifyBlockRules() {
-  const expectedCount = currentBlockedSites.reduce((sum, site) => sum + site.domains.length, 0);
+  const expectedCount = currentBlockedSites
+    .filter(s => s.mode !== 'limit')
+    .reduce((sum, site) => sum + site.domains.length, 0);
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
   const blockRules = existingRules.filter(r => r.id < LIMIT_RULE_ID_BASE);
   if (blockRules.length !== expectedCount) {
@@ -231,18 +263,11 @@ function getSiteTimeToday(data, siteId) {
   return (data.time && data.time[siteId + ':' + getTodayKey()]) || 0;
 }
 
-// Tracked sites that have a positive daily limit and have reached it today.
-async function getOverLimitTrackedSites() {
+// Limit-mode restrictions that have reached their daily cap today.
+async function getOverLimitSites() {
   const result = await chrome.storage.local.get('trackingData');
   const data = result.trackingData || { visits: {}, time: {} };
-  const over = [];
-  for (const site of currentTrackedSites) {
-    const limit = Number(site.dailyLimitSeconds);
-    if (Number.isFinite(limit) && limit > 0 && getSiteTimeToday(data, site.id) >= limit) {
-      over.push(site);
-    }
-  }
-  return over;
+  return getLimitSites().filter(site => getSiteTimeToday(data, site.id) >= Number(site.dailyLimitSeconds));
 }
 
 // Generate dynamic rules that redirect over-limit tracked sites to the limit block page.
@@ -252,7 +277,7 @@ function syncLimitRules() {
 }
 
 async function _syncLimitRules() {
-  const overSites = await getOverLimitTrackedSites();
+  const overSites = await getOverLimitSites();
   overLimitSiteIds = new Set(overSites.map(s => s.id));
 
   const rules = [];
@@ -294,12 +319,12 @@ async function _syncLimitRules() {
   }
 }
 
-// In-memory check: return the over-limit tracked site matching a URL, if any.
+// In-memory check: return the over-limit restriction matching a URL, if any.
 function getMatchingOverLimitSite(url) {
   try {
     const parsed = new URL(url);
-    for (const site of currentTrackedSites) {
-      if (overLimitSiteIds.has(site.id) && site.domains.includes(parsed.hostname)) {
+    for (const site of getLimitSites()) {
+      if (overLimitSiteIds.has(site.id) && urlMatchesSite(parsed, site)) {
         return site;
       }
     }
@@ -350,52 +375,123 @@ async function enforceLimits() {
   return [...overLimitSiteIds];
 }
 
-// Set or clear a tracked site's daily limit. limitSeconds = 0 clears it.
-async function setSiteLimit(siteId, limitSeconds) {
-  const sites = [...currentTrackedSites];
-  const idx = sites.findIndex(s => s.id === siteId);
-  if (idx === -1) {
-    return { success: false, error: 'Site not tracked' };
-  }
-
-  const n = Math.floor(Number(limitSeconds));
-  if (!Number.isFinite(n) || n < 0) {
-    return { success: false, error: 'Invalid limit' };
-  }
-
-  const site = { ...sites[idx] };
-  if (n === 0) {
-    delete site.dailyLimitSeconds;
-  } else if (n < MIN_SITE_LIMIT_SECONDS || n > MAX_SITE_LIMIT_SECONDS) {
-    return { success: false, error: 'Limit must be between 1 minute and 24 hours' };
-  } else {
-    site.dailyLimitSeconds = n;
-  }
-  sites[idx] = site;
-
-  await saveTrackedSites(sites);
-  await enforceLimits();
-  return { success: true, sites };
+// Replace an entry with the same id, or append it.
+function upsertById(list, entry) {
+  const out = list.filter(s => s.id !== entry.id);
+  out.push(entry);
+  return out;
 }
 
-// Check if a URL matches any blocked site
+// Snapshot of every restriction (blocked-list entry) with its mode + live usage, for the popup.
+async function getRestrictionSites() {
+  const result = await chrome.storage.local.get('trackingData');
+  const data = result.trackingData || { visits: {}, time: {} };
+  return currentBlockedSites.map(s => {
+    const mode = s.mode === 'limit' ? 'limit' : 'always';
+    const cap = mode === 'limit' ? Number(s.dailyLimitSeconds) || 0 : 0;
+    const usage = mode === 'limit' ? getSiteTimeToday(data, s.id) : 0;
+    return {
+      id: s.id,
+      label: s.label,
+      domains: s.domains,
+      builtin: !!s.builtin,
+      pathOnly: !!s.pathOnly,
+      mode,
+      dailyLimitSeconds: cap,
+      usageTodaySeconds: usage,
+      overLimit: cap > 0 && usage >= cap
+    };
+  });
+}
+
+// Set a site's restriction mode atomically. mode: 'off' (remove) | 'always' | 'limit'.
+// A restricted site is owned by the blocked list; it's dropped from the analytics list to
+// avoid a split source (limit-mode usage still surfaces via getEffectiveTrackedSites()).
+async function setSiteRestriction(siteId, mode, dailyLimitSeconds) {
+  const base = currentBlockedSites.find(s => s.id === siteId) || currentTrackedSites.find(s => s.id === siteId);
+  if (!base && mode !== 'off') {
+    return { success: false, error: 'Unknown site' };
+  }
+
+  let blocked = [...currentBlockedSites];
+  let tracked = [...currentTrackedSites];
+
+  if (mode === 'off') {
+    blocked = blocked.filter(s => s.id !== siteId);
+  } else if (mode === 'always') {
+    blocked = upsertById(blocked, {
+      id: base.id, label: base.label, domains: base.domains,
+      builtin: !!base.builtin, pathOnly: !!base.pathOnly, mode: 'always'
+    });
+    tracked = tracked.filter(s => s.id !== siteId);
+  } else if (mode === 'limit') {
+    const n = Math.floor(Number(dailyLimitSeconds));
+    if (!Number.isFinite(n) || n < MIN_SITE_LIMIT_SECONDS || n > MAX_SITE_LIMIT_SECONDS) {
+      return { success: false, error: 'Limit must be between 1 minute and 24 hours' };
+    }
+    blocked = upsertById(blocked, {
+      id: base.id, label: base.label, domains: base.domains,
+      builtin: !!base.builtin, pathOnly: !!base.pathOnly, mode: 'limit', dailyLimitSeconds: n
+    });
+    tracked = tracked.filter(s => s.id !== siteId);
+  } else {
+    return { success: false, error: 'Invalid mode' };
+  }
+
+  currentTrackedSites = tracked;
+  await chrome.storage.local.set({ trackedSites: tracked });
+  await saveBlockedSites(blocked); // updates cache + storage + syncBlockRules
+  await enforceLimits();
+  return { success: true, sites: blocked };
+}
+
+// One-time migration: older builds stored daily limits on trackedSites entries. Move them onto
+// the blocked list as mode:'limit' restrictions. If the same id is already always-blocked, the
+// always-block wins and the limit is discarded.
+async function migrateTrackedLimits() {
+  const withLimit = currentTrackedSites.filter(s => Number(s.dailyLimitSeconds) > 0);
+  if (withLimit.length === 0) return;
+
+  let blocked = [...currentBlockedSites];
+  const blockedIds = new Set(blocked.map(s => s.id));
+  const promotedIds = new Set();
+  for (const t of withLimit) {
+    if (!blockedIds.has(t.id)) {
+      blocked.push({
+        id: t.id, label: t.label, domains: t.domains,
+        builtin: !!t.builtin, pathOnly: !!t.pathOnly,
+        mode: 'limit', dailyLimitSeconds: Math.floor(Number(t.dailyLimitSeconds))
+      });
+      blockedIds.add(t.id);
+      promotedIds.add(t.id);
+    }
+    // else: an always-block already owns this id → discard the limit but keep analytics history.
+  }
+  // Only drop entries that actually became restrictions; for the rest just strip the stale
+  // dailyLimitSeconds so they stay in analytics (and migration is idempotent on the next run).
+  const tracked = currentTrackedSites
+    .filter(s => !promotedIds.has(s.id))
+    .map(s => {
+      if (Number(s.dailyLimitSeconds) > 0) {
+        const copy = { ...s };
+        delete copy.dailyLimitSeconds;
+        return copy;
+      }
+      return s;
+    });
+
+  currentBlockedSites = blocked;
+  currentTrackedSites = tracked;
+  await chrome.storage.local.set({ blockedSites: blocked, trackedSites: tracked });
+}
+
+// Check if a URL matches an always-block site (limit-mode entries are not blocked here)
 function getMatchingSite(url) {
   try {
     const parsed = new URL(url);
     for (const site of currentBlockedSites) {
-      if (site.pathOnly) {
-        for (const domain of site.domains) {
-          const [host, ...pathParts] = domain.split('/');
-          const path = '/' + pathParts.join('/');
-          if (parsed.hostname === host && parsed.pathname.startsWith(path)) {
-            return site;
-          }
-        }
-      } else {
-        if (site.domains.includes(parsed.hostname)) {
-          return site;
-        }
-      }
+      if (site.mode === 'limit') continue;
+      if (urlMatchesSite(parsed, site)) return site;
     }
   } catch (e) {
     // Invalid URL
@@ -754,7 +850,7 @@ async function getTrackingDataForToday() {
   const data = result.trackingData || { visits: {}, time: {} };
   const todayKey = getTodayKey();
   const sites = {};
-  for (const site of currentTrackedSites) {
+  for (const site of getEffectiveTrackedSites()) {
     const vKey = site.id + ':' + todayKey;
     const tKey = site.id + ':' + todayKey;
     sites[site.id] = {
@@ -781,7 +877,7 @@ async function getTrackingReportData() {
     const dateKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     let dayTime = 0;
     let dayVisits = 0;
-    for (const site of currentTrackedSites) {
+    for (const site of getEffectiveTrackedSites()) {
       dayTime += data.time[site.id + ':' + dateKey] || 0;
       dayVisits += data.visits[site.id + ':' + dateKey] || 0;
     }
@@ -792,7 +888,7 @@ async function getTrackingReportData() {
   const siteBreakdownToday = [];
   const siteBreakdownWeek = [];
   const siteBreakdownMonth = [];
-  for (const site of currentTrackedSites) {
+  for (const site of getEffectiveTrackedSites()) {
     let todaySiteTime = 0, todaySiteVisits = 0;
     let weekSiteTime = 0, weekSiteVisits = 0;
     let monthSiteTime = 0, monthSiteVisits = 0;
@@ -823,7 +919,7 @@ async function getTrackingReportData() {
       const d = new Date(today);
       d.setDate(d.getDate() - (w * 7 + i));
       const dateKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      for (const site of currentTrackedSites) {
+      for (const site of getEffectiveTrackedSites()) {
         weekTime += data.time[site.id + ':' + dateKey] || 0;
         weekVisits += data.visits[site.id + ':' + dateKey] || 0;
       }
@@ -1013,7 +1109,7 @@ async function capturePhoto() {
   }
 }
 
-// Add a blocked site
+// Add a blocked/limited site. siteEntry may carry mode:'limit' + dailyLimitSeconds.
 async function addBlockedSite(siteEntry) {
   const sites = [...currentBlockedSites];
 
@@ -1023,14 +1119,22 @@ async function addBlockedSite(siteEntry) {
   }
 
   sites.push(siteEntry);
+  // A new restriction also shouldn't stay in the analytics list under the same id.
+  const tracked = currentTrackedSites.filter(s => s.id !== siteEntry.id);
+  if (tracked.length !== currentTrackedSites.length) {
+    currentTrackedSites = tracked;
+    await chrome.storage.local.set({ trackedSites: tracked });
+  }
   await saveBlockedSites(sites);
+  await enforceLimits(); // evaluate immediately if it was added as a limit restriction
   return { success: true, sites };
 }
 
-// Remove a blocked site
+// Remove a blocked/limited site (also drops any limit rule it had).
 async function removeBlockedSite(siteId) {
   const sites = currentBlockedSites.filter(s => s.id !== siteId);
   await saveBlockedSites(sites);
+  await enforceLimits();
   return { success: true, sites };
 }
 
@@ -1181,6 +1285,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // Effective tracked set for analytics (tracked sites + limit-mode restrictions)
+  if (message.type === 'GET_ANALYTICS_SITES') {
+    initReady.then(() => sendResponse(getEffectiveTrackedSites()));
+    return true;
+  }
+
+  // All restrictions (blocked list) with mode + live usage, for the Blocker tab
+  if (message.type === 'GET_RESTRICTION_SITES') {
+    initReady.then(() => getRestrictionSites()).then(sendResponse);
+    return true;
+  }
+
   if (message.type === 'ADD_TRACKED_SITE') {
     addTrackedSite(message.site).then(sendResponse);
     return true;
@@ -1191,8 +1307,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (message.type === 'SET_SITE_LIMIT') {
-    initReady.then(() => setSiteLimit(message.siteId, message.limitSeconds)).then(sendResponse);
+  if (message.type === 'SET_SITE_RESTRICTION') {
+    initReady.then(() => setSiteRestriction(message.siteId, message.mode, message.dailyLimitSeconds)).then(sendResponse);
     return true;
   }
 
@@ -1242,14 +1358,16 @@ chrome.storage.onChanged.addListener((changes, area) => {
       currentBlockedSites = changes.blockedSites.newValue === undefined
         ? DEFAULT_SITES
         : changes.blockedSites.newValue;
+      // The blocked list drives both always-block rules and (via mode:'limit') limit rules, so
+      // re-sync both whenever it changes — covers external writes / imports. withRuleLock
+      // serializes these with any in-flight syncs.
+      syncBlockRules();
+      syncLimitRules();
     }
     if (changes.trackedSites) {
       currentTrackedSites = changes.trackedSites.newValue === undefined
         ? DEFAULT_TRACKED_SITES
         : changes.trackedSites.newValue;
-      // Limits live on tracked-site entries, so re-evaluate them whenever the list changes
-      // (covers external writes / imports). withRuleLock serializes this with other syncs.
-      syncLimitRules();
     }
     if (changes.photoLimit) {
       const n = Number(changes.photoLimit.newValue);
@@ -1300,6 +1418,7 @@ async function initialize() {
   await loadBlockedSites();
   await loadTrackedSites();
   await loadPhotoLimit();
+  await migrateTrackedLimits(); // move any legacy trackedSites limits onto the blocked list
   await syncBlockRules();
   await syncLimitRules();
 

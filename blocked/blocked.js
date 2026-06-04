@@ -237,20 +237,11 @@
     });
   }
 
-  // Get tracked sites (includes each site's daily limit, if any)
-  async function getTrackedSites() {
+  // Get all restrictions (each carries its mode, daily limit, and today's usage)
+  async function getRestrictionSites() {
     return new Promise((resolve) => {
-      chrome.runtime.sendMessage({ type: 'GET_TRACKED_SITES' }, (response) => {
+      chrome.runtime.sendMessage({ type: 'GET_RESTRICTION_SITES' }, (response) => {
         resolve(response || []);
-      });
-    });
-  }
-
-  // Get today's tracking data keyed by site id
-  async function getTrackingData() {
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage({ type: 'GET_TRACKING_DATA' }, (response) => {
-        resolve(response || {});
       });
     });
   }
@@ -262,10 +253,10 @@
     banner.style.display = 'block';
 
     try {
-      const [sites, tracking] = await Promise.all([getTrackedSites(), getTrackingData()]);
+      const sites = await getRestrictionSites();
       const site = sites.find((s) => s.id === blockedSiteId);
-      const spent = (tracking[blockedSiteId] && tracking[blockedSiteId].time) || 0;
-      const cap = site && Number(site.dailyLimitSeconds) > 0 ? Number(site.dailyLimitSeconds) : 0;
+      const spent = (site && Number(site.usageTodaySeconds)) || 0;
+      const cap = (site && Number(site.dailyLimitSeconds) > 0) ? Number(site.dailyLimitSeconds) : 0;
 
       document.getElementById('limit-site').textContent = (site && (site.label || site.id)) || blockedSiteId || 'this site';
       document.getElementById('limit-spent').textContent = formatDuration(spent);

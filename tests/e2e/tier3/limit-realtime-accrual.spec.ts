@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures/extension';
-import { checkLimits, getTrackedSites, getTrackingDataForToday } from '../helpers/messaging';
-import { setStorage } from '../helpers/storage';
+import { checkLimits, getTrackingDataForToday } from '../helpers/messaging';
+import { setStorage, seedLimitRestriction } from '../helpers/storage';
 
 // Real wall-clock accrual tests: keep a tracked site focused until genuinely-accrued focus
 // time reaches its daily limit, and verify the block fires AT the limit and not before.
@@ -30,10 +30,10 @@ test.describe('Tier 3: Real-Time Limit Accrual', () => {
       const L = c.limitSec;
       const flushEvery = Math.min(20, Math.max(2, Math.floor(L / 5))); // flush often enough to dodge the 1800s cap
 
-      // Seed the limit + zero usage.
-      const sites = await getTrackedSites(extensionPage);
-      const updated = sites.map((s: any) => (s.id === 'reddit' ? { ...s, dailyLimitSeconds: L } : s));
-      await setStorage(extensionPage, { trackedSites: updated, trackingData: { visits: {}, time: {} } });
+      // Seed reddit as a limit restriction with the target cap + zero usage.
+      await seedLimitRestriction(extensionPage, {
+        id: 'reddit', label: 'Reddit', domains: ['reddit.com', 'www.reddit.com', 'old.reddit.com'], capSeconds: L, usedSeconds: 0
+      });
       await extensionPage.waitForTimeout(400);
 
       const page = await context.newPage();
