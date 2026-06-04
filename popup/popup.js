@@ -629,7 +629,53 @@ viewTrackingReportBtn.addEventListener('click', () => {
   });
 });
 
+// --- What's New announcement banner ---
+
+// Bump this key whenever a new feature should re-show the banner.
+const WHATS_NEW_KEY = 'daily-limits';
+
+async function initWhatsNew() {
+  const banner = document.getElementById('whats-new');
+  const dismissBtn = document.getElementById('whats-new-dismiss');
+  if (!banner) return;
+
+  let seen;
+  try {
+    ({ seenWhatsNew: seen } = await chrome.storage.local.get('seenWhatsNew'));
+  } catch (e) {
+    seen = null;
+  }
+  if (seen === WHATS_NEW_KEY) return; // already dismissed this announcement
+
+  async function dismiss() {
+    banner.hidden = true;
+    try {
+      await chrome.storage.local.set({ seenWhatsNew: WHATS_NEW_KEY });
+    } catch (e) { /* best-effort: banner just reappears next open */ }
+  }
+
+  // Tapping the banner jumps to the Tracker tab (where limits are set), then dismisses.
+  banner.addEventListener('click', () => {
+    const trackerTab = document.querySelector('.tab-btn[data-tab="tracker"]');
+    if (trackerTab) trackerTab.click();
+    dismiss();
+  });
+  banner.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      banner.click();
+    }
+  });
+  dismissBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // don't trigger the banner's jump-to-tracker click
+    dismiss();
+  });
+
+  banner.hidden = false;
+}
+
 // Load on popup open
 loadStats();
 loadRestrictions();
 loadRemovalStats();
+initWhatsNew();
