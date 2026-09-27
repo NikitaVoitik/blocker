@@ -28,7 +28,7 @@ const shameLevels = [
   { min: 3, name: 'Repeat Offender', class: 'level-2' },
   { min: 6, name: 'Addict', class: 'level-3' },
   { min: 10, name: 'Terminal Brain Rot', class: 'level-4' },
-  { min: 20, name: 'Beyond Saving', class: 'level-5' },
+  { min: 20, name: 'Beyond Saving', class: 'level-5' }
 ];
 
 function getShameLevel(count) {
@@ -50,8 +50,8 @@ function formatTime(seconds) {
   if (seconds < 60) return '<1m';
   const hours = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
+  if (hours > 0) return hours + 'h ' + mins + 'm';
+  return mins + 'm';
 }
 
 // --- Tab switching ---
@@ -60,11 +60,9 @@ const tabBtns = document.querySelectorAll('.tab-btn');
 const tabBlocker = document.getElementById('tab-blocker');
 const tabTracker = document.getElementById('tab-tracker');
 
-tabBtns.forEach((btn) => {
+tabBtns.forEach(btn => {
   btn.addEventListener('click', async () => {
-    tabBtns.forEach((b) => {
-      b.classList.remove('active');
-    });
+    tabBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const tab = btn.dataset.tab;
     tabBlocker.style.display = tab === 'blocker' ? '' : 'none';
@@ -78,26 +76,12 @@ tabBtns.forEach((btn) => {
   });
 });
 
-// --- Blocker tab (restrictions: Always block / Limit N min/day) ---
+// --- Blocker tab ---
 
-// Mode selected in the add-site row.
-let addMode = 'always';
-
-async function loadRestrictions() {
-  const sites = await chrome.runtime.sendMessage({ type: 'GET_RESTRICTION_SITES' });
-  renderRestrictions(sites || []);
+async function loadBlockedSites() {
+  const sites = await chrome.runtime.sendMessage({ type: 'GET_BLOCKED_SITES' });
+  renderBlockedSites(sites || []);
   await loadAvailablePresets();
-}
-
-async function setRestriction(siteId, mode, minutes) {
-  const msg = { type: 'SET_SITE_RESTRICTION', siteId, mode };
-  if (mode === 'limit') {
-    const m = Math.max(1, Math.min(1440, Number(minutes) || 60));
-    msg.dailyLimitSeconds = m * 60;
-  }
-  const result = await chrome.runtime.sendMessage(msg);
-  if (result?.success) await loadRestrictions();
-  return result;
 }
 
 async function loadAvailablePresets() {
@@ -132,11 +116,8 @@ function renderPresetSuggestions(presets) {
     addBtn.textContent = '+';
     addBtn.title = 'Add';
     addBtn.addEventListener('click', async () => {
-      const result = await chrome.runtime.sendMessage({
-        type: 'ADD_BLOCKED_SITE',
-        site: { ...preset, mode: 'always' },
-      });
-      if (result?.success) await loadRestrictions();
+      const result = await chrome.runtime.sendMessage({ type: 'ADD_BLOCKED_SITE', site: preset });
+      if (result && result.success) await loadBlockedSites();
     });
 
     item.appendChild(label);
@@ -147,38 +128,15 @@ function renderPresetSuggestions(presets) {
   blockedListEl.parentElement.insertBefore(container, blockedListEl.nextSibling);
 }
 
-function renderRestrictions(sites) {
+function renderBlockedSites(sites) {
   blockedListEl.innerHTML = '';
   for (const site of sites) {
-    const isLimit = site.mode === 'limit';
-    const cap = Number(site.dailyLimitSeconds) || 0;
-    const used = Number(site.usageTodaySeconds) || 0;
-    const over = !!site.overLimit;
-
     const item = document.createElement('div');
-    item.className = 'site-item restriction-item';
-
-    // Main row: label + mode toggle + remove
-    const main = document.createElement('div');
-    main.className = 'restriction-main';
+    item.className = 'site-item';
 
     const label = document.createElement('span');
     label.className = 'site-label';
     label.textContent = site.label || site.id;
-
-    const controls = document.createElement('div');
-    controls.className = 'restriction-controls';
-
-    const seg = document.createElement('div');
-    seg.className = 'mode-seg';
-    const alwaysBtn = document.createElement('button');
-    alwaysBtn.className = `mode-opt${!isLimit ? ' active' : ''}`;
-    alwaysBtn.textContent = 'Always';
-    const limitBtn = document.createElement('button');
-    limitBtn.className = `mode-opt${isLimit ? ' active' : ''}`;
-    limitBtn.textContent = 'Limit';
-    seg.appendChild(alwaysBtn);
-    seg.appendChild(limitBtn);
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'site-remove';
@@ -186,77 +144,8 @@ function renderRestrictions(sites) {
     removeBtn.title = 'Remove';
     removeBtn.addEventListener('click', () => startRemovalGauntlet(site.id, site.label || site.id));
 
-    controls.appendChild(seg);
-    controls.appendChild(removeBtn);
-    main.appendChild(label);
-    main.appendChild(controls);
-    item.appendChild(main);
-
-    // Usage bar (limit mode only)
-    if (isLimit && cap > 0) {
-      const usage = document.createElement('div');
-      usage.className = `limit-usage${over ? ' is-over' : ''}`;
-      const barTrack = document.createElement('div');
-      barTrack.className = 'limit-usage-track';
-      const fill = document.createElement('div');
-      fill.className = 'limit-usage-fill';
-      fill.style.width = `${Math.min(100, (used / cap) * 100)}%`;
-      barTrack.appendChild(fill);
-      const text = document.createElement('span');
-      text.className = 'limit-usage-text';
-      text.textContent = `${formatTime(used)} / ${formatLimitShort(cap)}${over ? ' · OVER' : ''}`;
-      usage.appendChild(barTrack);
-      usage.appendChild(text);
-      item.appendChild(usage);
-    }
-
-    // Minutes editor (revealed by the Limit button)
-    const editor = document.createElement('div');
-    editor.className = 'limit-editor';
-    editor.style.display = 'none';
-    const inputRow = document.createElement('div');
-    inputRow.className = 'limit-input-row';
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.className = 'limit-minutes';
-    input.min = '1';
-    input.max = '1440';
-    input.step = '1';
-    input.value = String(isLimit && cap > 0 ? Math.max(1, Math.round(cap / 60)) : 60);
-    const unit = document.createElement('span');
-    unit.className = 'limit-unit';
-    unit.textContent = 'min / day';
-    inputRow.appendChild(input);
-    inputRow.appendChild(unit);
-    const editorActions = document.createElement('div');
-    editorActions.className = 'limit-editor-actions';
-    const setBtn = document.createElement('button');
-    setBtn.className = 'limit-set';
-    setBtn.textContent = isLimit ? 'Update' : 'Set';
-    const apply = () => {
-      let m = Number.parseInt(input.value, 10);
-      if (!Number.isFinite(m)) m = 60;
-      setRestriction(site.id, 'limit', m);
-    };
-    setBtn.addEventListener('click', apply);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') apply();
-    });
-    editorActions.appendChild(setBtn);
-    editor.appendChild(inputRow);
-    editor.appendChild(editorActions);
-    item.appendChild(editor);
-
-    alwaysBtn.addEventListener('click', () => {
-      if (isLimit) setRestriction(site.id, 'always');
-      else editor.style.display = 'none';
-    });
-    limitBtn.addEventListener('click', () => {
-      const open = editor.style.display !== 'none';
-      editor.style.display = open ? 'none' : 'flex';
-      if (!open) input.focus();
-    });
-
+    item.appendChild(label);
+    item.appendChild(removeBtn);
     blockedListEl.appendChild(item);
   }
 }
@@ -266,26 +155,25 @@ async function addSite() {
   if (!raw.trim()) return;
 
   const hostname = extractHostname(raw);
-  if (!hostname?.includes('.')) return;
+  if (!hostname || !hostname.includes('.')) return;
 
   const id = hostname.replace(/^www\./, '');
   const domains = [hostname];
   if (!hostname.startsWith('www.')) {
-    domains.push(`www.${hostname}`);
+    domains.push('www.' + hostname);
   }
 
-  const site = { id, label: id, domains, builtin: false, mode: addMode };
-  if (addMode === 'limit') {
-    const minsEl = document.getElementById('add-limit-input');
-    let m = Number.parseInt(minsEl?.value, 10);
-    if (!Number.isFinite(m)) m = 60;
-    site.dailyLimitSeconds = Math.max(1, Math.min(1440, m)) * 60;
-  }
+  const site = {
+    id,
+    label: id,
+    domains,
+    builtin: false
+  };
 
   const result = await chrome.runtime.sendMessage({ type: 'ADD_BLOCKED_SITE', site });
-  if (result?.success) {
+  if (result && result.success) {
     siteInput.value = '';
-    await loadRestrictions();
+    await loadBlockedSites();
   }
 }
 
@@ -293,18 +181,18 @@ const GAUNTLET_STEPS = [
   {
     title: 'REMOVING {site}? COWARD.',
     body: 'You blocked this site for a reason. Giving up already?',
-    continueLabel: 'Continue',
+    continueLabel: 'Continue'
   },
   {
     title: "YOU'RE REALLY GIVING UP?",
     body: 'This goes on your permanent record. Every surrender is tracked.',
-    continueLabel: 'Continue',
+    continueLabel: 'Continue'
   },
   {
     title: 'LAST CHANCE.',
     body: 'Your shame selfie is about to be taken. Everyone will know you caved.',
-    continueLabel: 'Remove',
-  },
+    continueLabel: 'Remove'
+  }
 ];
 
 let gauntletState = null;
@@ -350,10 +238,10 @@ async function advanceGauntlet() {
   let photoId = null;
   try {
     const capture = await chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO' });
-    if (capture?.success) {
-      photoId = `removal_${siteId}_${Date.now()}`;
+    if (capture && capture.success) {
+      photoId = 'removal_' + siteId + '_' + Date.now();
     }
-  } catch (_e) {
+  } catch (e) {
     // Camera denied or failed — proceed without photo
   }
 
@@ -361,12 +249,12 @@ async function advanceGauntlet() {
     type: 'LOG_REMOVAL',
     siteId,
     siteLabel,
-    photoId,
+    photoId
   });
 
   const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId });
-  if (result?.success) {
-    await loadRestrictions();
+  if (result && result.success) {
+    await loadBlockedSites();
     await loadRemovalStats();
   }
 }
@@ -391,26 +279,32 @@ async function loadStats() {
 
     const level = getShameLevel(threeDayCount);
     shameLevelEl.textContent = level.name;
-    shameLevelContainer.className = `shame-level ${level.class}`;
+    shameLevelContainer.className = 'shame-level ' + level.class;
   } catch (error) {
     console.error('Failed to load stats:', error);
   }
 }
 
-// --- Tracker tab (analytics only) ---
+// --- Tracker tab ---
+
+let lastTrackingData = {};
 
 async function loadTrackedSites() {
-  const sites = await chrome.runtime.sendMessage({ type: 'GET_TRACKED_SITES' });
-  renderTrackedSites(sites || []);
+  const [sites, tracking] = await Promise.all([
+    chrome.runtime.sendMessage({ type: 'GET_TRACKED_SITES' }),
+    chrome.runtime.sendMessage({ type: 'GET_TRACKING_DATA' })
+  ]);
+  lastTrackingData = tracking || {};
+  renderTrackedSites(sites || [], lastTrackingData);
   await loadAvailableTrackingPresets();
 }
 
 // Compact daily-limit label: 3600 -> "1h", 1800 -> "30m", 5400 -> "1h 30m"
 function formatLimitShort(seconds) {
   const m = Math.round(seconds / 60);
-  if (m >= 60 && m % 60 === 0) return `${m / 60}h`;
-  if (m < 60) return `${Math.max(1, m)}m`;
-  return `${Math.floor(m / 60)}h ${m % 60}m`;
+  if (m >= 60 && m % 60 === 0) return (m / 60) + 'h';
+  if (m < 60) return Math.max(1, m) + 'm';
+  return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
 }
 
 async function loadAvailableTrackingPresets() {
@@ -446,7 +340,7 @@ function renderTrackingPresetSuggestions(presets) {
     addBtn.title = 'Add';
     addBtn.addEventListener('click', async () => {
       const result = await chrome.runtime.sendMessage({ type: 'ADD_TRACKED_SITE', site: preset });
-      if (result?.success) {
+      if (result && result.success) {
         await loadTrackedSites();
         await loadTrackingData();
       }
@@ -465,31 +359,135 @@ async function reloadTracker() {
   await loadTrackingData();
 }
 
-// Tracker tab is analytics-only: simple add/remove rows. Limits are managed in the Blocker tab.
-function renderTrackedSites(sites) {
+async function setSiteLimitMinutes(siteId, minutes) {
+  const result = await chrome.runtime.sendMessage({
+    type: 'SET_SITE_LIMIT',
+    siteId,
+    limitSeconds: minutes > 0 ? minutes * 60 : 0
+  });
+  if (result && result.success) await reloadTracker();
+}
+
+function renderTrackedSites(sites, tracking) {
   trackedListEl.innerHTML = '';
   for (const site of sites) {
+    const usedSec = (tracking[site.id] && tracking[site.id].time) || 0;
+    const capSec = Number(site.dailyLimitSeconds) > 0 ? Number(site.dailyLimitSeconds) : 0;
+    const hasLimit = capSec > 0;
+    const over = hasLimit && usedSec >= capSec;
+
     const item = document.createElement('div');
     item.className = 'site-item site-item-track';
+
+    // Main row: label + limit chip + remove
+    const main = document.createElement('div');
+    main.className = 'tracked-main';
 
     const label = document.createElement('span');
     label.className = 'site-label site-label-track';
     label.textContent = site.label || site.id;
+
+    const right = document.createElement('div');
+    right.className = 'tracked-right';
+
+    const chip = document.createElement('button');
+    chip.className = 'limit-chip' + (hasLimit ? ' is-set' : '') + (over ? ' is-over' : '');
+    chip.textContent = hasLimit ? (over ? 'BLOCKED' : formatLimitShort(capSec)) : '+ LIMIT';
+    chip.title = hasLimit ? 'Edit daily limit' : 'Set a daily limit';
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'site-remove';
     removeBtn.textContent = '×';
     removeBtn.title = 'Remove';
     removeBtn.addEventListener('click', async () => {
-      const result = await chrome.runtime.sendMessage({
-        type: 'REMOVE_TRACKED_SITE',
-        siteId: site.id,
-      });
-      if (result?.success) await reloadTracker();
+      const result = await chrome.runtime.sendMessage({ type: 'REMOVE_TRACKED_SITE', siteId: site.id });
+      if (result && result.success) await reloadTracker();
     });
 
-    item.appendChild(label);
-    item.appendChild(removeBtn);
+    right.appendChild(chip);
+    right.appendChild(removeBtn);
+    main.appendChild(label);
+    main.appendChild(right);
+    item.appendChild(main);
+
+    // Usage bar (only when a limit is set)
+    if (hasLimit) {
+      const usage = document.createElement('div');
+      usage.className = 'limit-usage' + (over ? ' is-over' : '');
+
+      const barTrack = document.createElement('div');
+      barTrack.className = 'limit-usage-track';
+      const fill = document.createElement('div');
+      fill.className = 'limit-usage-fill';
+      fill.style.width = Math.min(100, (usedSec / capSec) * 100) + '%';
+      barTrack.appendChild(fill);
+
+      const text = document.createElement('span');
+      text.className = 'limit-usage-text';
+      text.textContent = formatTime(usedSec) + ' / ' + formatLimitShort(capSec) + (over ? ' · OVER' : '');
+
+      usage.appendChild(barTrack);
+      usage.appendChild(text);
+      item.appendChild(usage);
+    }
+
+    // Inline editor (hidden until the chip is clicked)
+    const editor = document.createElement('div');
+    editor.className = 'limit-editor';
+    editor.style.display = 'none';
+
+    const inputRow = document.createElement('div');
+    inputRow.className = 'limit-input-row';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'limit-minutes';
+    input.min = '1';
+    input.max = '1440';
+    input.step = '1';
+    input.value = String(hasLimit ? Math.max(1, Math.round(capSec / 60)) : 60);
+
+    const unit = document.createElement('span');
+    unit.className = 'limit-unit';
+    unit.textContent = 'min / day';
+
+    inputRow.appendChild(input);
+    inputRow.appendChild(unit);
+
+    const actions = document.createElement('div');
+    actions.className = 'limit-editor-actions';
+
+    const setBtn = document.createElement('button');
+    setBtn.className = 'limit-set';
+    setBtn.textContent = hasLimit ? 'Update' : 'Set';
+    const applyLimit = async () => {
+      let mins = parseInt(input.value, 10);
+      if (!Number.isFinite(mins)) mins = 60;
+      mins = Math.max(1, Math.min(1440, mins));
+      await setSiteLimitMinutes(site.id, mins);
+    };
+    setBtn.addEventListener('click', applyLimit);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyLimit(); });
+    actions.appendChild(setBtn);
+
+    if (hasLimit) {
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'limit-clear';
+      clearBtn.textContent = 'Clear';
+      clearBtn.addEventListener('click', () => setSiteLimitMinutes(site.id, 0));
+      actions.appendChild(clearBtn);
+    }
+
+    editor.appendChild(inputRow);
+    editor.appendChild(actions);
+    item.appendChild(editor);
+
+    chip.addEventListener('click', () => {
+      const open = editor.style.display !== 'none';
+      editor.style.display = open ? 'none' : 'flex';
+      if (!open) input.focus();
+    });
+
     trackedListEl.appendChild(item);
   }
 }
@@ -522,7 +520,7 @@ async function loadTrackingData() {
 function renderTrackedBreakdown(entries) {
   trackedBreakdownEl.innerHTML = '';
 
-  const active = entries.filter((e) => e.visits > 0 || e.time > 0);
+  const active = entries.filter(e => e.visits > 0 || e.time > 0);
   if (active.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'breakdown-empty';
@@ -531,7 +529,7 @@ function renderTrackedBreakdown(entries) {
     return;
   }
 
-  const maxTime = Math.max(1, ...active.map((e) => e.time));
+  const maxTime = Math.max(1, ...active.map(e => e.time));
 
   for (const entry of active) {
     const row = document.createElement('div');
@@ -543,13 +541,13 @@ function renderTrackedBreakdown(entries) {
 
     const stats = document.createElement('span');
     stats.className = 'breakdown-stats';
-    stats.textContent = `${entry.visits} · ${formatTime(entry.time)}`;
+    stats.textContent = entry.visits + ' · ' + formatTime(entry.time);
 
     const barTrack = document.createElement('div');
     barTrack.className = 'breakdown-bar-track';
     const bar = document.createElement('div');
     bar.className = 'breakdown-bar';
-    bar.style.width = `${(entry.time / maxTime) * 100}%`;
+    bar.style.width = (entry.time / maxTime) * 100 + '%';
     barTrack.appendChild(bar);
 
     row.appendChild(label);
@@ -564,23 +562,23 @@ async function addTrackedSite() {
   if (!raw.trim()) return;
 
   const hostname = extractHostname(raw);
-  if (!hostname?.includes('.')) return;
+  if (!hostname || !hostname.includes('.')) return;
 
   const id = hostname.replace(/^www\./, '');
   const domains = [hostname];
   if (!hostname.startsWith('www.')) {
-    domains.push(`www.${hostname}`);
+    domains.push('www.' + hostname);
   }
 
   const site = {
     id,
     label: id,
     domains,
-    builtin: false,
+    builtin: false
   };
 
   const result = await chrome.runtime.sendMessage({ type: 'ADD_TRACKED_SITE', site });
-  if (result?.success) {
+  if (result && result.success) {
     trackSiteInput.value = '';
     await loadTrackedSites();
     await loadTrackingData();
@@ -589,7 +587,7 @@ async function addTrackedSite() {
 
 async function loadRemovalStats() {
   const log = await chrome.runtime.sendMessage({ type: 'GET_REMOVAL_LOG' });
-  surrenderedEl.textContent = log?.length || 0;
+  surrenderedEl.textContent = (log && log.length) || 0;
 }
 
 // --- Event listeners ---
@@ -599,19 +597,6 @@ siteInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') addSite();
 });
 
-// Add-row mode toggle (Always / Limit)
-const addModeBtns = document.querySelectorAll('[data-addmode]');
-const addLimitWrap = document.getElementById('add-limit-wrap');
-addModeBtns.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    addMode = btn.dataset.addmode;
-    addModeBtns.forEach((b) => {
-      b.classList.toggle('active', b === btn);
-    });
-    if (addLimitWrap) addLimitWrap.style.display = addMode === 'limit' ? 'flex' : 'none';
-  });
-});
-
 addTrackBtn.addEventListener('click', addTrackedSite);
 trackSiteInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') addTrackedSite();
@@ -619,29 +604,29 @@ trackSiteInput.addEventListener('keydown', (e) => {
 
 viewGalleryBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('blocked/blocked.html?gallery=true'),
+    url: chrome.runtime.getURL('blocked/blocked.html?gallery=true')
   });
 });
 
 viewReportBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('report/report.html'),
+    url: chrome.runtime.getURL('report/report.html')
   });
 });
 
 testBlockBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('blocked/blocked.html'),
+    url: chrome.runtime.getURL('blocked/blocked.html')
   });
 });
 
 viewTrackingReportBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('report/report.html?tab=tracking'),
+    url: chrome.runtime.getURL('report/report.html?tab=tracking')
   });
 });
 
 // Load on popup open
 loadStats();
-loadRestrictions();
+loadBlockedSites();
 loadRemovalStats();

@@ -1,4 +1,4 @@
-@import url("../assets/fonts/fonts.css");
+@import url('../assets/fonts/fonts.css');
 
 * {
   margin: 0;
@@ -12,11 +12,11 @@
   --border: #2a2a2d;
   --text: #ededef;
   --text-muted: #6b6b70;
-  --accent: #e4ff1a;
+  --accent: #E4FF1A;
   --accent-dim: rgba(228, 255, 26, 0.12);
-  --danger: #ff2d2d;
+  --danger: #FF2D2D;
   --danger-dim: rgba(255, 45, 45, 0.1);
-  --track: #00d4ff;
+  --track: #00D4FF;
   --track-dim: rgba(0, 212, 255, 0.1);
 }
 
@@ -24,14 +24,14 @@ body {
   width: 320px;
   background: var(--bg);
   color: var(--text);
-  font-family: "Space Mono", monospace;
+  font-family: 'Space Mono', monospace;
   font-size: 12px;
   position: relative;
   overflow-x: hidden;
 }
 
 body::before {
-  content: "";
+  content: '';
   position: fixed;
   top: 0;
   left: 0;
@@ -53,7 +53,7 @@ body::before {
 }
 
 h1 {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 1.6rem;
   color: var(--accent);
   text-align: center;
@@ -66,11 +66,11 @@ h1 {
 }
 
 h1::after {
-  content: "v1.3";
+  content: 'v1.3';
   position: absolute;
   right: 0;
   bottom: 14px;
-  font-family: "Space Mono", monospace;
+  font-family: 'Space Mono', monospace;
   font-size: 0.5rem;
   color: var(--text-muted);
   letter-spacing: 0;
@@ -89,7 +89,7 @@ h1::after {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -136,7 +136,7 @@ h1::after {
 
 .stat-value {
   display: block;
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 1.6rem;
   color: var(--accent);
   line-height: 1;
@@ -177,28 +177,17 @@ h1::after {
 
 .shame-level .level {
   color: var(--accent);
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 1rem;
   letter-spacing: 0.08em;
 }
 
 /* Shame level colors */
-.shame-level.level-1 .level {
-  color: var(--text-muted);
-}
-.shame-level.level-2 .level {
-  color: #ffb800;
-}
-.shame-level.level-3 .level {
-  color: #ff6b00;
-}
-.shame-level.level-4 .level {
-  color: var(--danger);
-}
-.shame-level.level-5 .level {
-  color: var(--danger);
-  text-shadow: 0 0 8px rgba(255, 45, 45, 0.6);
-}
+.shame-level.level-1 .level { color: var(--text-muted); }
+.shame-level.level-2 .level { color: #FFB800; }
+.shame-level.level-3 .level { color: #FF6B00; }
+.shame-level.level-4 .level { color: var(--danger); }
+.shame-level.level-5 .level { color: var(--danger); text-shadow: 0 0 8px rgba(255, 45, 45, 0.6); }
 
 /* Blocked sites */
 .blocked-sites {
@@ -208,7 +197,7 @@ h1::after {
 .blocked-sites h3,
 .tracked-sites h3,
 .tracked-breakdown h3 {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 0.85rem;
   color: var(--text-muted);
   letter-spacing: 0.12em;
@@ -250,7 +239,7 @@ h1::after {
   padding: 0 4px;
   line-height: 1;
   transition: color 0.1s;
-  font-family: "Space Mono", monospace;
+  font-family: 'Space Mono', monospace;
 }
 
 .site-remove:hover {
@@ -270,7 +259,7 @@ h1::after {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 7px 10px;
-  font-family: "Space Mono", monospace;
+  font-family: 'Space Mono', monospace;
   font-size: 0.7rem;
   outline: none;
   transition: border-color 0.1s;
@@ -293,7 +282,7 @@ h1::after {
   color: #000;
   border: 1px solid var(--accent);
   padding: 7px 14px;
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -336,7 +325,7 @@ h1::after {
   border: 1px solid var(--accent);
   padding: 10px 15px;
   cursor: pointer;
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 0.9rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -386,7 +375,7 @@ h1::after {
 
 /* Preset suggestions */
 .preset-suggestions h3 {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 0.75rem;
   color: var(--text-muted);
   letter-spacing: 0.1em;
@@ -415,7 +404,7 @@ h1::after {
   padding: 0 4px;
   line-height: 1;
   transition: color 0.1s;
-  font-family: "Space Mono", monospace;
+  font-family: 'Space Mono', monospace;
 }
 
 .preset-add:hover {
@@ -492,110 +481,65 @@ h1::after {
   min-width: 0;
 }
 
-/* Tracked sites (analytics list) */
+/* Tracked sites */
 .tracked-sites {
   margin-bottom: 14px;
 }
 
-/* --- Blocker tab: restrictions (Always block / Limit N min) --- */
-
-/* Restriction rows are vertical containers: mode toggle + usage bar + minutes editor */
-.restriction-item {
+/* Tracked-site rows become vertical containers to hold the limit controls */
+.site-item-track {
   display: block;
   padding: 8px 10px;
 }
 
-.restriction-main {
+.tracked-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.restriction-controls {
+.tracked-right {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
 }
 
-/* Segmented ALWAYS | LIMIT toggle */
-.mode-seg {
-  display: flex;
-  border: 1px solid var(--border);
-}
-
-.mode-opt {
+/* Limit chip — toggles the inline editor */
+.limit-chip {
   background: transparent;
-  border: none;
+  border: 1px dashed var(--border);
   color: var(--text-muted);
-  font-family: "Bebas Neue", sans-serif;
-  font-size: 0.72rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 3px 9px;
+  padding: 2px 7px;
   cursor: pointer;
   transition: all 0.1s;
   line-height: 1.4;
 }
 
-.mode-opt + .mode-opt {
-  border-left: 1px solid var(--border);
+.limit-chip:hover {
+  border-color: var(--track);
+  color: var(--track);
 }
 
-.mode-opt:hover {
-  color: var(--text);
+.limit-chip.is-set {
+  border-style: solid;
+  border-color: var(--track);
+  color: var(--track);
+  background: var(--track-dim);
 }
 
-.mode-opt.active {
-  background: var(--accent);
-  color: #000;
+.limit-chip.is-over {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-dim);
 }
 
-/* Add-restriction block */
-.add-restriction {
-  margin-top: 6px;
-}
-
-.add-restriction > input[type="text"] {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 7px 10px;
-  font-family: "Space Mono", monospace;
-  font-size: 0.7rem;
-  outline: none;
-  transition: border-color 0.1s;
-}
-
-.add-restriction > input[type="text"]:focus {
-  border-color: var(--accent);
-}
-
-.add-restriction > input[type="text"]::placeholder {
-  color: var(--text-muted);
-}
-
-.add-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-
-.add-limit-wrap {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.add-row .btn-add {
-  margin-left: auto;
-}
-
-/* Usage bar under a limited restriction */
+/* Usage bar under a limited site */
 .limit-usage {
   margin-top: 7px;
 }
@@ -608,7 +552,7 @@ h1::after {
 
 .limit-usage-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--track);
   min-width: 0;
   transition: width 0.2s;
 }
@@ -630,7 +574,7 @@ h1::after {
   color: var(--danger);
 }
 
-/* Inline minutes editor */
+/* Inline limit editor */
 .limit-editor {
   margin-top: 8px;
   padding-top: 8px;
@@ -654,14 +598,14 @@ h1::after {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 5px 6px;
-  font-family: "Space Mono", monospace;
+  font-family: 'Space Mono', monospace;
   font-size: 0.7rem;
   outline: none;
   transition: border-color 0.1s;
 }
 
 .limit-minutes:focus {
-  border-color: var(--accent);
+  border-color: var(--track);
 }
 
 .limit-unit {
@@ -676,21 +620,36 @@ h1::after {
   gap: 6px;
 }
 
-.limit-set {
-  font-family: "Bebas Neue", sans-serif;
+.limit-set,
+.limit-clear {
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 5px 12px;
   cursor: pointer;
   transition: all 0.1s;
-  background: var(--accent);
+}
+
+.limit-set {
+  background: var(--track);
   color: #000;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--track);
 }
 
 .limit-set:hover {
-  background: #f0ff4d;
+  background: #33e0ff;
+}
+
+.limit-clear {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.limit-clear:hover {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 /* Removal gauntlet modal */
@@ -714,7 +673,7 @@ h1::after {
 }
 
 .gauntlet-step {
-  font-family: "Space Mono", monospace;
+  font-family: 'Space Mono', monospace;
   font-size: 0.6rem;
   color: var(--text-muted);
   letter-spacing: 0.1em;
@@ -722,7 +681,7 @@ h1::after {
 }
 
 .gauntlet-title {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 1.3rem;
   color: var(--danger);
   letter-spacing: 0.1em;
@@ -748,7 +707,7 @@ h1::after {
 .gauntlet-btn {
   flex: 1;
   padding: 10px 12px;
-  font-family: "Bebas Neue", sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
