@@ -8,16 +8,23 @@ const DEFAULT_SITES = [
   {
     id: 'twitter',
     label: 'Twitter / X',
-    domains: ['twitter.com', 'x.com', 'www.twitter.com', 'www.x.com', 'mobile.twitter.com', 'mobile.x.com'],
-    builtin: true
+    domains: [
+      'twitter.com',
+      'x.com',
+      'www.twitter.com',
+      'www.x.com',
+      'mobile.twitter.com',
+      'mobile.x.com',
+    ],
+    builtin: true,
   },
   {
     id: 'youtube-shorts',
     label: 'YouTube Shorts',
     domains: ['youtube.com/shorts', 'www.youtube.com/shorts', 'm.youtube.com/shorts'],
     pathOnly: true,
-    builtin: true
-  }
+    builtin: true,
+  },
 ];
 
 const DEFAULT_TRACKED_SITES = [
@@ -25,62 +32,69 @@ const DEFAULT_TRACKED_SITES = [
     id: 'instagram',
     label: 'Instagram',
     domains: ['instagram.com', 'www.instagram.com'],
-    builtin: true
+    builtin: true,
   },
   {
     id: 'facebook',
     label: 'Facebook',
     domains: ['facebook.com', 'www.facebook.com', 'web.facebook.com', 'm.facebook.com'],
-    builtin: true
+    builtin: true,
   },
   {
     id: 'tiktok',
     label: 'TikTok',
     domains: ['tiktok.com', 'www.tiktok.com'],
-    builtin: true
+    builtin: true,
   },
   {
     id: 'reddit',
     label: 'Reddit',
     domains: ['reddit.com', 'www.reddit.com', 'old.reddit.com'],
-    builtin: true
+    builtin: true,
   },
   {
     id: 'twitter',
     label: 'Twitter / X',
-    domains: ['twitter.com', 'x.com', 'www.twitter.com', 'www.x.com', 'mobile.twitter.com', 'mobile.x.com'],
-    builtin: true
+    domains: [
+      'twitter.com',
+      'x.com',
+      'www.twitter.com',
+      'www.x.com',
+      'mobile.twitter.com',
+      'mobile.x.com',
+    ],
+    builtin: true,
   },
   {
     id: 'youtube',
     label: 'YouTube',
     domains: ['youtube.com', 'www.youtube.com', 'm.youtube.com'],
-    builtin: true
+    builtin: true,
   },
   {
     id: 'snapchat',
     label: 'Snapchat',
     domains: ['snapchat.com', 'www.snapchat.com', 'web.snapchat.com'],
-    builtin: true
+    builtin: true,
   },
   {
     id: 'linkedin',
     label: 'LinkedIn',
     domains: ['linkedin.com', 'www.linkedin.com'],
-    builtin: true
+    builtin: true,
   },
   {
     id: 'pinterest',
     label: 'Pinterest',
     domains: ['pinterest.com', 'www.pinterest.com'],
-    builtin: true
+    builtin: true,
   },
   {
     id: 'tumblr',
     label: 'Tumblr',
     domains: ['tumblr.com', 'www.tumblr.com'],
-    builtin: true
-  }
+    builtin: true,
+  },
 ];
 
 // Runtime cache of blocked sites
@@ -128,7 +142,7 @@ function getMatchingTrackedSite(url) {
         return site;
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Invalid URL
   }
   return null;
@@ -148,35 +162,35 @@ async function syncBlockRules() {
         action: {
           type: 'redirect',
           redirect: {
-            extensionPath: `/blocked/blocked.html?site=${encodeURIComponent(site.id)}`
-          }
+            extensionPath: `/blocked/blocked.html?site=${encodeURIComponent(site.id)}`,
+          },
         },
         condition: {
           urlFilter: `||${domain}`,
-          resourceTypes: ['main_frame']
-        }
+          resourceTypes: ['main_frame'],
+        },
       });
     }
   }
 
   // Get existing dynamic rules to remove them
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  const removeRuleIds = existingRules.map(r => r.id);
+  const removeRuleIds = existingRules.map((r) => r.id);
 
   try {
     await chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds,
-      addRules: rules
+      addRules: rules,
     });
   } catch (err) {
     console.error('[SiteBlocker] Failed to update rules, retrying...', err);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     try {
       const retryExisting = await chrome.declarativeNetRequest.getDynamicRules();
-      const retryRemoveIds = retryExisting.map(r => r.id);
+      const retryRemoveIds = retryExisting.map((r) => r.id);
       await chrome.declarativeNetRequest.updateDynamicRules({
         removeRuleIds: retryRemoveIds,
-        addRules: rules
+        addRules: rules,
       });
     } catch (retryErr) {
       console.error('[SiteBlocker] Retry also failed:', retryErr);
@@ -189,7 +203,9 @@ async function verifyBlockRules() {
   const expectedCount = currentBlockedSites.reduce((sum, site) => sum + site.domains.length, 0);
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
   if (existingRules.length !== expectedCount) {
-    console.warn(`[SiteBlocker] Rule mismatch: expected ${expectedCount}, found ${existingRules.length}. Re-syncing...`);
+    console.warn(
+      `[SiteBlocker] Rule mismatch: expected ${expectedCount}, found ${existingRules.length}. Re-syncing...`,
+    );
     await syncBlockRules();
   }
 }
@@ -202,18 +218,16 @@ function getMatchingSite(url) {
       if (site.pathOnly) {
         for (const domain of site.domains) {
           const [host, ...pathParts] = domain.split('/');
-          const path = '/' + pathParts.join('/');
+          const path = `/${pathParts.join('/')}`;
           if (parsed.hostname === host && parsed.pathname.startsWith(path)) {
             return site;
           }
         }
-      } else {
-        if (site.domains.includes(parsed.hostname)) {
-          return site;
-        }
+      } else if (site.domains.includes(parsed.hostname)) {
+        return site;
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Invalid URL
   }
   return null;
@@ -228,7 +242,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   const site = getMatchingSite(details.url);
   if (site) {
     await chrome.tabs.update(details.tabId, {
-      url: chrome.runtime.getURL(`blocked/blocked.html?site=${encodeURIComponent(site.id)}`)
+      url: chrome.runtime.getURL(`blocked/blocked.html?site=${encodeURIComponent(site.id)}`),
     });
   }
 });
@@ -256,7 +270,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     } else {
       activeTracking = { tabId: activeInfo.tabId, siteId: null, startTime: null };
     }
-  } catch (e) {
+  } catch (_e) {
     activeTracking = { tabId: null, siteId: null, startTime: null };
   }
 });
@@ -271,7 +285,7 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
     try {
       const [tab] = await chrome.tabs.query({ active: true, windowId });
       await flushActiveTime();
-      if (tab && tab.url) {
+      if (tab?.url) {
         const site = getMatchingTrackedSite(tab.url);
         if (site) {
           activeTracking = { tabId: tab.id, siteId: site.id, startTime: Date.now() };
@@ -281,14 +295,14 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
       } else {
         activeTracking = { tabId: null, siteId: null, startTime: null };
       }
-    } catch (e) {
+    } catch (_e) {
       activeTracking = { tabId: null, siteId: null, startTime: null };
     }
   }
 });
 
 // Track URL changes within the active tab (SPA navigation)
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, _tab) => {
   if (changeInfo.url && tabId === activeTracking.tabId) {
     await initReady;
     await flushActiveTime();
@@ -354,7 +368,7 @@ async function openDatabase() {
       if (!database.objectStoreNames.contains(PHOTOS_STORE)) {
         const store = database.createObjectStore(PHOTOS_STORE, {
           keyPath: 'id',
-          autoIncrement: true
+          autoIncrement: true,
         });
         store.createIndex('timestamp', 'timestamp', { unique: false });
       }
@@ -372,7 +386,7 @@ async function savePhoto(dataUrl) {
 
     const photo = {
       data: dataUrl,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     const request = store.add(photo);
@@ -421,7 +435,9 @@ async function cleanupOldPhotos() {
         }
         cursor.continue();
       } else {
-        toDelete.forEach(key => store.delete(key));
+        toDelete.forEach((key) => {
+          store.delete(key);
+        });
         resolve();
       }
     };
@@ -452,7 +468,7 @@ async function getPhotoStorageInfo() {
       // data URL: "data:image/...;base64,<payload>". Decoded size ≈ payload.length * 3 / 4.
       const commaIdx = photo.data.indexOf(',');
       const payloadLen = commaIdx >= 0 ? photo.data.length - commaIdx - 1 : photo.data.length;
-      bytes += Math.floor(payloadLen * 3 / 4);
+      bytes += Math.floor((payloadLen * 3) / 4);
     }
   }
   return {
@@ -460,14 +476,20 @@ async function getPhotoStorageInfo() {
     bytes,
     limit: currentPhotoLimit,
     minLimit: MIN_PHOTO_LIMIT,
-    maxLimit: MAX_PHOTO_LIMIT
+    maxLimit: MAX_PHOTO_LIMIT,
   };
 }
 
 // Get today's date key in YYYY-MM-DD format
 function getTodayKey() {
   const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return (
+    d.getFullYear() +
+    '-' +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
 }
 
 // Sum dailyCounts for the last n calendar days
@@ -477,7 +499,12 @@ function sumLastNDays(dailyCounts, n) {
   for (let i = 0; i < n; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const key =
+      d.getFullYear() +
+      '-' +
+      String(d.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(d.getDate()).padStart(2, '0');
     total += dailyCounts[key] || 0;
   }
   return total;
@@ -494,7 +521,13 @@ function pruneDailyCounts(dailyCounts) {
   for (let i = 0; i < 30; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    validKeys.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+    validKeys.add(
+      d.getFullYear() +
+        '-' +
+        String(d.getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(d.getDate()).padStart(2, '0'),
+    );
   }
   const pruned = {};
   for (const key of Object.keys(dailyCounts)) {
@@ -507,7 +540,7 @@ function pruneDailyCounts(dailyCounts) {
 async function incrementVisit(siteId) {
   const result = await chrome.storage.local.get('trackingData');
   const data = result.trackingData || { visits: {}, time: {} };
-  const key = siteId + ':' + getTodayKey();
+  const key = `${siteId}:${getTodayKey()}`;
   data.visits[key] = (data.visits[key] || 0) + 1;
   pruneTrackingData(data);
   await chrome.storage.local.set({ trackingData: data });
@@ -524,7 +557,7 @@ async function flushActiveTime() {
 
   const result = await chrome.storage.local.get('trackingData');
   const data = result.trackingData || { visits: {}, time: {} };
-  const key = activeTracking.siteId + ':' + getTodayKey();
+  const key = `${activeTracking.siteId}:${getTodayKey()}`;
   data.time[key] = (data.time[key] || 0) + cappedElapsed;
   await chrome.storage.local.set({ trackingData: data });
 
@@ -538,7 +571,13 @@ function pruneTrackingData(data) {
   for (let i = 0; i < 30; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    validKeys.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+    validKeys.add(
+      d.getFullYear() +
+        '-' +
+        String(d.getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(d.getDate()).padStart(2, '0'),
+    );
   }
   for (const key of Object.keys(data.visits)) {
     const datepart = key.split(':')[1];
@@ -558,11 +597,11 @@ async function getTrackingDataForToday() {
   const todayKey = getTodayKey();
   const sites = {};
   for (const site of currentTrackedSites) {
-    const vKey = site.id + ':' + todayKey;
-    const tKey = site.id + ':' + todayKey;
+    const vKey = `${site.id}:${todayKey}`;
+    const tKey = `${site.id}:${todayKey}`;
     sites[site.id] = {
       visits: data.visits[vKey] || 0,
-      time: data.time[tKey] || 0
+      time: data.time[tKey] || 0,
     };
   }
   return sites;
@@ -574,19 +613,24 @@ async function getTrackingReportData() {
   const result = await chrome.storage.local.get('trackingData');
   const data = result.trackingData || { visits: {}, time: {} };
   const today = new Date();
-  const todayKey = getTodayKey();
+  const _todayKey = getTodayKey();
 
   // Daily totals (all sites combined)
   const dailyBreakdown = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const dateKey =
+      d.getFullYear() +
+      '-' +
+      String(d.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(d.getDate()).padStart(2, '0');
     let dayTime = 0;
     let dayVisits = 0;
     for (const site of currentTrackedSites) {
-      dayTime += data.time[site.id + ':' + dateKey] || 0;
-      dayVisits += data.visits[site.id + ':' + dateKey] || 0;
+      dayTime += data.time[`${site.id}:${dateKey}`] || 0;
+      dayVisits += data.visits[`${site.id}:${dateKey}`] || 0;
     }
     dailyBreakdown.push({ date: dateKey, time: dayTime, visits: dayVisits });
   }
@@ -596,22 +640,52 @@ async function getTrackingReportData() {
   const siteBreakdownWeek = [];
   const siteBreakdownMonth = [];
   for (const site of currentTrackedSites) {
-    let todaySiteTime = 0, todaySiteVisits = 0;
-    let weekSiteTime = 0, weekSiteVisits = 0;
-    let monthSiteTime = 0, monthSiteVisits = 0;
+    let todaySiteTime = 0;
+    let todaySiteVisits = 0;
+    let weekSiteTime = 0;
+    let weekSiteVisits = 0;
+    let monthSiteTime = 0;
+    let monthSiteVisits = 0;
     for (let i = 0; i < 30; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const dateKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      const t = data.time[site.id + ':' + dateKey] || 0;
-      const v = data.visits[site.id + ':' + dateKey] || 0;
-      if (i === 0) { todaySiteTime = t; todaySiteVisits = v; }
-      if (i < 7) { weekSiteTime += t; weekSiteVisits += v; }
-      monthSiteTime += t; monthSiteVisits += v;
+      const dateKey =
+        d.getFullYear() +
+        '-' +
+        String(d.getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(d.getDate()).padStart(2, '0');
+      const t = data.time[`${site.id}:${dateKey}`] || 0;
+      const v = data.visits[`${site.id}:${dateKey}`] || 0;
+      if (i === 0) {
+        todaySiteTime = t;
+        todaySiteVisits = v;
+      }
+      if (i < 7) {
+        weekSiteTime += t;
+        weekSiteVisits += v;
+      }
+      monthSiteTime += t;
+      monthSiteVisits += v;
     }
-    siteBreakdownToday.push({ id: site.id, label: site.label, visits: todaySiteVisits, time: todaySiteTime });
-    siteBreakdownWeek.push({ id: site.id, label: site.label, visits: weekSiteVisits, time: weekSiteTime });
-    siteBreakdownMonth.push({ id: site.id, label: site.label, visits: monthSiteVisits, time: monthSiteTime });
+    siteBreakdownToday.push({
+      id: site.id,
+      label: site.label,
+      visits: todaySiteVisits,
+      time: todaySiteTime,
+    });
+    siteBreakdownWeek.push({
+      id: site.id,
+      label: site.label,
+      visits: weekSiteVisits,
+      time: weekSiteTime,
+    });
+    siteBreakdownMonth.push({
+      id: site.id,
+      label: site.label,
+      visits: monthSiteVisits,
+      time: monthSiteTime,
+    });
   }
   siteBreakdownToday.sort((a, b) => b.time - a.time);
   siteBreakdownWeek.sort((a, b) => b.time - a.time);
@@ -625,10 +699,15 @@ async function getTrackingReportData() {
     for (let i = 0; i < 7; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() - (w * 7 + i));
-      const dateKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const dateKey =
+        d.getFullYear() +
+        '-' +
+        String(d.getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(d.getDate()).padStart(2, '0');
       for (const site of currentTrackedSites) {
-        weekTime += data.time[site.id + ':' + dateKey] || 0;
-        weekVisits += data.visits[site.id + ':' + dateKey] || 0;
+        weekTime += data.time[`${site.id}:${dateKey}`] || 0;
+        weekVisits += data.visits[`${site.id}:${dateKey}`] || 0;
       }
     }
     weeklySummaries.push({ weekNumber: w + 1, time: weekTime, visits: weekVisits });
@@ -643,9 +722,10 @@ async function getTrackingReportData() {
   const monthVisits = dailyBreakdown.reduce((sum, d) => sum + d.visits, 0);
 
   // Insights
-  const daysWithActivity = dailyBreakdown.filter(d => d.time > 0).length;
+  const daysWithActivity = dailyBreakdown.filter((d) => d.time > 0).length;
   const avgDailyTime = daysWithActivity > 0 ? Math.round(monthTime / daysWithActivity) : 0;
-  const mostTimeSite = siteBreakdownMonth[0] && siteBreakdownMonth[0].time > 0 ? siteBreakdownMonth[0] : null;
+  const mostTimeSite =
+    siteBreakdownMonth[0] && siteBreakdownMonth[0].time > 0 ? siteBreakdownMonth[0] : null;
   const mostVisitedSite = [...siteBreakdownMonth].sort((a, b) => b.visits - a.visits)[0];
   const mostVisited = mostVisitedSite && mostVisitedSite.visits > 0 ? mostVisitedSite : null;
 
@@ -669,14 +749,14 @@ async function getTrackingReportData() {
     avgDailyTime,
     mostTimeSite,
     mostVisited,
-    worstDay
+    worstDay,
   };
 }
 
 // Add a tracked site
 async function addTrackedSite(siteEntry) {
   const sites = [...currentTrackedSites];
-  if (sites.some(s => s.id === siteEntry.id)) {
+  if (sites.some((s) => s.id === siteEntry.id)) {
     return { success: false, error: 'Site already tracked' };
   }
   sites.push(siteEntry);
@@ -686,14 +766,19 @@ async function addTrackedSite(siteEntry) {
 
 // Remove a tracked site
 async function removeTrackedSite(siteId) {
-  const sites = currentTrackedSites.filter(s => s.id !== siteId);
+  const sites = currentTrackedSites.filter((s) => s.id !== siteId);
   await saveTrackedSites(sites);
   return { success: true, sites };
 }
 
 // Get/update attempt stats
 async function getStats() {
-  const result = await chrome.storage.local.get(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts']);
+  const result = await chrome.storage.local.get([
+    'attemptCount',
+    'todayDate',
+    'todayCount',
+    'dailyCounts',
+  ]);
 
   const today = new Date().toDateString();
   let todayCount = result.todayCount || 0;
@@ -704,7 +789,7 @@ async function getStats() {
     await chrome.storage.local.set({ todayDate: today, todayCount: 0 });
   }
 
-  let dailyCounts = result.dailyCounts || {};
+  const dailyCounts = result.dailyCounts || {};
 
   // Migrate: if dailyCounts was never written, seed today's entry from todayCount
   const todayKey = getTodayKey();
@@ -718,12 +803,17 @@ async function getStats() {
   return {
     allTimeCount: result.attemptCount || 0,
     todayCount: todayCount,
-    threeDayCount: threeDayCount
+    threeDayCount: threeDayCount,
   };
 }
 
 async function incrementAttempt() {
-  const result = await chrome.storage.local.get(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts']);
+  const result = await chrome.storage.local.get([
+    'attemptCount',
+    'todayDate',
+    'todayCount',
+    'dailyCounts',
+  ]);
 
   const today = new Date().toDateString();
   let todayCount = result.todayCount || 0;
@@ -746,17 +836,21 @@ async function incrementAttempt() {
     attemptCount: newAllTime,
     todayDate: today,
     todayCount: newToday,
-    dailyCounts: dailyCounts
+    dailyCounts: dailyCounts,
   });
 
-  return { allTimeCount: newAllTime, todayCount: newToday, threeDayCount: sumLastThreeDays(dailyCounts) };
+  return {
+    allTimeCount: newAllTime,
+    todayCount: newToday,
+    threeDayCount: sumLastThreeDays(dailyCounts),
+  };
 }
 
 // Check if offscreen document exists
 async function hasOffscreenDocument() {
   const contexts = await chrome.runtime.getContexts({
     contextTypes: ['OFFSCREEN_DOCUMENT'],
-    documentUrls: [chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)]
+    documentUrls: [chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)],
   });
   return contexts.length > 0;
 }
@@ -770,7 +864,7 @@ async function createOffscreenDocument() {
   await chrome.offscreen.createDocument({
     url: OFFSCREEN_DOCUMENT_PATH,
     reasons: ['USER_MEDIA'],
-    justification: 'Capture webcam photo for shame display'
+    justification: 'Capture webcam photo for shame display',
   });
 }
 
@@ -779,7 +873,7 @@ async function closeOffscreenDocument() {
   if (await hasOffscreenDocument()) {
     try {
       await chrome.runtime.sendMessage({ type: 'CLEANUP' });
-    } catch (e) {
+    } catch (_e) {
       // Document may already be unresponsive
     }
     await chrome.offscreen.closeDocument();
@@ -792,11 +886,11 @@ async function capturePhoto() {
     await createOffscreenDocument();
 
     // Small delay to ensure document is ready
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     const response = await chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO' });
 
-    if (response && response.success) {
+    if (response?.success) {
       // Save photo and increment attempt
       await savePhoto(response.data);
       await incrementAttempt();
@@ -819,7 +913,7 @@ async function addBlockedSite(siteEntry) {
   const sites = [...currentBlockedSites];
 
   // Check for duplicate
-  if (sites.some(s => s.id === siteEntry.id)) {
+  if (sites.some((s) => s.id === siteEntry.id)) {
     return { success: false, error: 'Site already blocked' };
   }
 
@@ -830,7 +924,7 @@ async function addBlockedSite(siteEntry) {
 
 // Remove a blocked site
 async function removeBlockedSite(siteId) {
-  const sites = currentBlockedSites.filter(s => s.id !== siteId);
+  const sites = currentBlockedSites.filter((s) => s.id !== siteId);
   await saveBlockedSites(sites);
   return { success: true, sites };
 }
@@ -842,7 +936,7 @@ async function logRemoval(siteId, siteLabel, photoId) {
     siteId,
     siteLabel,
     timestamp: Date.now(),
-    photoId: photoId || null
+    photoId: photoId || null,
   });
   await chrome.storage.local.set({ removalLog: log });
 }
@@ -855,7 +949,7 @@ async function getRemovalLog() {
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Ignore messages from offscreen document (it handles CAPTURE_PHOTO internally)
-  if (sender.url && sender.url.includes('offscreen/offscreen.html')) {
+  if (sender.url?.includes('offscreen/offscreen.html')) {
     return false;
   }
 
@@ -885,13 +979,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'CLEAR_PHOTOS') {
-    clearAllPhotos().then(sendResponse).catch(err => sendResponse({ success: false, error: String(err) }));
+    clearAllPhotos()
+      .then(sendResponse)
+      .catch((err) => sendResponse({ success: false, error: String(err) }));
     return true;
   }
 
   if (message.type === 'GET_REPORT_DATA') {
     (async () => {
-      const result = await chrome.storage.local.get(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts', 'installDate']);
+      const result = await chrome.storage.local.get([
+        'attemptCount',
+        'todayDate',
+        'todayCount',
+        'dailyCounts',
+        'installDate',
+      ]);
       const dailyCounts = result.dailyCounts || {};
       const photos = await getPhotos();
 
@@ -900,7 +1002,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       for (let i = 29; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
-        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        const key =
+          d.getFullYear() +
+          '-' +
+          String(d.getMonth() + 1).padStart(2, '0') +
+          '-' +
+          String(d.getDate()).padStart(2, '0');
         dailyBreakdown.push({ date: key, count: dailyCounts[key] || 0 });
       }
 
@@ -910,7 +1017,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         for (let i = 0; i < 7; i++) {
           const d = new Date(today);
           d.setDate(d.getDate() - (w * 7 + i));
-          const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+          const key =
+            d.getFullYear() +
+            '-' +
+            String(d.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(d.getDate()).padStart(2, '0');
           weekTotal += dailyCounts[key] || 0;
         }
         weeklySummaries.push({ weekNumber: w + 1, total: weekTotal });
@@ -923,7 +1035,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       // Only count streaks from install date onward
       const installDate = result.installDate || dailyBreakdown[dailyBreakdown.length - 1].date;
-      const activeDays = dailyBreakdown.filter(d => d.date >= installDate);
+      const activeDays = dailyBreakdown.filter((d) => d.date >= installDate);
 
       let currentStreak = 0;
       for (let i = activeDays.length - 1; i >= 0; i--) {
@@ -931,10 +1043,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         else break;
       }
 
-      let longestStreak = 0, tempStreak = 0;
+      let longestStreak = 0;
+      let tempStreak = 0;
       for (const entry of activeDays) {
-        if (entry.count === 0) { tempStreak++; longestStreak = Math.max(longestStreak, tempStreak); }
-        else tempStreak = 0;
+        if (entry.count === 0) {
+          tempStreak++;
+          longestStreak = Math.max(longestStreak, tempStreak);
+        } else tempStreak = 0;
       }
 
       sendResponse({
@@ -948,7 +1063,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         worstDay,
         currentCleanStreak: currentStreak,
         longestCleanStreak: longestStreak,
-        photoCount: photos.length
+        photoCount: photos.length,
       });
     })();
     return true;
@@ -971,8 +1086,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'GET_AVAILABLE_PRESETS') {
     initReady.then(() => {
-      const blockedIds = new Set(currentBlockedSites.map(s => s.id));
-      sendResponse(DEFAULT_SITES.filter(s => !blockedIds.has(s.id)));
+      const blockedIds = new Set(currentBlockedSites.map((s) => s.id));
+      sendResponse(DEFAULT_SITES.filter((s) => !blockedIds.has(s.id)));
     });
     return true;
   }
@@ -1004,14 +1119,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'GET_AVAILABLE_TRACKING_PRESETS') {
     initReady.then(() => {
-      const trackedIds = new Set(currentTrackedSites.map(s => s.id));
-      sendResponse(DEFAULT_TRACKED_SITES.filter(s => !trackedIds.has(s.id)));
+      const trackedIds = new Set(currentTrackedSites.map((s) => s.id));
+      sendResponse(DEFAULT_TRACKED_SITES.filter((s) => !trackedIds.has(s.id)));
     });
     return true;
   }
 
   if (message.type === 'LOG_REMOVAL') {
-    logRemoval(message.siteId, message.siteLabel, message.photoId).then(() => sendResponse({ success: true }));
+    logRemoval(message.siteId, message.siteLabel, message.photoId).then(() =>
+      sendResponse({ success: true }),
+    );
     return true;
   }
 
@@ -1030,14 +1147,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
       // newValue is undefined when storage.local.clear() runs; fall back to defaults
       // so the in-memory cache stays usable. An explicit empty array means the user
       // removed all entries and is preserved as-is.
-      currentBlockedSites = changes.blockedSites.newValue === undefined
-        ? DEFAULT_SITES
-        : changes.blockedSites.newValue;
+      currentBlockedSites =
+        changes.blockedSites.newValue === undefined ? DEFAULT_SITES : changes.blockedSites.newValue;
     }
     if (changes.trackedSites) {
-      currentTrackedSites = changes.trackedSites.newValue === undefined
-        ? DEFAULT_TRACKED_SITES
-        : changes.trackedSites.newValue;
+      currentTrackedSites =
+        changes.trackedSites.newValue === undefined
+          ? DEFAULT_TRACKED_SITES
+          : changes.trackedSites.newValue;
     }
     if (changes.photoLimit) {
       const n = Number(changes.photoLimit.newValue);
@@ -1055,7 +1172,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     await saveBlockedSites(DEFAULT_SITES);
     await saveTrackedSites(DEFAULT_TRACKED_SITES);
     await chrome.tabs.create({
-      url: chrome.runtime.getURL('setup/setup.html')
+      url: chrome.runtime.getURL('setup/setup.html'),
     });
   } else {
     // On update, load existing sites and sync rules
@@ -1103,13 +1220,13 @@ async function initialize() {
   // Resume tracking for the currently active tab (handles service worker restarts)
   try {
     const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-    if (tab && tab.url) {
+    if (tab?.url) {
       const site = getMatchingTrackedSite(tab.url);
       if (site) {
         activeTracking = { tabId: tab.id, siteId: site.id, startTime: Date.now() };
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Tab query can fail if no windows are focused
   }
 }

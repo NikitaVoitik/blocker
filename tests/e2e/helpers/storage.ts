@@ -1,6 +1,9 @@
-import { type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
-export async function getStorage(page: Page, keys: string | string[]): Promise<Record<string, any>> {
+export async function getStorage(
+  page: Page,
+  keys: string | string[],
+): Promise<Record<string, any>> {
   return page.evaluate(async (k) => {
     return chrome.storage.local.get(k);
   }, keys);
@@ -18,7 +21,9 @@ export async function clearStorage(page: Page): Promise<void> {
   });
 }
 
-export async function getTrackingData(page: Page): Promise<{ visits: Record<string, number>; time: Record<string, number> }> {
+export async function getTrackingData(
+  page: Page,
+): Promise<{ visits: Record<string, number>; time: Record<string, number> }> {
   const result = await getStorage(page, 'trackingData');
   return result.trackingData || { visits: {}, time: {} };
 }

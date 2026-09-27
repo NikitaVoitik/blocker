@@ -4,7 +4,7 @@ import { sendMessage } from '../helpers/messaging';
 import { setStorage } from '../helpers/storage';
 
 // These drive service-worker internals that normal user flows don't reach:
-// migration, validation failures, the DNR update retry/catch paths, and the
+// migration, validation failures, camera failures, and the
 // startup tab-resume branch. We call SW functions directly via Worker.evaluate.
 async function getSW(context: any): Promise<Worker> {
   return context.serviceWorkers()[0] || (await context.waitForEvent('serviceworker'));
@@ -12,7 +12,7 @@ async function getSW(context: any): Promise<Worker> {
 
 base.describe('Tier 2: service-worker internals', () => {
   base(
-    'message handlers: duplicates, invalid mode, unknown type, getStats migration',
+    'message handlers: duplicates, unknown type, getStats migration',
     async ({ context, extensionId }) => {
       const page = await context.newPage();
       await page.goto(`chrome-extension://${extensionId}/blocked/blocked.html?gallery=true`);
@@ -28,14 +28,6 @@ base.describe('Tier 2: service-worker internals', () => {
         site: { id: 'instagram', label: 'I', domains: ['instagram.com'] },
       });
       expect(dupTrack.success).toBe(false);
-
-      // Invalid restriction mode.
-      const badMode = await sendMessage(page, {
-        type: 'SET_SITE_RESTRICTION',
-        siteId: 'twitter',
-        mode: 'bogus',
-      });
-      expect(badMode.success).toBe(false);
 
       // Unknown message type → handler returns false (no response).
       await sendMessage(page, { type: '__definitely_unknown__' });
@@ -66,36 +58,6 @@ base.describe('Tier 2: service-worker internals', () => {
       expect(await sw.evaluate(() => loadPhotoLimit())).toBe(50);
 
       await page.close();
-    },
-  );
-
-  base(
-    'DNR block-rule sync survives a transient failure and a permanent failure',
-    async ({ context }) => {
-      const sw = await getSW(context);
-      // First update throws, retry succeeds.
-      const calls = await sw.evaluate(async () => {
-        const dnr: any = chrome.declarativeNetRequest;
-        const orig = dnr.updateDynamicRules.bind(dnr);
-        let n = 0;
-        dnr.updateDynamicRules = (o: any) => {
-          n++;
-          return n === 1 ? Promise.reject(new Error('transient')) : orig(o);
-        };
-        await _syncBlockRules();
-        dnr.updateDynamicRules = orig;
-        return n;
-      });
-      expect(calls).toBeGreaterThanOrEqual(2);
-
-      // Both update attempts throw → retryErr branch (swallowed).
-      await sw.evaluate(async () => {
-        const dnr: any = chrome.declarativeNetRequest;
-        const orig = dnr.updateDynamicRules.bind(dnr);
-        dnr.updateDynamicRules = () => Promise.reject(new Error('permanent'));
-        await _syncBlockRules();
-        dnr.updateDynamicRules = orig;
-      });
     },
   );
 

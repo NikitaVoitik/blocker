@@ -28,7 +28,7 @@ const shameLevels = [
   { min: 3, name: 'Repeat Offender', class: 'level-2' },
   { min: 6, name: 'Addict', class: 'level-3' },
   { min: 10, name: 'Terminal Brain Rot', class: 'level-4' },
-  { min: 20, name: 'Beyond Saving', class: 'level-5' }
+  { min: 20, name: 'Beyond Saving', class: 'level-5' },
 ];
 
 function getShameLevel(count) {
@@ -50,8 +50,8 @@ function formatTime(seconds) {
   if (seconds < 60) return '<1m';
   const hours = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) return hours + 'h ' + mins + 'm';
-  return mins + 'm';
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
 }
 
 // --- Tab switching ---
@@ -60,9 +60,11 @@ const tabBtns = document.querySelectorAll('.tab-btn');
 const tabBlocker = document.getElementById('tab-blocker');
 const tabTracker = document.getElementById('tab-tracker');
 
-tabBtns.forEach(btn => {
+tabBtns.forEach((btn) => {
   btn.addEventListener('click', () => {
-    tabBtns.forEach(b => b.classList.remove('active'));
+    tabBtns.forEach((b) => {
+      b.classList.remove('active');
+    });
     btn.classList.add('active');
     const tab = btn.dataset.tab;
     tabBlocker.style.display = tab === 'blocker' ? '' : 'none';
@@ -115,7 +117,7 @@ function renderPresetSuggestions(presets) {
     addBtn.title = 'Add';
     addBtn.addEventListener('click', async () => {
       const result = await chrome.runtime.sendMessage({ type: 'ADD_BLOCKED_SITE', site: preset });
-      if (result && result.success) await loadBlockedSites();
+      if (result?.success) await loadBlockedSites();
     });
 
     item.appendChild(label);
@@ -153,23 +155,23 @@ async function addSite() {
   if (!raw.trim()) return;
 
   const hostname = extractHostname(raw);
-  if (!hostname || !hostname.includes('.')) return;
+  if (!hostname?.includes('.')) return;
 
   const id = hostname.replace(/^www\./, '');
   const domains = [hostname];
   if (!hostname.startsWith('www.')) {
-    domains.push('www.' + hostname);
+    domains.push(`www.${hostname}`);
   }
 
   const site = {
     id,
     label: id,
     domains,
-    builtin: false
+    builtin: false,
   };
 
   const result = await chrome.runtime.sendMessage({ type: 'ADD_BLOCKED_SITE', site });
-  if (result && result.success) {
+  if (result?.success) {
     siteInput.value = '';
     await loadBlockedSites();
   }
@@ -179,18 +181,18 @@ const GAUNTLET_STEPS = [
   {
     title: 'REMOVING {site}? COWARD.',
     body: 'You blocked this site for a reason. Giving up already?',
-    continueLabel: 'Continue'
+    continueLabel: 'Continue',
   },
   {
     title: "YOU'RE REALLY GIVING UP?",
     body: 'This goes on your permanent record. Every surrender is tracked.',
-    continueLabel: 'Continue'
+    continueLabel: 'Continue',
   },
   {
     title: 'LAST CHANCE.',
     body: 'Your shame selfie is about to be taken. Everyone will know you caved.',
-    continueLabel: 'Remove'
-  }
+    continueLabel: 'Remove',
+  },
 ];
 
 let gauntletState = null;
@@ -236,10 +238,10 @@ async function advanceGauntlet() {
   let photoId = null;
   try {
     const capture = await chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO' });
-    if (capture && capture.success) {
-      photoId = 'removal_' + siteId + '_' + Date.now();
+    if (capture?.success) {
+      photoId = `removal_${siteId}_${Date.now()}`;
     }
-  } catch (e) {
+  } catch (_e) {
     // Camera denied or failed — proceed without photo
   }
 
@@ -247,11 +249,11 @@ async function advanceGauntlet() {
     type: 'LOG_REMOVAL',
     siteId,
     siteLabel,
-    photoId
+    photoId,
   });
 
   const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId });
-  if (result && result.success) {
+  if (result?.success) {
     await loadBlockedSites();
     await loadRemovalStats();
   }
@@ -277,7 +279,7 @@ async function loadStats() {
 
     const level = getShameLevel(threeDayCount);
     shameLevelEl.textContent = level.name;
-    shameLevelContainer.className = 'shame-level ' + level.class;
+    shameLevelContainer.className = `shame-level ${level.class}`;
   } catch (error) {
     console.error('Failed to load stats:', error);
   }
@@ -324,7 +326,7 @@ function renderTrackingPresetSuggestions(presets) {
     addBtn.title = 'Add';
     addBtn.addEventListener('click', async () => {
       const result = await chrome.runtime.sendMessage({ type: 'ADD_TRACKED_SITE', site: preset });
-      if (result && result.success) {
+      if (result?.success) {
         await loadTrackedSites();
         await loadTrackingData();
       }
@@ -353,8 +355,11 @@ function renderTrackedSites(sites) {
     removeBtn.textContent = '×';
     removeBtn.title = 'Remove';
     removeBtn.addEventListener('click', async () => {
-      const result = await chrome.runtime.sendMessage({ type: 'REMOVE_TRACKED_SITE', siteId: site.id });
-      if (result && result.success) {
+      const result = await chrome.runtime.sendMessage({
+        type: 'REMOVE_TRACKED_SITE',
+        siteId: site.id,
+      });
+      if (result?.success) {
         await loadTrackedSites();
         await loadTrackingData();
       }
@@ -394,7 +399,7 @@ async function loadTrackingData() {
 function renderTrackedBreakdown(entries) {
   trackedBreakdownEl.innerHTML = '';
 
-  const active = entries.filter(e => e.visits > 0 || e.time > 0);
+  const active = entries.filter((e) => e.visits > 0 || e.time > 0);
   if (active.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'breakdown-empty';
@@ -403,7 +408,7 @@ function renderTrackedBreakdown(entries) {
     return;
   }
 
-  const maxTime = Math.max(1, ...active.map(e => e.time));
+  const maxTime = Math.max(1, ...active.map((e) => e.time));
 
   for (const entry of active) {
     const row = document.createElement('div');
@@ -415,13 +420,13 @@ function renderTrackedBreakdown(entries) {
 
     const stats = document.createElement('span');
     stats.className = 'breakdown-stats';
-    stats.textContent = entry.visits + ' · ' + formatTime(entry.time);
+    stats.textContent = `${entry.visits} · ${formatTime(entry.time)}`;
 
     const barTrack = document.createElement('div');
     barTrack.className = 'breakdown-bar-track';
     const bar = document.createElement('div');
     bar.className = 'breakdown-bar';
-    bar.style.width = (entry.time / maxTime) * 100 + '%';
+    bar.style.width = `${(entry.time / maxTime) * 100}%`;
     barTrack.appendChild(bar);
 
     row.appendChild(label);
@@ -436,23 +441,23 @@ async function addTrackedSite() {
   if (!raw.trim()) return;
 
   const hostname = extractHostname(raw);
-  if (!hostname || !hostname.includes('.')) return;
+  if (!hostname?.includes('.')) return;
 
   const id = hostname.replace(/^www\./, '');
   const domains = [hostname];
   if (!hostname.startsWith('www.')) {
-    domains.push('www.' + hostname);
+    domains.push(`www.${hostname}`);
   }
 
   const site = {
     id,
     label: id,
     domains,
-    builtin: false
+    builtin: false,
   };
 
   const result = await chrome.runtime.sendMessage({ type: 'ADD_TRACKED_SITE', site });
-  if (result && result.success) {
+  if (result?.success) {
     trackSiteInput.value = '';
     await loadTrackedSites();
     await loadTrackingData();
@@ -461,7 +466,7 @@ async function addTrackedSite() {
 
 async function loadRemovalStats() {
   const log = await chrome.runtime.sendMessage({ type: 'GET_REMOVAL_LOG' });
-  surrenderedEl.textContent = (log && log.length) || 0;
+  surrenderedEl.textContent = log?.length || 0;
 }
 
 // --- Event listeners ---
@@ -478,25 +483,25 @@ trackSiteInput.addEventListener('keydown', (e) => {
 
 viewGalleryBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('blocked/blocked.html?gallery=true')
+    url: chrome.runtime.getURL('blocked/blocked.html?gallery=true'),
   });
 });
 
 viewReportBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('report/report.html')
+    url: chrome.runtime.getURL('report/report.html'),
   });
 });
 
 testBlockBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('blocked/blocked.html')
+    url: chrome.runtime.getURL('blocked/blocked.html'),
   });
 });
 
 viewTrackingReportBtn.addEventListener('click', () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL('report/report.html?tab=tracking')
+    url: chrome.runtime.getURL('report/report.html?tab=tracking'),
   });
 });
 

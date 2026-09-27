@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 export async function sendMessage(page: Page, message: Record<string, any>): Promise<any> {
   return page.evaluate(async (msg) => {
@@ -10,7 +10,10 @@ export async function sendMessage(page: Page, message: Record<string, any>): Pro
   }, message);
 }
 
-export async function addBlockedSite(page: Page, site: { id: string; label: string; domains: string[]; builtin?: boolean }) {
+export async function addBlockedSite(
+  page: Page,
+  site: { id: string; label: string; domains: string[]; builtin?: boolean },
+) {
   return sendMessage(page, { type: 'ADD_BLOCKED_SITE', site });
 }
 
@@ -18,7 +21,10 @@ export async function removeBlockedSite(page: Page, siteId: string) {
   return sendMessage(page, { type: 'REMOVE_BLOCKED_SITE', siteId });
 }
 
-export async function addTrackedSite(page: Page, site: { id: string; label: string; domains: string[]; builtin?: boolean }) {
+export async function addTrackedSite(
+  page: Page,
+  site: { id: string; label: string; domains: string[]; builtin?: boolean },
+) {
   return sendMessage(page, { type: 'ADD_TRACKED_SITE', site });
 }
 

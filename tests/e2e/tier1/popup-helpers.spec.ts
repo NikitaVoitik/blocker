@@ -112,5 +112,4 @@ test.describe('Tier 1: popup.js UI + helpers', () => {
     await tracking.waitForLoadState('domcontentloaded').catch(() => {});
     await popup.close();
   });
-
 });

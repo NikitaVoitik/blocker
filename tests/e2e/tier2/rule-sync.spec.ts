@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { expect, test } from '../fixtures/extension';
 import { addBlockedSite, removeBlockedSite } from '../helpers/messaging';
 
 test.describe('Tier 2: Rule Sync', () => {
@@ -9,7 +9,10 @@ test.describe('Tier 2: Rule Sync', () => {
       });
     });
 
-    const expectedRuleCount = sites.reduce((sum: number, site: any) => sum + site.domains.length, 0);
+    const expectedRuleCount = sites.reduce(
+      (sum: number, site: any) => sum + site.domains.length,
+      0,
+    );
 
     const actualRuleCount: number = await extensionPage.evaluate(async () => {
       const rules = await chrome.declarativeNetRequest.getDynamicRules();
@@ -25,16 +28,25 @@ test.describe('Tier 2: Rule Sync', () => {
       return rules.length;
     });
 
-    const site = { id: 'test-sync.com', label: 'Test Sync', domains: ['test-sync.com', 'www.test-sync.com'] };
+    const site = {
+      id: 'test-sync.com',
+      label: 'Test Sync',
+      domains: ['test-sync.com', 'www.test-sync.com'],
+    };
     await addBlockedSite(extensionPage, site);
 
-    await expect.poll(async () => {
-      const rules = await extensionPage.evaluate(async () => {
-        const r = await chrome.declarativeNetRequest.getDynamicRules();
-        return r.length;
-      });
-      return rules;
-    }, { timeout: 5000 }).toBe(before + 2);
+    await expect
+      .poll(
+        async () => {
+          const rules = await extensionPage.evaluate(async () => {
+            const r = await chrome.declarativeNetRequest.getDynamicRules();
+            return r.length;
+          });
+          return rules;
+        },
+        { timeout: 5000 },
+      )
+      .toBe(before + 2);
 
     await removeBlockedSite(extensionPage, 'test-sync.com');
   });
@@ -48,22 +60,32 @@ test.describe('Tier 2: Rule Sync', () => {
     const site = { id: 'remove-test.com', label: 'Remove Test', domains: ['remove-test.com'] };
     await addBlockedSite(extensionPage, site);
 
-    await expect.poll(async () => {
-      const rules = await extensionPage.evaluate(async () => {
-        const r = await chrome.declarativeNetRequest.getDynamicRules();
-        return r.length;
-      });
-      return rules;
-    }, { timeout: 5000 }).toBe(before + 1);
+    await expect
+      .poll(
+        async () => {
+          const rules = await extensionPage.evaluate(async () => {
+            const r = await chrome.declarativeNetRequest.getDynamicRules();
+            return r.length;
+          });
+          return rules;
+        },
+        { timeout: 5000 },
+      )
+      .toBe(before + 1);
 
     await removeBlockedSite(extensionPage, 'remove-test.com');
 
-    await expect.poll(async () => {
-      const rules = await extensionPage.evaluate(async () => {
-        const r = await chrome.declarativeNetRequest.getDynamicRules();
-        return r.length;
-      });
-      return rules;
-    }, { timeout: 5000 }).toBe(before);
+    await expect
+      .poll(
+        async () => {
+          const rules = await extensionPage.evaluate(async () => {
+            const r = await chrome.declarativeNetRequest.getDynamicRules();
+            return r.length;
+          });
+          return rules;
+        },
+        { timeout: 5000 },
+      )
+      .toBe(before);
   });
 });
