@@ -28,28 +28,6 @@ and the `test:tier*` scripts are unaffected — coverage only activates when the
 
 Only tier1 + tier2 feed the report (tier3 is soak/stress and adds no new lines).
 
-## Result
+## Results
 
-**97.3% lines** overall. Per file (lines): service-worker 96%, blocked 99%,
-content 100%, filters 97%, popup 99%, report 100%, setup 100%; storage 89% and
-offscreen 83% (see below).
-
-## Documented remainder
-
-These lines are intentionally uncovered — they need browser events the harness
-can't deliver, defensive error paths that can't fail in the test environment, or
-dead code. They are auditable, not forgotten.
-
-| File | Lines | Why |
-|------|-------|-----|
-| `background/service-worker.js` | 262-271 | `verifyBlockRules` — only invoked by the periodic RULE_CHECK alarm |
-| | 1555-1561 | `alarms.onAlarm` dispatch — alarms don't fire within a short test |
-| | 594, 609-621, 633 | `windows.onFocusChanged` focused-window branch + `tabs.onActivated`/`onUpdated` reset paths — depend on real OS focus/tab events not delivered under Xvfb |
-| | 1542-1544, 1550 | `onInstalled` *update* branch + `onStartup` — one-shot lifecycle events (install fires `"install"`; startup fires before tests attach) |
-| | 341, 1318 | `_syncLimitRules` retry remainder + `CLEAR_PHOTOS` reject handler — defensive paths for chrome API calls that don't fail in tests |
-| `blocked/blocked.js` | 634, 662 | Error-status branches for `SET_PHOTO_LIMIT`/`CLEAR_PHOTOS` responses that can't fail for valid input |
-| `lib/filters.js` | 88-89 | `default` overlay-position case — no shipped overlay config uses it |
-| `lib/storage.js` | 27-29, 33 | `onupgradeneeded` — the service worker always creates the DB first, so this unused legacy helper never triggers an upgrade |
-| `offscreen/offscreen.js` | 15, 44-45, 55-57, 65-67 | Video-ready early-return, `error` handler, and 5s load-timeout — require real-camera failure/timing (the fake device always loads cleanly) |
-| `popup/popup.js` | 396, 518, 658 | `try/catch` error handlers for messaging/storage calls that don't fail in tests |
-| | 243, 252 | Enter-to-apply shortcut in the per-site limit editor + "Always" clicked on an already-always restriction (UI no-op branches) |
+Run `npm run coverage` to regenerate the report for the current source tree.

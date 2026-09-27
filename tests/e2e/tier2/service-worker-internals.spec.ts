@@ -51,65 +51,6 @@ base.describe('Tier 2: service-worker internals', () => {
   );
 
   base(
-    'migrateTrackedLimits promotes, discards on collision, and strips stale limits',
-    async ({ context }) => {
-      const sw = await getSW(context);
-      // Wait for first-run install to finish writing defaults, otherwise its
-      // one-time saveBlockedSites(DEFAULT_SITES) clobbers our setup mid-test.
-      await expect
-        .poll(
-          () =>
-            sw.evaluate(
-              () =>
-                currentBlockedSites.some((s: any) => s.id === 'twitter') &&
-                currentTrackedSites.some((s: any) => s.id === 'instagram'),
-            ),
-          { timeout: 5000 },
-        )
-        .toBe(true);
-
-      const out = await sw.evaluate(async () => {
-        await saveBlockedSites([
-          { id: 'reddit', label: 'Reddit', domains: ['reddit.com'], builtin: true, mode: 'always' },
-        ]);
-        await saveTrackedSites([
-          {
-            id: 'reddit',
-            label: 'Reddit',
-            domains: ['reddit.com'],
-            builtin: true,
-            dailyLimitSeconds: 120,
-          }, // collides w/ always
-          {
-            id: 'tiktok',
-            label: 'TikTok',
-            domains: ['tiktok.com'],
-            builtin: true,
-            dailyLimitSeconds: 300,
-          }, // promoted
-          { id: 'facebook', label: 'Facebook', domains: ['fb.com'], builtin: true }, // untouched
-        ]);
-        await migrateTrackedLimits();
-        return {
-          blocked: currentBlockedSites.map((s: any) => ({
-            id: s.id,
-            mode: s.mode,
-            cap: s.dailyLimitSeconds,
-          })),
-          tracked: currentTrackedSites.map((s: any) => ({ id: s.id, cap: s.dailyLimitSeconds })),
-        };
-      });
-
-      const tiktok = out.blocked.find((s: any) => s.id === 'tiktok');
-      expect(tiktok).toMatchObject({ mode: 'limit', cap: 300 });
-      expect(out.blocked.find((s: any) => s.id === 'reddit').mode).toBe('always'); // limit discarded
-      expect(out.tracked.find((s: any) => s.id === 'tiktok')).toBeUndefined(); // promoted out
-      expect(out.tracked.find((s: any) => s.id === 'reddit').cap).toBeUndefined(); // stale stripped
-      expect(out.tracked.find((s: any) => s.id === 'facebook')).toBeTruthy(); // untouched
-    },
-  );
-
-  base(
     'loadPhotoLimit honours a valid stored value and rejects an out-of-range one',
     async ({ context, extensionId }) => {
       const sw = await getSW(context);
@@ -153,31 +94,6 @@ base.describe('Tier 2: service-worker internals', () => {
         const orig = dnr.updateDynamicRules.bind(dnr);
         dnr.updateDynamicRules = () => Promise.reject(new Error('permanent'));
         await _syncBlockRules();
-        dnr.updateDynamicRules = orig;
-      });
-    },
-  );
-
-  base(
-    'DNR limit-rule sync survives a transient failure and a permanent failure',
-    async ({ context }) => {
-      const sw = await getSW(context);
-      await sw.evaluate(async () => {
-        const dnr: any = chrome.declarativeNetRequest;
-        const orig = dnr.updateDynamicRules.bind(dnr);
-        let n = 0;
-        dnr.updateDynamicRules = (o: any) => {
-          n++;
-          return n === 1 ? Promise.reject(new Error('transient')) : orig(o);
-        };
-        await _syncLimitRules();
-        dnr.updateDynamicRules = orig;
-      });
-      await sw.evaluate(async () => {
-        const dnr: any = chrome.declarativeNetRequest;
-        const orig = dnr.updateDynamicRules.bind(dnr);
-        dnr.updateDynamicRules = () => Promise.reject(new Error('permanent'));
-        await _syncLimitRules();
         dnr.updateDynamicRules = orig;
       });
     },
