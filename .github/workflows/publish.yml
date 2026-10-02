@@ -1,11 +1,34 @@
 name: Publish to Chrome Web Store
 
 on:
+  pull_request:
   push:
     branches: [main]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run check
+      - run: pnpm run package:ext
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: test-results/
+
   publish:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -15,30 +38,7 @@ jobs:
         run: echo "version=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")" >> "$GITHUB_OUTPUT"
 
       - name: Zip extension
-        run: |
-          mkdir -p dist
-          zip -r "dist/blocker-${{ steps.version.outputs.version }}.zip" . \
-            -x ".git/*" \
-            -x ".gitignore" \
-            -x ".env" \
-            -x ".claude/*" \
-            -x ".github/*" \
-            -x "node_modules/*" \
-            -x "dist/*" \
-            -x "tests/*" \
-            -x "scripts/*" \
-            -x "docs/*" \
-            -x "site/*" \
-            -x "store-screenshots/*" \
-            -x "playwright-report/*" \
-            -x "test-results/*" \
-            -x "playwright.config.*" \
-            -x "package.json" \
-            -x "package-lock.json" \
-            -x "pnpm-lock.yaml" \
-            -x "tsconfig.json" \
-            -x "*.md" \
-            -x "_metadata/*"
+        run: bash scripts/package.sh
 
       - name: Get access token
         id: auth
@@ -75,8 +75,8 @@ jobs:
 
       - name: Publish
         run: |
-          curl -s -X POST \
+          RESPONSE=$(curl --fail-with-body -sS -X POST \
             -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
             -H "x-goog-api-version: 2" \
-            "https://www.googleapis.com/chromewebstore/v1.1/items/${{ secrets.EXTENSION_ID }}/publish" | python3 -m json.tool
-          echo "Published v${{ steps.version.outputs.version }}"
+            "https://www.googleapis.com/chromewebstore/v1.1/items/${{ secrets.EXTENSION_ID }}/publish")
+          echo "$RESPONSE" | python3 scripts/check-publish-response.py

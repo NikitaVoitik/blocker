@@ -1,13 +1,7 @@
 import { type Page } from '@playwright/test';
 
 export async function sendMessage(page: Page, message: Record<string, any>): Promise<any> {
-  return page.evaluate(async (msg) => {
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage(msg, (response) => {
-        resolve(response);
-      });
-    });
-  }, message);
+  return page.evaluate(msg => chrome.runtime.sendMessage(msg), message);
 }
 
 export async function addBlockedSite(page: Page, site: { id: string; label: string; domains: string[]; builtin?: boolean }) {
@@ -36,10 +30,6 @@ export async function getTrackingDataForToday(page: Page) {
 
 export async function getTrackingReportData(page: Page) {
   return sendMessage(page, { type: 'GET_TRACKING_REPORT_DATA' });
-}
-
-export async function logRemoval(page: Page, siteId: string, siteLabel: string, photoId?: string) {
-  return sendMessage(page, { type: 'LOG_REMOVAL', siteId, siteLabel, photoId: photoId || null });
 }
 
 export async function getRemovalLog(page: Page) {

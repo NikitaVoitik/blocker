@@ -1,69 +1,32 @@
-import { test, expect } from '../fixtures/extension';
-import { addBlockedSite, removeBlockedSite } from '../helpers/messaging';
+import { test, expect, webURL } from '../fixtures/extension';
+import { addBlockedSite } from '../helpers/messaging';
+import { expectBlocked } from '../helpers/navigation';
 
-test.describe('Tier 2: Rule Sync', () => {
-  test('dynamic rules count matches blocked site domains', async ({ extensionPage }) => {
-    const sites: any[] = await extensionPage.evaluate(async () => {
-      return new Promise((resolve) => {
-        chrome.runtime.sendMessage({ type: 'GET_BLOCKED_SITES' }, resolve);
-      });
+// Tier 1 owns add/remove navigation. This suite owns alarm repair and concurrent mutations.
+test('the verification alarm repairs changed rules even when their count is unchanged', async ({ context, extensionPage }) => {
+  await extensionPage.evaluate(async () => {
+    const rules = await chrome.declarativeNetRequest.getDynamicRules();
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: rules.map(rule => rule.id),
+      addRules: rules.map(rule => ({ ...rule, condition: { requestDomains: ['wrong.test'], resourceTypes: ['main_frame'] } })),
     });
-
-    const expectedRuleCount = sites.reduce((sum: number, site: any) => sum + site.domains.length, 0);
-
-    const actualRuleCount: number = await extensionPage.evaluate(async () => {
-      const rules = await chrome.declarativeNetRequest.getDynamicRules();
-      return rules.length;
-    });
-
-    expect(actualRuleCount).toBe(expectedRuleCount);
+    await chrome.alarms.create('verify-block-rules', { when: Date.now() + 100 });
   });
+  await expect.poll(async () => extensionPage.evaluate(async () => {
+    const rules = await chrome.declarativeNetRequest.getDynamicRules();
+    return rules.some(rule => rule.condition.requestDomains?.includes('twitter.com'));
+  })).toBe(true);
+  const page = await context.newPage();
+  await page.goto(webURL('http://unlisted.twitter.com/')).catch(() => {});
+  await expect(page).toHaveURL(/blocked\/blocked.html\?site=twitter/);
+});
 
-  test('adding a site creates new rules immediately', async ({ extensionPage }) => {
-    const before: number = await extensionPage.evaluate(async () => {
-      const rules = await chrome.declarativeNetRequest.getDynamicRules();
-      return rules.length;
-    });
-
-    const site = { id: 'test-sync.com', label: 'Test Sync', domains: ['test-sync.com', 'www.test-sync.com'] };
-    await addBlockedSite(extensionPage, site);
-
-    await expect.poll(async () => {
-      const rules = await extensionPage.evaluate(async () => {
-        const r = await chrome.declarativeNetRequest.getDynamicRules();
-        return r.length;
-      });
-      return rules;
-    }, { timeout: 5000 }).toBe(before + 2);
-
-    await removeBlockedSite(extensionPage, 'test-sync.com');
-  });
-
-  test('removing a site removes its rules', async ({ extensionPage }) => {
-    const before: number = await extensionPage.evaluate(async () => {
-      const rules = await chrome.declarativeNetRequest.getDynamicRules();
-      return rules.length;
-    });
-
-    const site = { id: 'remove-test.com', label: 'Remove Test', domains: ['remove-test.com'] };
-    await addBlockedSite(extensionPage, site);
-
-    await expect.poll(async () => {
-      const rules = await extensionPage.evaluate(async () => {
-        const r = await chrome.declarativeNetRequest.getDynamicRules();
-        return r.length;
-      });
-      return rules;
-    }, { timeout: 5000 }).toBe(before + 1);
-
-    await removeBlockedSite(extensionPage, 'remove-test.com');
-
-    await expect.poll(async () => {
-      const rules = await extensionPage.evaluate(async () => {
-        const r = await chrome.declarativeNetRequest.getDynamicRules();
-        return r.length;
-      });
-      return rules;
-    }, { timeout: 5000 }).toBe(before);
-  });
+test('concurrent additions retain every site and enforce every block', async ({ context, extensionPage }) => {
+  const hosts = Array.from({ length: 10 }, (_, i) => `parallel-${i}.test`);
+  const results = await Promise.all(hosts.map(host => addBlockedSite(extensionPage, { id: host, label: host, domains: [host] })));
+  expect(results.every(result => result.success)).toBe(true);
+  const page = await context.newPage();
+  for (const host of hosts) {
+    await expectBlocked(page, `http://${host}/`, host);
+  }
 });

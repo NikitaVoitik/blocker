@@ -9,6 +9,11 @@
   <div class="popup-container">
     <h1>Punishment Mode</h1>
 
+    <div id="incognito-warning" class="incognito-warning" hidden>
+      <strong>INCOGNITO IS UNPROTECTED.</strong>
+      <p>Open extension settings and turn on “Allow in Incognito.” Chrome still lets you disable or uninstall this extension.</p>
+      <button id="incognito-settings" class="btn btn-secondary">Open extension settings</button>
+    </div>
     <div class="tab-switcher">
       <button class="tab-btn active" data-tab="blocker">Blocker</button>
       <button class="tab-btn" data-tab="tracker">Tracker</button>
@@ -92,6 +97,7 @@
       </div>
     </div>
 
+    <p class="privacy-note">When enabled, Incognito attempts are recorded locally. Incognito photos clear when private windows close.</p>
     <div class="footer">
       <p>// Stay strong. Touch grass.</p>
     </div>

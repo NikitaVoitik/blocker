@@ -1,32 +1,14 @@
-// Remove YouTube Shorts elements that load dynamically (YouTube is an SPA)
+// Toggle CSS for existing and dynamically inserted Shorts elements.
 
-const SHORTS_SELECTORS = [
-  'ytd-rich-shelf-renderer[is-shorts]',
-  'ytd-reel-shelf-renderer',
-  'ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts])',
-  'ytd-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"])',
-  'ytd-guide-entry-renderer:has(a[href="/shorts"])',
-  'ytd-mini-guide-entry-renderer:has(a[href="/shorts"])',
-  'ytd-rich-item-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"])',
-  'ytd-compact-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"])',
-  'ytd-grid-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"])'
-];
-
-const COMBINED_SELECTOR = SHORTS_SELECTORS.join(', ');
-
-function removeShorts() {
-  const elements = document.querySelectorAll(COMBINED_SELECTOR);
-  for (const el of elements) {
-    el.style.display = 'none';
-  }
+function applyShortsSetting(sites) {
+  const enabled = sites === undefined || sites.some(site => site.id === 'youtube-shorts');
+  document.documentElement.classList.toggle('punishment-hide-shorts', enabled);
 }
-
-// Run on initial load
-removeShorts();
-
-// Observe DOM changes for dynamically loaded content
-const observer = new MutationObserver(removeShorts);
-observer.observe(document.documentElement, {
-  childList: true,
-  subtree: true
+function initializeShorts() {
+  chrome.storage.local.get('blockedSites').then(result => applyShortsSetting(result.blockedSites));
+}
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.blockedSites) applyShortsSetting(changes.blockedSites.newValue);
 });
+if (document.documentElement) initializeShorts();
+else document.addEventListener('DOMContentLoaded', initializeShorts, { once: true });

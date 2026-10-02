@@ -1,108 +1,49 @@
-import { test, expect } from '../fixtures/extension';
-import { getTrackingDataForToday } from '../helpers/messaging';
-import { clearStorage } from '../helpers/storage';
+import { test, expect, webURL, type Page } from '../fixtures/extension';
+import { getStats, getTrackingDataForToday } from '../helpers/messaging';
 
-const WALK_DURATION_MS = 60 * 60 * 1000; // 1 hour
-const BLOCKED_URLS = ['https://twitter.com', 'https://x.com'];
-const TRACKED_URLS = ['https://www.reddit.com', 'https://www.instagram.com', 'https://www.facebook.com'];
-const NEUTRAL_URLS = ['https://www.google.com', 'https://www.wikipedia.org', 'https://www.github.com'];
-const ALL_URLS = [...BLOCKED_URLS, ...TRACKED_URLS, ...NEUTRAL_URLS];
-
-function randomChoice<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-test.describe('Tier 3: Random Walk', () => {
-  test('data consistency after random navigation patterns', async ({ context, extensionId, extensionPage }) => {
-    test.setTimeout(WALK_DURATION_MS + 5 * 60 * 1000);
-
-    await clearStorage(extensionPage);
-    await extensionPage.waitForTimeout(500);
-
-    const startTime = Date.now();
-    const openPages: { page: any; url: string }[] = [];
-    let blockedRedirectCount = 0;
-
-    while (Date.now() - startTime < WALK_DURATION_MS) {
-      const action = randomInt(1, 5);
-
-      switch (action) {
-        case 1: {
-          if (openPages.length < 10) {
-            const url = randomChoice(ALL_URLS);
-            const page = await context.newPage();
-            try {
-              await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15_000 });
-              if (page.url().includes('blocked/blocked.html')) {
-                blockedRedirectCount++;
-              }
-            } catch (e) {
-              // Navigation timeout is acceptable
-            }
-            openPages.push({ page, url });
-          }
-          break;
-        }
-        case 2: {
-          if (openPages.length > 1) {
-            const idx = randomInt(0, openPages.length - 1);
-            const { page } = openPages.splice(idx, 1)[0];
-            await page.close().catch(() => {});
-          }
-          break;
-        }
-        case 3: {
-          if (openPages.length > 0) {
-            const { page } = randomChoice(openPages);
-            await page.bringToFront().catch(() => {});
-          }
-          break;
-        }
-        case 4: {
-          if (openPages.length > 0) {
-            const idx = randomInt(0, openPages.length - 1);
-            const url = randomChoice(ALL_URLS);
-            try {
-              await openPages[idx].page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15_000 });
-              openPages[idx].url = url;
-              if (openPages[idx].page.url().includes('blocked/blocked.html')) {
-                blockedRedirectCount++;
-              }
-            } catch (e) {
-              // Navigation timeout is acceptable
-            }
-          }
-          break;
-        }
-        case 5: {
-          await extensionPage.waitForTimeout(randomInt(500, 3000));
-          break;
-        }
+// Fixed seed makes a failing navigation sequence reproducible.
+let seed = 73421;
+function choice(n: number) { seed = (seed * 1664525 + 1013904223) >>> 0; return seed % n; }
+const hosts = ['twitter.com', 'x.com', 'reddit.com', 'instagram.com', 'neutral.test'];
+test('seeded navigation, tab closing and switching preserve attempts and visits', async ({ context, extensionPage }) => {
+  seed = 73421;
+  const pages: Page[] = [];
+  let attempts = 0;
+  const expectedVisits: Record<string, number> = { reddit: 0, instagram: 0 };
+  const start = Date.now();
+  for (let step = 0; step < 100; step++) {
+    const action = choice(4);
+    if (action === 0 && pages.length > 1) {
+      await pages.splice(choice(pages.length), 1)[0].close();
+    } else if (action === 1 && pages.length > 0) {
+      await pages[choice(pages.length)].bringToFront();
+    } else {
+      const page = pages.length === 0 || pages.length < 5 && action === 2 ? await context.newPage() : pages[choice(pages.length)];
+      if (!pages.includes(page)) pages.push(page);
+      const host = hosts[choice(hosts.length)];
+      await page.goto(webURL(`http://${host}/`)).catch(error => {
+        if (!['twitter.com', 'x.com'].includes(host)) throw error;
+      });
+      if (['twitter.com', 'x.com'].includes(host)) {
+        await expect(page).toHaveURL(/blocked\/blocked.html\?site=twitter/);
+        await expect(page.locator('h1')).toHaveText('BLOCKED');
+        attempts++;
+      } else {
+        await expect(page.locator('h1')).toHaveText('Test page');
+        if (host === 'reddit.com') expectedVisits.reddit++;
+        if (host === 'instagram.com') expectedVisits.instagram++;
       }
-
-      await extensionPage.waitForTimeout(randomInt(100, 1000));
     }
-
-    await extensionPage.bringToFront();
-    await extensionPage.waitForTimeout(3000);
-
-    for (const { page } of openPages) {
-      await page.close().catch(() => {});
-    }
-
+    await extensionPage.waitForTimeout(30);
+  }
+  await extensionPage.bringToFront();
+  await expect.poll(async () => (await getStats(extensionPage)).allTimeCount).toBe(attempts);
+  await expect.poll(async () => {
     const data = await getTrackingDataForToday(extensionPage);
-
-    for (const [siteId, stats] of Object.entries(data) as [string, any][]) {
-      expect(stats.time).toBeGreaterThanOrEqual(0);
-      expect(stats.visits).toBeGreaterThanOrEqual(0);
-      const maxPossibleSeconds = Math.ceil((Date.now() - startTime) / 1000);
-      expect(stats.time).toBeLessThanOrEqual(maxPossibleSeconds);
-    }
-
-    expect(blockedRedirectCount).toBeGreaterThan(0);
-  });
+    return { reddit: data.reddit.visits, instagram: data.instagram.visits };
+  }).toEqual(expectedVisits);
+  const data = await getTrackingDataForToday(extensionPage);
+  const total = Object.values(data).reduce((sum: number, site: any) => sum + site.time, 0);
+  expect(total).toBeLessThanOrEqual((Date.now() - start) / 1000 + 0.5);
+  expect(attempts).toBeGreaterThan(0);
 });

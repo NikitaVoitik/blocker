@@ -12,7 +12,12 @@
     "test": "npx playwright test",
     "test:tier1": "npx playwright test --project=tier1",
     "test:tier2": "npx playwright test --project=tier2",
-    "test:tier3": "npx playwright test --project=tier3"
+    "test:tier3": "npx playwright test --project=tier3",
+    "check": "bash scripts/check.sh",
+    "check:types": "tsc --noEmit",
+    "check:syntax": "node scripts/check-syntax.cjs",
+    "test:soak": "TEST_SOAK_MS=14400000 TEST_VISIT_MS=30000 TEST_IDLE_MS=150000 playwright test --project=tier3 soak.spec.ts",
+    "package:ext": "bash scripts/package.sh"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +25,9 @@
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@types/chrome": "^0.3.4",
+    "@types/node": "^26.6.3",
     "typescript": "^6.0.3"
-  }
+  },
+  "packageManager": "pnpm@12.4.2"
 }

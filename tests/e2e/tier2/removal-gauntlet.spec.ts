@@ -200,7 +200,7 @@ test.describe('Tier 2: Removal Gauntlet', () => {
 
   test('multiple removals accumulate in log', async ({ context, extensionId }) => {
     const msgPage = await context.newPage();
-    await msgPage.goto(`chrome-extension://${extensionId}/blocked/blocked.html`);
+    await msgPage.goto(`chrome-extension://${extensionId}/popup/popup.html`);
 
     const sites = [
       { id: 'multi1.com', label: 'Multi 1', domains: ['multi1.com'] },

@@ -40,10 +40,12 @@ function getShameLevel(count) {
 }
 
 function extractHostname(input) {
-  let cleaned = input.trim().toLowerCase();
-  cleaned = cleaned.replace(/^https?:\/\//, '');
-  cleaned = cleaned.replace(/\/.*$/, '');
-  return cleaned;
+  try {
+    const raw = input.trim();
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
+    return url.hostname.toLowerCase().replace(/\.$/, '').replace(/^www\./, '');
+  } catch { return null; }
 }
 
 function formatTime(seconds) {
@@ -230,27 +232,20 @@ async function advanceGauntlet() {
     return;
   }
 
-  const { siteId, siteLabel } = gauntletState;
+  const { siteId } = gauntletState;
   closeGauntlet();
 
   let photoId = null;
   try {
     const capture = await chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO' });
     if (capture && capture.success) {
-      photoId = 'removal_' + siteId + '_' + Date.now();
+      photoId = capture.photoId;
     }
   } catch (e) {
     // Camera denied or failed — proceed without photo
   }
 
-  await chrome.runtime.sendMessage({
-    type: 'LOG_REMOVAL',
-    siteId,
-    siteLabel,
-    photoId
-  });
-
-  const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId });
+  const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId, photoId });
   if (result && result.success) {
     await loadBlockedSites();
     await loadRemovalStats();
@@ -504,3 +499,10 @@ viewTrackingReportBtn.addEventListener('click', () => {
 loadStats();
 loadBlockedSites();
 loadRemovalStats();
+
+chrome.extension.isAllowedIncognitoAccess().then(allowed => {
+  document.getElementById('incognito-warning').hidden = allowed;
+}).catch(console.error);
+document.getElementById('incognito-settings').addEventListener('click', () => {
+  chrome.tabs.create({ url: 'chrome://extensions/?id=' + chrome.runtime.id });
+});

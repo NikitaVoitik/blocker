@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/extension';
+import { test, expect, webURL } from '../fixtures/extension';
 import { setStorage, getStorage, clearStorage } from '../helpers/storage';
 import { getTrackingDataForToday, getTrackingReportData, getStats } from '../helpers/messaging';
 
@@ -16,7 +16,7 @@ test.describe('Tier 2: Data Integrity', () => {
 
     await extensionPage.close();
     const newPage = await context.newPage();
-    await newPage.goto(`chrome-extension://${extensionId}/blocked/blocked.html`);
+    await newPage.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await newPage.waitForTimeout(1000);
 
     const data = await getTrackingDataForToday(newPage);
@@ -77,7 +77,7 @@ test.describe('Tier 2: Data Integrity', () => {
     });
 
     const page = await extensionPage.context().newPage();
-    await page.goto('https://www.reddit.com', { waitUntil: 'load', timeout: 30_000 });
+    await page.goto(webURL('https://www.reddit.com'), { waitUntil: 'load', timeout: 30_000 });
     await page.waitForTimeout(2000);
     await page.close();
 

@@ -190,7 +190,8 @@
       const row = document.createElement('div');
       row.className = 'coward-log-entry';
 
-      if (entry.photoId && photoMap[entry.photoId]) {
+      const photoContext = chrome.extension.inIncognitoContext ? 'incognito' : 'regular';
+      if ((entry.photoContext || 'regular') === photoContext && entry.photoId && photoMap[entry.photoId]) {
         const img = document.createElement('img');
         img.className = 'coward-log-thumb';
         img.src = photoMap[entry.photoId];

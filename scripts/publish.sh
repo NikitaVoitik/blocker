@@ -14,6 +14,8 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
+cd "$PROJECT_DIR"
+pnpm run check
 source "$ENV_FILE"
 
 for var in EXTENSION_ID CLIENT_ID CLIENT_SECRET REFRESH_TOKEN; do
@@ -30,27 +32,7 @@ mkdir -p "$PROJECT_DIR/dist"
 
 echo "Zipping extension v${VERSION}..."
 cd "$PROJECT_DIR"
-zip -r "$ZIP_FILE" . \
-  -x ".git/*" \
-  -x ".gitignore" \
-  -x ".env" \
-  -x ".claude/*" \
-  -x "node_modules/*" \
-  -x "dist/*" \
-  -x "tests/*" \
-  -x "scripts/*" \
-  -x "docs/*" \
-  -x "site/*" \
-  -x "store-screenshots/*" \
-  -x "playwright-report/*" \
-  -x "test-results/*" \
-  -x "playwright.config.*" \
-  -x "package.json" \
-  -x "package-lock.json" \
-  -x "pnpm-lock.yaml" \
-  -x "tsconfig.json" \
-  -x "*.md" \
-  -x "_metadata/*"
+bash scripts/package.sh
 
 echo "Getting access token..."
 ACCESS_TOKEN=$(curl -s -X POST https://oauth2.googleapis.com/token \
@@ -75,11 +57,9 @@ if [ "$UPLOAD_STATUS" != "SUCCESS" ]; then
 fi
 
 echo "Upload successful. Publishing..."
-PUBLISH_RESPONSE=$(curl -s -X POST \
+PUBLISH_RESPONSE=$(curl --fail-with-body -sS -X POST \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "x-goog-api-version: 2" \
   "https://www.googleapis.com/chromewebstore/v1.1/items/${EXTENSION_ID}/publish")
 
-echo "$PUBLISH_RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$PUBLISH_RESPONSE"
-echo ""
-echo "Done! v${VERSION} published."
+echo "$PUBLISH_RESPONSE" | python3 scripts/check-publish-response.py

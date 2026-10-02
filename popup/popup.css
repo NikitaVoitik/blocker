@@ -570,3 +570,9 @@ h1::after {
   border-color: var(--text);
   color: var(--text);
 }
+
+.incognito-warning { border: 2px solid #ff3333; padding: 10px; margin: 12px 0; font-size: 11px; color: #ff6666; }
+.incognito-warning[hidden] { display: none; }
+.incognito-warning p { line-height: 1.5; }
+
+.privacy-note { color: #888; font-size: 10px; line-height: 1.5; margin: 12px 0; }

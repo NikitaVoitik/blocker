@@ -1,73 +1,31 @@
-import { test, expect } from '../fixtures/extension';
-import { addBlockedSite, removeBlockedSite, addTrackedSite, removeTrackedSite } from '../helpers/messaging';
+import { test, expect, webURL } from '../fixtures/extension';
+import { addBlockedSite, addTrackedSite, getTrackingDataForToday } from '../helpers/messaging';
+import { expectBlocked } from '../helpers/navigation';
 
-test.describe('Tier 3: Many Sites Stress', () => {
-  test('50 blocked sites all redirect correctly', async ({ context, extensionPage }) => {
-    test.setTimeout(10 * 60 * 1000);
+test('50 blocked sites all redirect correctly', async ({ context, extensionPage }) => {
+  for (let i = 0; i < 50; i++) {
+    const host = `stress-block-${i}.test`;
+    expect((await addBlockedSite(extensionPage, { id: host, label: host, domains: [host] })).success).toBe(true);
+  }
+  const page = await context.newPage();
+  for (let i = 0; i < 50; i++) {
+    const host = `stress-block-${i}.test`;
+    await expectBlocked(page, `http://${host}/`, host);
+  }
+});
 
-    const sites = [];
-    for (let i = 0; i < 50; i++) {
-      const id = `stress-block-${i}.example`;
-      sites.push({
-        id,
-        label: `Stress Block ${i}`,
-        domains: [`stress-block-${i}.example`],
-      });
-    }
-
-    for (const site of sites) {
-      const result = await addBlockedSite(extensionPage, site);
-      expect(result.success).toBe(true);
-    }
-    await extensionPage.waitForTimeout(2000);
-
-    const ruleCount: number = await extensionPage.evaluate(async () => {
-      const rules = await chrome.declarativeNetRequest.getDynamicRules();
-      return rules.length;
-    });
-    expect(ruleCount).toBeGreaterThanOrEqual(50);
-
-    const page = await context.newPage();
-    for (let i = 0; i < 5; i++) {
-      await page.goto(`http://stress-block-${i}.example/`, { timeout: 10_000 }).catch(() => {});
-      await page.waitForTimeout(1000);
-    }
-    await page.close();
-
-    for (const site of sites) {
-      await removeBlockedSite(extensionPage, site.id);
-    }
-    await extensionPage.waitForTimeout(2000);
-  });
-
-  test('50 tracked sites all count visits', async ({ context, extensionPage }) => {
-    test.setTimeout(10 * 60 * 1000);
-
-    const sites = [];
-    for (let i = 0; i < 50; i++) {
-      const id = `stress-track-${i}.example`;
-      sites.push({
-        id,
-        label: `Stress Track ${i}`,
-        domains: [`stress-track-${i}.example`],
-      });
-    }
-
-    for (const site of sites) {
-      const result = await addTrackedSite(extensionPage, site);
-      expect(result.success).toBe(true);
-    }
-    await extensionPage.waitForTimeout(1000);
-
-    const trackedSites: any[] = await extensionPage.evaluate(async () => {
-      return new Promise((resolve) => {
-        chrome.runtime.sendMessage({ type: 'GET_TRACKED_SITES' }, resolve);
-      });
-    });
-    expect(trackedSites.length).toBeGreaterThanOrEqual(50);
-
-    for (const site of sites) {
-      await removeTrackedSite(extensionPage, site.id);
-    }
-  });
+test('50 tracked sites each count exactly one real navigation', async ({ context, extensionPage }) => {
+  const hosts = Array.from({ length: 50 }, (_, i) => `stress-track-${i}.test`);
+  for (const host of hosts) {
+    expect((await addTrackedSite(extensionPage, { id: host, label: host, domains: [host] })).success).toBe(true);
+  }
+  const page = await context.newPage();
+  for (const host of hosts) {
+    await page.goto(webURL(`http://${host}/`));
+    await expect(page.locator('h1')).toHaveText('Test page');
+  }
+  await expect.poll(async () => {
+    const data = await getTrackingDataForToday(extensionPage);
+    return hosts.map(host => data[host]?.visits);
+  }).toEqual(hosts.map(() => 1));
 });

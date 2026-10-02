@@ -4,6 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    "types": ["node", "chrome"],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "outDir": "dist",

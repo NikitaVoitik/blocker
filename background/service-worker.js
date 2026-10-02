@@ -84,18 +84,94 @@ const DEFAULT_TRACKED_SITES = [
 ];
 
 // Runtime cache of blocked sites
-let currentBlockedSites = [];
+let currentBlockedSites = DEFAULT_SITES;
 
 // Runtime cache of tracked sites
-let currentTrackedSites = [];
+let currentTrackedSites = DEFAULT_TRACKED_SITES;
 
 // Active time tracking state
 let activeTracking = { tabId: null, siteId: null, startTime: null };
 
+// Serialize operations that read and then replace shared state.
+function createQueue() {
+  let pending = Promise.resolve();
+  return operation => {
+    const result = pending.then(operation);
+    pending = result.catch(() => {});
+    return result;
+  };
+}
+// Split Incognito workers cannot open the normal profile's extension pages.
+// Give each worker its own writable counters; readers combine both local partitions.
+const privateContext = chrome.extension.inIncognitoContext;
+const localKey = key => privateContext ? 'incognito:' + key : key;
+const sessionKey = localKey('activeTracking');
+async function getOwnData(keys) {
+  keys = Array.isArray(keys) ? keys : [keys];
+  const values = await chrome.storage.local.get(keys.map(localKey));
+  return Object.fromEntries(keys.map(key => [key, values[localKey(key)]]));
+}
+async function setOwnData(data) {
+  await chrome.storage.local.set(Object.fromEntries(Object.entries(data).map(([key, value]) => [localKey(key), value])));
+}
+async function combinedTrackingData() {
+  const values = await chrome.storage.local.get(['trackingData', 'incognito:trackingData']);
+  const combined = { visits: {}, time: {} };
+  for (const data of [values.trackingData, values['incognito:trackingData']]) {
+    if (!data) continue;
+    for (const type of ['visits', 'time']) {
+      for (const [key, value] of Object.entries(data[type] || {})) combined[type][key] = (combined[type][key] || 0) + value;
+    }
+  }
+  return combined;
+}
+async function combinedAttempts() {
+  const keys = ['attemptCount', 'todayDate', 'todayCount', 'dailyCounts', 'attemptLog', 'installDate'];
+  const values = await chrome.storage.local.get([...keys, ...keys.map(key => 'incognito:' + key)]);
+  const today = new Date().toDateString();
+  const result = { attemptCount: 0, todayCount: 0, dailyCounts: {}, attemptLog: [], installDate: values.installDate };
+  for (const prefix of ['', 'incognito:']) {
+    result.attemptCount += values[prefix + 'attemptCount'] || 0;
+    if (values[prefix + 'todayDate'] === today) result.todayCount += values[prefix + 'todayCount'] || 0;
+    for (const [day, count] of Object.entries(values[prefix + 'dailyCounts'] || {})) result.dailyCounts[day] = (result.dailyCounts[day] || 0) + count;
+    result.attemptLog.push(...(values[prefix + 'attemptLog'] || []));
+  }
+  return result;
+}
+
+const mutateStorage = createQueue();
+const mutateSites = createQueue();
+const updateRules = createQueue();
+const updateTracking = createQueue();
+const captureQueue = createQueue();
+
+function normalizeHost(host) {
+  return host.toLowerCase().replace(/\.$/, '').replace(/^www\./, '');
+}
+function hostMatches(host, domain) {
+  host = normalizeHost(host);
+  domain = normalizeHost(domain);
+  return host === domain || host.endsWith('.' + domain);
+}
+function normalizeSite(site) {
+  if (!site || typeof site.id !== 'string' || !Array.isArray(site.domains) || !site.domains.length) {
+    throw new Error('Enter a valid site');
+  }
+  const domains = [...new Set(site.domains.map(domain => {
+    const url = new URL('https://' + domain);
+    if (!url.hostname.includes('.') || url.username || url.password || url.search || url.hash) {
+      throw new Error('Enter a valid domain');
+    }
+    const host = normalizeHost(url.hostname);
+    return host + (site.pathOnly ? url.pathname.replace(/\/$/, '') : '');
+  }))];
+  return { ...site, domains };
+}
+
 // Load blocked sites from storage
 async function loadBlockedSites() {
   const result = await chrome.storage.local.get('blockedSites');
-  currentBlockedSites = result.blockedSites || DEFAULT_SITES;
+  currentBlockedSites = (result.blockedSites || DEFAULT_SITES).map(normalizeSite);
   return currentBlockedSites;
 }
 
@@ -109,7 +185,7 @@ async function saveBlockedSites(sites) {
 // Load tracked sites from storage
 async function loadTrackedSites() {
   const result = await chrome.storage.local.get('trackedSites');
-  currentTrackedSites = result.trackedSites || DEFAULT_TRACKED_SITES;
+  currentTrackedSites = (result.trackedSites || DEFAULT_TRACKED_SITES).map(normalizeSite);
   return currentTrackedSites;
 }
 
@@ -124,7 +200,7 @@ function getMatchingTrackedSite(url) {
   try {
     const parsed = new URL(url);
     for (const site of currentTrackedSites) {
-      if (site.domains.includes(parsed.hostname)) {
+      if (site.domains.some(domain => hostMatches(parsed.hostname, domain))) {
         return site;
       }
     }
@@ -134,64 +210,45 @@ function getMatchingTrackedSite(url) {
   return null;
 }
 
-// Generate dynamic declarativeNetRequest rules from blocked sites
-async function syncBlockRules() {
-  const sites = currentBlockedSites;
+// Chrome's requestDomains matches complete hosts and their subdomains.
+function buildBlockRules() {
+  let id = 1000;
   const rules = [];
-  let ruleId = 1000; // Start high to avoid conflicts with static rules
-
-  for (const site of sites) {
+  for (const site of currentBlockedSites) {
     for (const domain of site.domains) {
-      rules.push({
-        id: ruleId++,
-        priority: 1,
-        action: {
-          type: 'redirect',
-          redirect: {
-            extensionPath: `/blocked/blocked.html?site=${encodeURIComponent(site.id)}`
-          }
-        },
-        condition: {
-          urlFilter: `||${domain}`,
-          resourceTypes: ['main_frame']
-        }
-      });
+      const [host, ...parts] = domain.split('/');
+      const condition = { requestDomains: [host], resourceTypes: ['main_frame'] };
+      if (site.pathOnly) {
+        const path = '/' + parts.join('/');
+        const escaped = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        condition.isUrlFilterCaseSensitive = true;
+        condition.regexFilter = '^https?://[^/]+' + escaped + '([/?#]|$)';
+      }
+      rules.push({ id: id++, priority: site.pathOnly ? 2 : 1,
+        action: { type: 'redirect', redirect: { extensionPath: '/blocked/blocked.html?site=' + encodeURIComponent(site.id) } },
+        condition });
+      rules.push({ id: id++, priority: site.pathOnly ? 2 : 1, action: { type: 'block' },
+        condition: { ...condition, resourceTypes: ['sub_frame'] } });
     }
   }
-
-  // Get existing dynamic rules to remove them
-  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  const removeRuleIds = existingRules.map(r => r.id);
-
-  try {
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds,
-      addRules: rules
-    });
-  } catch (err) {
-    console.error('[SiteBlocker] Failed to update rules, retrying...', err);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    try {
-      const retryExisting = await chrome.declarativeNetRequest.getDynamicRules();
-      const retryRemoveIds = retryExisting.map(r => r.id);
-      await chrome.declarativeNetRequest.updateDynamicRules({
-        removeRuleIds: retryRemoveIds,
-        addRules: rules
-      });
-    } catch (retryErr) {
-      console.error('[SiteBlocker] Retry also failed:', retryErr);
-    }
-  }
+  return rules;
 }
 
-// Verify that dynamic rules match expected count; re-sync if mismatched
+function syncBlockRules() {
+  return updateRules(async () => {
+    const rules = buildBlockRules();
+    const existing = await chrome.declarativeNetRequest.getDynamicRules();
+    await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: existing.map(r => r.id), addRules: rules });
+  });
+}
+
+// Compare the actual contract, not just the number of installed rules.
 async function verifyBlockRules() {
-  const expectedCount = currentBlockedSites.reduce((sum, site) => sum + site.domains.length, 0);
-  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  if (existingRules.length !== expectedCount) {
-    console.warn(`[SiteBlocker] Rule mismatch: expected ${expectedCount}, found ${existingRules.length}. Re-syncing...`);
-    await syncBlockRules();
-  }
+  const signature = rule => JSON.stringify([rule.id, rule.priority, rule.action.type, rule.action.redirect?.extensionPath || '',
+    rule.condition.requestDomains, rule.condition.regexFilter || '', rule.condition.isUrlFilterCaseSensitive || false, rule.condition.resourceTypes]);
+  const expected = buildBlockRules().map(signature).sort();
+  const actual = (await chrome.declarativeNetRequest.getDynamicRules()).map(signature).sort();
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) await syncBlockRules();
 }
 
 // Check if a URL matches any blocked site
@@ -203,12 +260,12 @@ function getMatchingSite(url) {
         for (const domain of site.domains) {
           const [host, ...pathParts] = domain.split('/');
           const path = '/' + pathParts.join('/');
-          if (parsed.hostname === host && parsed.pathname.startsWith(path)) {
+          if (hostMatches(parsed.hostname, host) && (parsed.pathname === path || parsed.pathname.startsWith(path + '/'))) {
             return site;
           }
         }
       } else {
-        if (site.domains.includes(parsed.hostname)) {
+        if (site.domains.some(domain => hostMatches(parsed.hostname, domain))) {
           return site;
         }
       }
@@ -219,87 +276,75 @@ function getMatchingSite(url) {
   return null;
 }
 
-// Block sites via webNavigation API (backup for declarativeNetRequest)
-chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+async function enforceNavigation(details) {
   if (details.frameId !== 0) return;
-
   await initReady;
-
   const site = getMatchingSite(details.url);
-  if (site) {
-    await chrome.tabs.update(details.tabId, {
-      url: chrome.runtime.getURL(`blocked/blocked.html?site=${encodeURIComponent(site.id)}`)
-    });
-  }
-});
-
-// Track visits via webNavigation.onCompleted (only fires for pages that fully loaded)
-chrome.webNavigation.onCompleted.addListener(async (details) => {
-  if (details.frameId !== 0) return;
-  await initReady;
-  const site = getMatchingTrackedSite(details.url);
-  if (site) {
-    await incrementVisit(site.id);
-  }
-});
-
-// Track time via tab focus changes
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  await initReady;
-  await flushActiveTime();
-
+  if (!site) return;
   try {
-    const tab = await chrome.tabs.get(activeInfo.tabId);
-    const site = tab.url ? getMatchingTrackedSite(tab.url) : null;
-    if (site) {
-      activeTracking = { tabId: activeInfo.tabId, siteId: site.id, startTime: Date.now() };
-    } else {
-      activeTracking = { tabId: activeInfo.tabId, siteId: null, startTime: null };
+    const tab = await chrome.tabs.get(details.tabId);
+    if (tab.pendingUrl && !getMatchingSite(tab.pendingUrl)) return;
+    const destination = chrome.runtime.getURL('blocked/blocked.html?site=' + encodeURIComponent(site.id));
+    // DNR may already have redirected this tab. Do not navigate twice.
+    if (tab.url !== destination && tab.pendingUrl !== destination) {
+      await chrome.tabs.update(details.tabId, { url: destination });
     }
-  } catch (e) {
-    activeTracking = { tabId: null, siteId: null, startTime: null };
+  } catch (error) {
+    // The user may close the tab while the navigation is being blocked.
+    console.debug('Block navigation ended:', error.message);
   }
-});
-
-// Track time via window focus changes
-chrome.windows.onFocusChanged.addListener(async (windowId) => {
-  await initReady;
-  if (windowId === chrome.windows.WINDOW_ID_NONE) {
-    await flushActiveTime();
-    activeTracking = { tabId: null, siteId: null, startTime: null };
+}
+const enforce = details => { enforceNavigation(details).catch(console.error); };
+// DNR owns network navigation. Running an async backup before commit can race
+// its redirect and produce a second block page (and a false attempt).
+chrome.webNavigation.onHistoryStateUpdated.addListener(enforce);
+chrome.webNavigation.onCommitted.addListener(details => {
+  if (details.frameId !== 0) return;
+  const url = new URL(details.url);
+  if (url.origin === new URL(chrome.runtime.getURL('/')).origin && url.pathname === '/blocked/blocked.html') {
+    const siteId = url.searchParams.get('site');
+    if (siteId && !['reload', 'auto_toplevel'].includes(details.transitionType) && !details.transitionQualifiers.includes('forward_back')) {
+      initReady.then(() => incrementAttempt(siteId)).catch(console.error);
+    }
   } else {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, windowId });
-      await flushActiveTime();
-      if (tab && tab.url) {
-        const site = getMatchingTrackedSite(tab.url);
-        if (site) {
-          activeTracking = { tabId: tab.id, siteId: site.id, startTime: Date.now() };
-        } else {
-          activeTracking = { tabId: tab.id, siteId: null, startTime: null };
-        }
-      } else {
-        activeTracking = { tabId: null, siteId: null, startTime: null };
-      }
-    } catch (e) {
-      activeTracking = { tabId: null, siteId: null, startTime: null };
-    }
+    enforce(details); // Covers redirects, restored pages and cached navigations.
   }
 });
 
-// Track URL changes within the active tab (SPA navigation)
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.url && tabId === activeTracking.tabId) {
-    await initReady;
-    await flushActiveTime();
-    const site = getMatchingTrackedSite(changeInfo.url);
-    if (site) {
-      activeTracking = { tabId, siteId: site.id, startTime: Date.now() };
-    } else {
-      activeTracking = { tabId, siteId: null, startTime: null };
-    }
+chrome.webNavigation.onCompleted.addListener(details => {
+  if (details.frameId === 0) {
+    initReady.then(() => {
+      const site = getMatchingTrackedSite(details.url);
+      if (site) return incrementVisit(site.id);
+    }).catch(console.error);
   }
 });
+
+async function setActiveTracking(tab) {
+  await flushTrackingTime();
+  const site = tab && tab.url ? getMatchingTrackedSite(tab.url) : null;
+  activeTracking = { tabId: tab ? tab.id : null, siteId: site ? site.id : null, startTime: site ? Date.now() : null };
+  await chrome.storage.session.set({ [sessionKey]: activeTracking });
+}
+function changeTracking(operation) {
+  initReady.then(() => updateTracking(operation)).catch(console.error);
+}
+chrome.tabs.onActivated.addListener(info => changeTracking(async () => {
+  const tab = await chrome.tabs.get(info.tabId).catch(() => null);
+  await setActiveTracking(tab);
+}));
+chrome.windows.onFocusChanged.addListener(windowId => changeTracking(async () => {
+  const [tab] = windowId === chrome.windows.WINDOW_ID_NONE ? [] : await chrome.tabs.query({ active: true, windowId });
+  await setActiveTracking(tab || null);
+}));
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url) changeTracking(async () => {
+    if (tabId === activeTracking.tabId) await setActiveTracking({ ...tab, url: changeInfo.url });
+  });
+});
+chrome.tabs.onRemoved.addListener(tabId => changeTracking(async () => {
+  if (tabId === activeTracking.tabId) await setActiveTracking(null);
+}));
 
 const DB_NAME = 'SelfieShameDB';
 const DB_VERSION = 1;
@@ -325,7 +370,8 @@ async function loadPhotoLimit() {
   return currentPhotoLimit;
 }
 
-async function setPhotoLimit(value) {
+function setPhotoLimit(value) { return captureQueue(() => applyPhotoLimit(value)); }
+async function applyPhotoLimit(value) {
   const n = Math.floor(Number(value));
   if (!Number.isFinite(n) || n < MIN_PHOTO_LIMIT || n > MAX_PHOTO_LIMIT) {
     return { success: false, error: 'Invalid photo limit', limit: currentPhotoLimit };
@@ -376,11 +422,9 @@ async function savePhoto(dataUrl) {
     };
 
     const request = store.add(photo);
-    request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
-
-    // Cleanup old photos after adding
-    transaction.oncomplete = () => cleanupOldPhotos();
+    transaction.onabort = () => reject(transaction.error || new Error('Photo save aborted'));
+    transaction.oncomplete = () => { cleanupOldPhotos().catch(console.error); resolve(request.result); };
   });
 }
 
@@ -403,7 +447,7 @@ async function cleanupOldPhotos() {
   const database = await openDatabase();
   const limit = currentPhotoLimit;
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const transaction = database.transaction([PHOTOS_STORE], 'readwrite');
     const store = transaction.objectStore(PHOTOS_STORE);
     const index = store.index('timestamp');
@@ -422,24 +466,27 @@ async function cleanupOldPhotos() {
         cursor.continue();
       } else {
         toDelete.forEach(key => store.delete(key));
-        resolve();
       }
     };
 
-    request.onerror = () => resolve();
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () => reject(transaction.error || new Error('Photo cleanup aborted'));
   });
 }
 
 // Clear every photo from storage
-async function clearAllPhotos() {
+function clearAllPhotos() { return captureQueue(purgePhotos); }
+async function purgePhotos() {
   const database = await openDatabase();
 
   return new Promise((resolve, reject) => {
     const transaction = database.transaction([PHOTOS_STORE], 'readwrite');
     const store = transaction.objectStore(PHOTOS_STORE);
     const request = store.clear();
-    request.onsuccess = () => resolve({ success: true });
     request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => resolve({ success: true });
+    transaction.onabort = () => reject(transaction.error || new Error('Photo purge aborted'));
   });
 }
 
@@ -504,32 +551,44 @@ function pruneDailyCounts(dailyCounts) {
 }
 
 // Increment visit count for a tracked site
-async function incrementVisit(siteId) {
-  const result = await chrome.storage.local.get('trackingData');
-  const data = result.trackingData || { visits: {}, time: {} };
-  const key = siteId + ':' + getTodayKey();
-  data.visits[key] = (data.visits[key] || 0) + 1;
-  pruneTrackingData(data);
-  await chrome.storage.local.set({ trackingData: data });
+function incrementVisit(siteId) {
+  return mutateStorage(async () => {
+    const result = await getOwnData('trackingData');
+    const data = result.trackingData || { visits: {}, time: {} };
+    const key = siteId + ':' + getTodayKey();
+    data.visits[key] = (data.visits[key] || 0) + 1;
+    pruneTrackingData(data);
+    await setOwnData({ trackingData: data });
+  });
 }
 
-// Flush accumulated active time to storage
-async function flushActiveTime() {
-  if (!activeTracking.siteId || !activeTracking.startTime) return;
-
-  const elapsed = Math.round((Date.now() - activeTracking.startTime) / 1000);
-  if (elapsed < 1) return;
-
-  const cappedElapsed = Math.min(elapsed, 1800);
-
-  const result = await chrome.storage.local.get('trackingData');
-  const data = result.trackingData || { visits: {}, time: {} };
-  const key = activeTracking.siteId + ':' + getTodayKey();
-  data.time[key] = (data.time[key] || 0) + cappedElapsed;
-  await chrome.storage.local.set({ trackingData: data });
-
-  activeTracking.startTime = Date.now();
+// Keep fractional seconds across rapid switches, cap stale sessions, and split midnight.
+async function flushTrackingTime() {
+  if (!activeTracking.siteId || activeTracking.startTime === null) return;
+  const end = Date.now();
+  const start = activeTracking.startTime;
+  if (end <= start) return;
+  const siteId = activeTracking.siteId;
+  await mutateStorage(async () => {
+    const result = await getOwnData('trackingData');
+    const data = result.trackingData || { visits: {}, time: {} };
+    let cursor = start;
+    const cappedEnd = Math.min(end, start + 1800_000);
+    while (cursor < cappedEnd) {
+      const day = new Date(cursor);
+      const key = siteId + ':' + day.getFullYear() + '-' + String(day.getMonth() + 1).padStart(2, '0') + '-' + String(day.getDate()).padStart(2, '0');
+      const midnight = new Date(day); midnight.setHours(24, 0, 0, 0);
+      const next = Math.min(cappedEnd, midnight.getTime());
+      data.time[key] = (data.time[key] || 0) + (next - cursor) / 1000;
+      cursor = next;
+    }
+    pruneTrackingData(data);
+    await setOwnData({ trackingData: data });
+  });
+  activeTracking.startTime = end;
+  await chrome.storage.session.set({ [sessionKey]: activeTracking });
 }
+function flushActiveTime() { return updateTracking(flushTrackingTime); }
 
 // Prune tracking data entries older than 30 days
 function pruneTrackingData(data) {
@@ -553,8 +612,7 @@ function pruneTrackingData(data) {
 // Get today's tracking data for all tracked sites
 async function getTrackingDataForToday() {
   await flushActiveTime();
-  const result = await chrome.storage.local.get('trackingData');
-  const data = result.trackingData || { visits: {}, time: {} };
+  const data = await combinedTrackingData();
   const todayKey = getTodayKey();
   const sites = {};
   for (const site of currentTrackedSites) {
@@ -571,8 +629,7 @@ async function getTrackingDataForToday() {
 // Get full tracking report data (30-day breakdown)
 async function getTrackingReportData() {
   await flushActiveTime();
-  const result = await chrome.storage.local.get('trackingData');
-  const data = result.trackingData || { visits: {}, time: {} };
+  const data = await combinedTrackingData();
   const today = new Date();
   const todayKey = getTodayKey();
 
@@ -674,26 +731,34 @@ async function getTrackingReportData() {
 }
 
 // Add a tracked site
-async function addTrackedSite(siteEntry) {
-  const sites = [...currentTrackedSites];
-  if (sites.some(s => s.id === siteEntry.id)) {
-    return { success: false, error: 'Site already tracked' };
-  }
-  sites.push(siteEntry);
-  await saveTrackedSites(sites);
-  return { success: true, sites };
+function addTrackedSite(siteEntry) {
+  return mutateSites(async () => {
+    siteEntry = normalizeSite(siteEntry);
+    const sites = [...currentTrackedSites];
+    if (sites.some(s => s.id === siteEntry.id)) {
+      return { success: false, error: 'Site already tracked' };
+    }
+    sites.push(siteEntry);
+    await saveTrackedSites(sites);
+    return { success: true, sites };
+  });
 }
 
 // Remove a tracked site
-async function removeTrackedSite(siteId) {
-  const sites = currentTrackedSites.filter(s => s.id !== siteId);
-  await saveTrackedSites(sites);
-  return { success: true, sites };
+function removeTrackedSite(siteId) {
+  return mutateSites(async () => {
+    await flushActiveTime();
+    const sites = currentTrackedSites.filter(s => s.id !== siteId);
+    await saveTrackedSites(sites);
+    if (activeTracking.siteId === siteId) await updateTracking(() => setActiveTracking(null));
+    return { success: true, sites };
+  });
 }
 
 // Get/update attempt stats
-async function getStats() {
-  const result = await chrome.storage.local.get(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts']);
+function getStats() { return mutateStorage(readStats); }
+async function readStats() {
+  const result = await getOwnData(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts']);
 
   const today = new Date().toDateString();
   let todayCount = result.todayCount || 0;
@@ -701,7 +766,7 @@ async function getStats() {
   // Reset today count if it's a new day
   if (result.todayDate !== today) {
     todayCount = 0;
-    await chrome.storage.local.set({ todayDate: today, todayCount: 0 });
+    await setOwnData({ todayDate: today, todayCount: 0 });
   }
 
   let dailyCounts = result.dailyCounts || {};
@@ -710,20 +775,16 @@ async function getStats() {
   const todayKey = getTodayKey();
   if (Object.keys(dailyCounts).length === 0 && todayCount > 0) {
     dailyCounts[todayKey] = todayCount;
-    await chrome.storage.local.set({ dailyCounts });
+    await setOwnData({ dailyCounts });
   }
 
-  const threeDayCount = sumLastThreeDays(dailyCounts);
-
-  return {
-    allTimeCount: result.attemptCount || 0,
-    todayCount: todayCount,
-    threeDayCount: threeDayCount
-  };
+  const combined = await combinedAttempts();
+  return { allTimeCount: combined.attemptCount, todayCount: combined.todayCount, threeDayCount: sumLastThreeDays(combined.dailyCounts) };
 }
 
-async function incrementAttempt() {
-  const result = await chrome.storage.local.get(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts']);
+function incrementAttempt(siteId) { return mutateStorage(() => recordAttempt(siteId)); }
+async function recordAttempt(siteId) {
+  const result = await getOwnData(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts', 'attemptLog']);
 
   const today = new Date().toDateString();
   let todayCount = result.todayCount || 0;
@@ -742,11 +803,12 @@ async function incrementAttempt() {
   dailyCounts[todayKey] = (dailyCounts[todayKey] || 0) + 1;
   dailyCounts = pruneDailyCounts(dailyCounts);
 
-  await chrome.storage.local.set({
+  await setOwnData({
     attemptCount: newAllTime,
     todayDate: today,
     todayCount: newToday,
-    dailyCounts: dailyCounts
+    dailyCounts,
+    attemptLog: [...(result.attemptLog || []), { siteId, timestamp: Date.now() }].slice(-1000)
   });
 
   return { allTimeCount: newAllTime, todayCount: newToday, threeDayCount: sumLastThreeDays(dailyCounts) };
@@ -787,7 +849,8 @@ async function closeOffscreenDocument() {
 }
 
 // Capture photo via offscreen document
-async function capturePhoto() {
+function capturePhoto() { return captureQueue(captureAndSavePhoto); }
+async function captureAndSavePhoto() {
   try {
     await createOffscreenDocument();
 
@@ -797,12 +860,11 @@ async function capturePhoto() {
     const response = await chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO' });
 
     if (response && response.success) {
-      // Save photo and increment attempt
-      await savePhoto(response.data);
-      await incrementAttempt();
+      // Captures are evidence; navigation records attempts independently.
+      const photoId = await savePhoto(response.data);
       await closeOffscreenDocument();
 
-      return response;
+      return { ...response, photoId };
     }
 
     await closeOffscreenDocument();
@@ -815,41 +877,54 @@ async function capturePhoto() {
 }
 
 // Add a blocked site
-async function addBlockedSite(siteEntry) {
-  const sites = [...currentBlockedSites];
+function addBlockedSite(siteEntry) {
+  return mutateSites(async () => {
+    siteEntry = normalizeSite(siteEntry);
+    const sites = [...currentBlockedSites];
 
-  // Check for duplicate
-  if (sites.some(s => s.id === siteEntry.id)) {
-    return { success: false, error: 'Site already blocked' };
-  }
+    // Check for duplicate
+    if (sites.some(s => s.id === siteEntry.id)) {
+      return { success: false, error: 'Site already blocked' };
+    }
 
-  sites.push(siteEntry);
-  await saveBlockedSites(sites);
-  return { success: true, sites };
+    sites.push(siteEntry);
+    await saveBlockedSites(sites);
+    const tabs = await chrome.tabs.query({});
+    await Promise.all(tabs.filter(tab => tab.url && getMatchingSite(tab.url)).map(tab => enforceNavigation({ tabId: tab.id, frameId: 0, url: tab.url })));
+    return { success: true, sites };
+  });
 }
 
 // Remove a blocked site
-async function removeBlockedSite(siteId) {
-  const sites = currentBlockedSites.filter(s => s.id !== siteId);
-  await saveBlockedSites(sites);
-  return { success: true, sites };
+function removeBlockedSite(siteId, photoId) {
+  return mutateSites(async () => {
+    const removed = currentBlockedSites.find(site => site.id === siteId);
+    if (!removed) return { success: false, error: 'Site is not blocked' };
+    const sites = currentBlockedSites.filter(s => s.id !== siteId);
+    await saveBlockedSites(sites);
+    await logRemoval(siteId, removed.label || siteId, photoId);
+    return { success: true, sites };
+  });
 }
 
-async function logRemoval(siteId, siteLabel, photoId) {
-  const result = await chrome.storage.local.get('removalLog');
-  const log = result.removalLog || [];
-  log.push({
-    siteId,
-    siteLabel,
-    timestamp: Date.now(),
-    photoId: photoId || null
+function logRemoval(siteId, siteLabel, photoId) {
+  return mutateStorage(async () => {
+    const result = await getOwnData('removalLog');
+    const log = result.removalLog || [];
+    log.push({
+      siteId,
+      siteLabel,
+      timestamp: Date.now(),
+      photoId: photoId || null,
+      photoContext: privateContext ? 'incognito' : 'regular'
+    });
+    await setOwnData({ removalLog: log });
   });
-  await chrome.storage.local.set({ removalLog: log });
 }
 
 async function getRemovalLog() {
-  const result = await chrome.storage.local.get('removalLog');
-  return result.removalLog || [];
+  const result = await chrome.storage.local.get(['removalLog', 'incognito:removalLog']);
+  return [...(result.removalLog || []), ...(result['incognito:removalLog'] || [])].sort((a, b) => a.timestamp - b.timestamp);
 }
 
 // Handle messages from content scripts and popup
@@ -860,17 +935,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'CAPTURE_PHOTO') {
-    capturePhoto().then(sendResponse);
+    initReady.then(() => capturePhoto()).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Async response
   }
 
   if (message.type === 'GET_STATS') {
-    getStats().then(sendResponse);
+    initReady.then(() => getStats()).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
   if (message.type === 'GET_PHOTOS') {
-    getPhotos().then(sendResponse);
+    initReady.then(() => getPhotos()).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
@@ -885,13 +960,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'CLEAR_PHOTOS') {
-    clearAllPhotos().then(sendResponse).catch(err => sendResponse({ success: false, error: String(err) }));
+    initReady.then(clearAllPhotos).then(sendResponse).catch(err => sendResponse({ success: false, error: String(err) }));
     return true;
   }
 
   if (message.type === 'GET_REPORT_DATA') {
     (async () => {
-      const result = await chrome.storage.local.get(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts', 'installDate']);
+      await initReady;
+      const result = await mutateStorage(async () => {
+        await readStats();
+        return combinedAttempts();
+      });
       const dailyCounts = result.dailyCounts || {};
       const photos = await getPhotos();
 
@@ -950,7 +1029,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         longestCleanStreak: longestStreak,
         photoCount: photos.length
       });
-    })();
+    })().catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
@@ -960,12 +1039,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'ADD_BLOCKED_SITE') {
-    addBlockedSite(message.site).then(sendResponse);
+    initReady.then(() => addBlockedSite(message.site)).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
   if (message.type === 'REMOVE_BLOCKED_SITE') {
-    removeBlockedSite(message.siteId).then(sendResponse);
+    initReady.then(() => removeBlockedSite(message.siteId, message.photoId)).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
@@ -983,22 +1062,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'ADD_TRACKED_SITE') {
-    addTrackedSite(message.site).then(sendResponse);
+    initReady.then(() => addTrackedSite(message.site)).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
   if (message.type === 'REMOVE_TRACKED_SITE') {
-    removeTrackedSite(message.siteId).then(sendResponse);
+    initReady.then(() => removeTrackedSite(message.siteId)).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
   if (message.type === 'GET_TRACKING_DATA') {
-    getTrackingDataForToday().then(sendResponse);
+    initReady.then(() => getTrackingDataForToday()).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
   if (message.type === 'GET_TRACKING_REPORT_DATA') {
-    getTrackingReportData().then(sendResponse);
+    initReady.then(() => getTrackingReportData()).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
@@ -1010,13 +1089,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (message.type === 'LOG_REMOVAL') {
-    logRemoval(message.siteId, message.siteLabel, message.photoId).then(() => sendResponse({ success: true }));
-    return true;
-  }
-
   if (message.type === 'GET_REMOVAL_LOG') {
-    getRemovalLog().then(sendResponse);
+    initReady.then(() => getRemovalLog()).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
@@ -1032,28 +1106,29 @@ chrome.storage.onChanged.addListener((changes, area) => {
       // removed all entries and is preserved as-is.
       currentBlockedSites = changes.blockedSites.newValue === undefined
         ? DEFAULT_SITES
-        : changes.blockedSites.newValue;
+        : changes.blockedSites.newValue.map(normalizeSite);
+      initReady.then(syncBlockRules).catch(console.error);
     }
     if (changes.trackedSites) {
       currentTrackedSites = changes.trackedSites.newValue === undefined
         ? DEFAULT_TRACKED_SITES
-        : changes.trackedSites.newValue;
+        : changes.trackedSites.newValue.map(normalizeSite);
     }
     if (changes.photoLimit) {
       const n = Number(changes.photoLimit.newValue);
       if (Number.isFinite(n) && n >= MIN_PHOTO_LIMIT && n <= MAX_PHOTO_LIMIT) {
         currentPhotoLimit = Math.floor(n);
-      }
+      } else { currentPhotoLimit = DEFAULT_PHOTO_LIMIT; }
+      captureQueue(cleanupOldPhotos).catch(console.error);
     }
   }
 });
 
 // On install, seed default sites and open setup page
 chrome.runtime.onInstalled.addListener(async (details) => {
+  await initReady;
   if (details.reason === 'install') {
     await chrome.storage.local.set({ installDate: getTodayKey() });
-    await saveBlockedSites(DEFAULT_SITES);
-    await saveTrackedSites(DEFAULT_TRACKED_SITES);
     await chrome.tabs.create({
       url: chrome.runtime.getURL('setup/setup.html')
     });
@@ -1067,7 +1142,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 // Re-initialize on browser startup
 chrome.runtime.onStartup.addListener(async () => {
-  await initialize();
+  await initReady;
 });
 
 // Periodically verify block rules and flush tracking time
@@ -1084,11 +1159,14 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
 // Initialize on startup
 async function initialize() {
-  await openDatabase().catch(console.error);
   await loadBlockedSites();
   await loadTrackedSites();
   await loadPhotoLimit();
+  const saved = await chrome.storage.local.get(['blockedSites', 'trackedSites']);
+  if (saved.blockedSites === undefined) await chrome.storage.local.set({ blockedSites: currentBlockedSites });
+  if (saved.trackedSites === undefined) await chrome.storage.local.set({ trackedSites: currentTrackedSites });
   await syncBlockRules();
+  await openDatabase();
 
   const existing = await chrome.alarms.get(RULE_CHECK_ALARM);
   if (!existing) {
@@ -1100,18 +1178,16 @@ async function initialize() {
     chrome.alarms.create(TRACKING_FLUSH_ALARM, { periodInMinutes: 1 });
   }
 
-  // Resume tracking for the currently active tab (handles service worker restarts)
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-    if (tab && tab.url) {
-      const site = getMatchingTrackedSite(tab.url);
-      if (site) {
-        activeTracking = { tabId: tab.id, siteId: site.id, startTime: Date.now() };
-      }
-    }
-  } catch (e) {
-    // Tab query can fail if no windows are focused
+  // Session storage survives worker suspension, but clears on browser shutdown.
+  const session = await chrome.storage.session.get(sessionKey);
+  if (session[sessionKey]) activeTracking = session[sessionKey];
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  const window = tab ? await chrome.windows.get(tab.windowId).catch(() => null) : null;
+  const site = tab && window && window.focused ? getMatchingTrackedSite(tab.url || '') : null;
+  if (!site || activeTracking.tabId !== tab.id || activeTracking.siteId !== site.id) {
+    await setActiveTracking(site ? tab : null);
   }
+
 }
 
 const initReady = initialize();

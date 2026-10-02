@@ -54,23 +54,8 @@ async function getPhotoCount(page: Page): Promise<number> {
 }
 
 test.describe('Tier 2: Gallery Storage', () => {
-  // The default `extensionPage` fixture lands on blocked.html which auto-triggers
-  // a webcam capture; we re-navigate to the gallery-only URL (which skips capture)
-  // and then drain any racing capture write before each test.
   test.beforeEach(async ({ extensionPage, extensionId }) => {
     await extensionPage.goto(`chrome-extension://${extensionId}/blocked/blocked.html?gallery=true`);
-    await extensionPage.evaluate(() => chrome.storage.local.remove('photoLimit'));
-    // Poll until any in-flight auto-capture has landed AND the store is empty,
-    // observed twice in a row. CLEAR_PHOTOS goes through the SW (which holds the
-    // canonical DB handle) so it can't race with the SW's own writes.
-    await expect.poll(async () => {
-      await sendMessage(extensionPage, { type: 'CLEAR_PHOTOS' });
-      await extensionPage.waitForTimeout(250);
-      const first = await getPhotoCount(extensionPage);
-      await extensionPage.waitForTimeout(250);
-      const second = await getPhotoCount(extensionPage);
-      return first === 0 && second === 0;
-    }, { timeout: 10_000, intervals: [200, 400, 800] }).toBe(true);
   });
 
   test('GET_PHOTO_STORAGE_INFO returns defaults when empty', async ({ extensionPage }) => {
