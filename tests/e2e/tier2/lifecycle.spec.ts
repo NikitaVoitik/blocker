@@ -1,4 +1,4 @@
-import { test, expect, webURL, launchExtension, extensionIdFor } from '../fixtures/extension';
+import { test, expect, webURL, launchExtension, closeExtension, extensionIdFor } from '../fixtures/extension';
 import { addBlockedSite, removeBlockedSite, getStats, getTrackingDataForToday, sendMessage } from '../helpers/messaging';
 import { stopExtensionWorker } from '../helpers/lifecycle';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -19,7 +19,7 @@ test('blocking and unflushed tracking survive worker termination', async ({ cont
   await expect.poll(async () => (await getStats(extensionPage)).allTimeCount).toBe(1);
 });
 
-test('browser restart retains custom blocks, removals and attempt evidence', async ({ webServer }) => {
+test('browser restart retains custom blocks, removals and attempt evidence', async ({ webServer }, info) => {
   const profile = await mkdtemp(path.join(tmpdir(), 'blocker-profile-'));
   let context = await launchExtension(profile, false);
   try {
@@ -39,7 +39,7 @@ test('browser restart retains custom blocks, removals and attempt evidence', asy
       await chrome.storage.local.set({ blockedSites: blockedSites.map(site => site.id === 'persist.test'
         ? { ...site, domains: ['www.persist.test:8443'] } : site) });
     });
-    await context.close();
+    await closeExtension(context);
     context = await launchExtension(profile, false);
     id = await extensionIdFor(context);
     // Navigate before opening a popup: persisted rules must enforce on startup.
@@ -49,12 +49,15 @@ test('browser restart retains custom blocks, removals and attempt evidence', asy
     await expect(page.locator('h1')).toHaveText('BLOCKED');
     await page.goto(webURL('http://twitter.com/'));
     await expect(page.locator('h1')).toHaveText('Test page');
+    const historySession = await context.newCDPSession(page);
+    await info.attach('restart-navigation-history', { body: JSON.stringify(await historySession.send('Page.getNavigationHistory'), null, 2), contentType: 'application/json' });
+    await historySession.detach();
     popup = await context.newPage();
     await popup.goto(`chrome-extension://${id}/popup/popup.html`);
     await expect(popup.locator('#blocked-list')).toContainText('Persist');
     await expect(popup.locator('#blocked-list')).not.toContainText('Twitter');
     await expect.poll(async () => (await getStats(popup)).allTimeCount).toBe(2);
-  } finally { await context.close(); await rm(profile, { recursive: true, force: true }); }
+  } finally { await closeExtension(context); await rm(profile, { recursive: true, force: true }); }
 });
 
 test('new blocks immediately confront a site already open in another tab', async ({ context, extensionPage }) => {

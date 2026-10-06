@@ -11,7 +11,7 @@
   --surface: #111113;
   --border: #2a2a2d;
   --text: #ededef;
-  --text-muted: #6b6b70;
+  --text-muted: #96969d;
   --accent: #E4FF1A;
   --accent-dim: rgba(228, 255, 26, 0.08);
   --danger: #FF2D2D;
@@ -125,7 +125,6 @@ h2 {
   font-weight: normal;
   font-size: 0.65rem;
   color: var(--text-muted);
-  opacity: 0.6;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -270,7 +269,6 @@ h2 {
 .chart-axis span {
   font-size: 0.6rem;
   color: var(--text-muted);
-  opacity: 0.5;
 }
 
 /* Weekly chart */

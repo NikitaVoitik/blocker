@@ -28,11 +28,8 @@ done
 VERSION=$(grep '"version"' "$PROJECT_DIR/manifest.json" | head -1 | sed 's/.*: *"\(.*\)".*/\1/')
 ZIP_FILE="$PROJECT_DIR/dist/blocker-${VERSION}.zip"
 
-mkdir -p "$PROJECT_DIR/dist"
-
-echo "Zipping extension v${VERSION}..."
-cd "$PROJECT_DIR"
-bash scripts/package.sh
+# check already built and tested this archive; never rebuild after validation.
+(cd "$PROJECT_DIR/dist" && sha256sum --check package.sha256)
 
 echo "Getting access token..."
 ACCESS_TOKEN=$(curl -s -X POST https://oauth2.googleapis.com/token \

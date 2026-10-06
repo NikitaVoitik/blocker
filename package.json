@@ -9,24 +9,32 @@
   },
   "scripts": {
     "publish:ext": "bash scripts/publish.sh",
-    "test": "npx playwright test",
-    "test:tier1": "npx playwright test --project=tier1",
-    "test:tier2": "npx playwright test --project=tier2",
-    "test:tier3": "npx playwright test --project=tier3",
+    "test": "bash scripts/browser-tests.sh",
+    "test:tier1": "bash scripts/browser-tests.sh --project=tier1",
+    "test:tier2": "bash scripts/browser-tests.sh --project=tier2",
+    "test:tier3": "bash scripts/browser-tests.sh --project=tier3",
     "check": "bash scripts/check.sh",
     "check:types": "tsc --noEmit",
     "check:syntax": "node scripts/check-syntax.cjs",
-    "test:soak": "TEST_SOAK_MS=14400000 TEST_VISIT_MS=30000 TEST_IDLE_MS=150000 playwright test --project=tier3 soak.spec.ts",
-    "package:ext": "bash scripts/package.sh"
+    "test:soak": "TEST_SOAK_MS=14400000 TEST_VISIT_MS=30000 TEST_IDLE_MS=150000 bash scripts/browser-tests.sh --project=tier3 soak.spec.ts",
+    "package:ext": "bash scripts/package.sh",
+    "check:lint": "eslint background blocked content lib offscreen popup report setup",
+    "check:package": "python3 scripts/validate-package.py",
+    "check:deep": "bash scripts/check-deep.sh",
+    "test:mutations": "node scripts/mutation-check.cjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.59.1",
     "@types/chrome": "^0.3.4",
     "@types/node": "^26.6.3",
+    "eslint": "^10.11.0",
+    "globals": "^17.13.0",
     "typescript": "^6.0.3"
   },
   "packageManager": "pnpm@12.4.2"

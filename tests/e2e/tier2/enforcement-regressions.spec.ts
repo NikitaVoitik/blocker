@@ -57,6 +57,10 @@ test.describe('Camera denied', () => {
     expect(photos).toHaveLength(0);
     await pages[0].reload();
     expect((await getStats(extensionPage)).allTimeCount).toBe(before.allTimeCount + 6);
+    await pages[0].goto(webURL('http://neutral.test/'));
+    await pages[0].goBack();
+    await expect(pages[0].locator('h1')).toHaveText('BLOCKED');
+    expect((await getStats(extensionPage)).allTimeCount).toBe(before.allTimeCount + 6);
   });
 });
 

@@ -1,5 +1,8 @@
 name: Publish to Chrome Web Store
 
+permissions:
+  contents: read
+
 on:
   pull_request:
   push:
@@ -8,8 +11,38 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      version-increased: ${{ steps.release.outputs.version-increased }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Check release version
+        id: release
+        if: github.event_name == 'push'
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+
+          current = json.load(open('manifest.json'))['version']
+          before = os.environ['BEFORE_SHA']
+          increased = False
+          if before and before != '0' * 40:
+              previous = json.loads(subprocess.check_output(
+                  ['git', 'show', before + ':manifest.json'], text=True))['version']
+              def parts(version):
+                  values = tuple(int(part) for part in version.split('.'))
+                  return values + (0,) * (4 - len(values))
+              increased = parts(current) > parts(previous)
+              print(f'Manifest version: {previous} -> {current}; publish: {increased}')
+          else:
+              print('No previous manifest to compare; skipping publication.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'version-increased={str(increased).lower()}\n')
+          PY
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -18,17 +51,31 @@ jobs:
           version: 12.4.2
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm run check
-      - run: pnpm run package:ext
+      - name: Full release validation
+        run: pnpm run check:deep
+        env:
+          TEST_SOAK_MS: '900000'
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
-          name: test-results
-          path: test-results/
+          name: validation-evidence
+          retention-days: 14
+          path: |
+            test-results/
+            playwright-report/
+            validation-results/
+            dist/package-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tested-extension
+          if-no-files-found: error
+          path: |
+            dist/blocker-*.zip
+            dist/package.sha256
 
   publish:
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.test.outputs.version-increased == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -37,8 +84,13 @@ jobs:
         id: version
         run: echo "version=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")" >> "$GITHUB_OUTPUT"
 
-      - name: Zip extension
-        run: bash scripts/package.sh
+      - uses: actions/download-artifact@v5
+        with:
+          name: tested-extension
+          path: dist
+      - name: Verify tested artifact
+        working-directory: dist
+        run: sha256sum --check package.sha256
 
       - name: Get access token
         id: auth

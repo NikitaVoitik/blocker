@@ -51,11 +51,13 @@
       <div class="blocked-sites">
         <h3>Blocked Sites</h3>
         <div id="blocked-list"></div>
+        <p class="commitment-hint">Optional: lock removal on any site. The block stays until you remove it.</p>
         <div class="add-site">
           <input type="text" id="site-input" placeholder="e.g. reddit.com" />
           <button id="add-site-btn" class="btn-add">Block</button>
         </div>
         <span class="input-hint">Enter a domain, not a specific page (e.g. reddit.com, not reddit.com/r/funny)</span>
+        <p id="blocker-error" class="blocker-error" role="alert" hidden></p>
       </div>
 
       <div class="actions">
@@ -114,6 +116,44 @@
       </div>
     </div>
   </div>
+
+  <dialog id="commitment-overlay" class="commitment-dialog" aria-labelledby="commitment-title">
+    <div id="commitment-kicker" class="commitment-kicker">OPTIONAL COMMITMENT</div>
+    <h2 id="commitment-title" tabindex="-1">NO EARLY REMOVAL.</h2>
+    <p id="commitment-site" class="commitment-site"></p>
+    <div id="commitment-choices">
+      <p>Choose how long removal stays locked.</p>
+      <div class="commitment-options" role="group" aria-label="Lock duration">
+        <button type="button" data-lock-hours="1" aria-pressed="false">1 hour</button>
+        <button type="button" data-lock-hours="24" aria-pressed="true">24 hours</button>
+        <button type="button" data-lock-hours="168" aria-pressed="false">7 days</button>
+        <button type="button" id="commitment-custom" aria-pressed="false">Custom</button>
+      </div>
+      <div id="commitment-custom-fields" hidden>
+        <label for="commitment-custom-amount">Custom duration</label>
+        <div class="commitment-custom-inputs">
+          <input id="commitment-custom-amount" type="number" min="1" max="8760" step="1" value="24" aria-describedby="commitment-custom-hint commitment-duration-error" />
+          <select id="commitment-custom-unit" aria-label="Duration unit">
+            <option value="hours">Hours</option>
+            <option value="days">Days</option>
+          </select>
+        </div>
+        <p id="commitment-custom-hint">Whole numbers · 1 hour to 365 days.</p>
+        <p id="commitment-duration-error" class="blocker-error" role="status" hidden>Enter a whole number from 1 hour to 365 days.</p>
+      </div>
+    </div>
+    <div class="commitment-receipt">
+      <span>Removal available</span>
+      <time id="commitment-deadline"></time>
+      <p>The site stays blocked after this deadline.</p>
+    </div>
+    <p id="commitment-explanation">You cannot shorten this lock here. Chrome still lets you disable or uninstall the extension.</p>
+    <p id="commitment-error" class="blocker-error" role="alert" hidden></p>
+    <div class="commitment-actions">
+      <button id="commitment-confirm" class="btn" type="button">Lock removal for 24 hours</button>
+      <button id="commitment-cancel" class="btn btn-secondary" type="button">Cancel</button>
+    </div>
+  </dialog>
 
   <script src="popup.js"></script>
 </body>

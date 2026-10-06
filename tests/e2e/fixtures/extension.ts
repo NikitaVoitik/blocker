@@ -1,10 +1,12 @@
 import { test as base, chromium, type BrowserContext, type Page } from '@playwright/test';
 import path from 'node:path';
+import { observeContext, closeExtension } from './evidence';
+export { closeExtension } from './evidence';
 import http from 'node:http';
 import https from 'node:https';
 import { readFileSync } from 'node:fs';
 
-const EXTENSION_PATH = path.resolve(__dirname, '../../../');
+const EXTENSION_PATH = path.resolve(process.env.EXTENSION_UNDER_TEST || path.resolve(__dirname, '../../../'));
 let serverPort = 0;
 let securePort = 0;
 
@@ -17,7 +19,7 @@ export function webURL(input: string): string {
 }
 
 export async function launchExtension(profile = '', camera = true): Promise<BrowserContext> {
-  return chromium.launchPersistentContext(profile, {
+  const context = await chromium.launchPersistentContext(profile, {
     headless: false,
     ignoreHTTPSErrors: true,
     args: [
@@ -28,6 +30,8 @@ export async function launchExtension(profile = '', camera = true): Promise<Brow
       ...(camera ? ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] : ['--deny-permission-prompts']),
     ],
   });
+  await observeContext(context, EXTENSION_PATH);
+  return context;
 }
 
 export async function extensionIdFor(context: BrowserContext): Promise<string> {
@@ -73,7 +77,7 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
       await ready.locator('#blocked-list .site-item').first().waitFor();
       await ready.close();
       await use(context);
-    } finally { await context.close(); }
+    } finally { await closeExtension(context); }
   },
   extensionId: async ({ context }, use) => { await use(await extensionIdFor(context)); },
   extensionPage: async ({ context, extensionId }, use) => {

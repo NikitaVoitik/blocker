@@ -13,6 +13,18 @@ const blockedListEl = document.getElementById('blocked-list');
 const siteInput = document.getElementById('site-input');
 const addSiteBtn = document.getElementById('add-site-btn');
 const surrenderedEl = document.getElementById('surrendered');
+const commitmentDialog = document.getElementById('commitment-overlay');
+const commitmentTitle = document.getElementById('commitment-title');
+const commitmentConfirm = document.getElementById('commitment-confirm');
+const commitmentCancel = document.getElementById('commitment-cancel');
+const commitmentCustom = document.getElementById('commitment-custom');
+const commitmentAmount = document.getElementById('commitment-custom-amount');
+const commitmentUnit = document.getElementById('commitment-custom-unit');
+const LOCK_DURATIONS = { 1: '1 hour', 24: '24 hours', 168: '7 days' };
+const MAX_COMMITMENT_HOURS = 365 * 24;
+let blockedSites = [];
+let commitmentState = null;
+let lockRefreshTimer = null;
 
 const trackTotalVisitsEl = document.getElementById('track-total-visits');
 const trackTotalTimeEl = document.getElementById('track-total-time');
@@ -80,7 +92,26 @@ tabBtns.forEach(btn => {
 
 async function loadBlockedSites() {
   const sites = await chrome.runtime.sendMessage({ type: 'GET_BLOCKED_SITES' });
-  renderBlockedSites(sites || []);
+  if (!Array.isArray(sites)) throw new Error(sites?.error || 'Could not load blocked sites. Reopen the popup.');
+  blockedSites = sites;
+  renderBlockedSites(blockedSites);
+  // A commitment made in another popup invalidates an open removal gauntlet.
+  if (gauntletState) {
+    const site = blockedSites.find(entry => entry.id === gauntletState.siteId);
+    if (site && isCommitted(site)) {
+      closeGauntlet();
+      openCommitment(site, 'details');
+    } else if (!site) closeGauntlet();
+  }
+  if (commitmentState) {
+    const site = blockedSites.find(entry => entry.id === commitmentState.site.id);
+    if (!site) commitmentDialog.close();
+    else {
+      commitmentState.site = site;
+      if (isCommitted(site)) commitmentState.mode = 'details';
+      updateCommitmentDialog();
+    }
+  }
   await loadAvailablePresets();
 }
 
@@ -129,26 +160,198 @@ function renderPresetSuggestions(presets) {
 }
 
 function renderBlockedSites(sites) {
+  const focused = document.activeElement;
+  const focusedId = focused?.closest('#blocked-list .site-item')?.dataset.siteId;
+  const focusedAction = focused?.classList.contains('site-remove') ? '.site-remove' : '.site-lock';
   blockedListEl.innerHTML = '';
   for (const site of sites) {
     const item = document.createElement('div');
     item.className = 'site-item';
+    item.dataset.siteId = site.id;
 
     const label = document.createElement('span');
     label.className = 'site-label';
     label.textContent = site.label || site.id;
 
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'site-remove';
-    removeBtn.textContent = '×';
-    removeBtn.title = 'Remove';
-    removeBtn.addEventListener('click', () => startRemovalGauntlet(site.id, site.label || site.id));
-
     item.appendChild(label);
-    item.appendChild(removeBtn);
+    const active = isCommitted(site);
+    const lockBtn = document.createElement('button');
+    lockBtn.type = 'button';
+    lockBtn.className = 'site-lock' + (active ? ' is-locked' : '');
+    lockBtn.textContent = active ? 'Locked · ' + lockRemaining(site.lockUntil) : 'Lock';
+    lockBtn.setAttribute('aria-label', (active ? 'Locked ' : 'Lock ') + (site.label || site.id));
+    lockBtn.addEventListener('click', () => openCommitment(site, isCommitted(site) ? 'details' : 'confirm'));
+    item.appendChild(lockBtn);
+    if (!active) {
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'site-remove';
+      removeBtn.textContent = '×';
+      removeBtn.title = 'Remove';
+      removeBtn.setAttribute('aria-label', 'Remove ' + (site.label || site.id));
+      removeBtn.addEventListener('click', () => startRemovalGauntlet(site.id, site.label || site.id));
+      item.appendChild(removeBtn);
+    }
+    if (site.lockUntil) {
+      const status = document.createElement('span');
+      status.className = 'site-commitment';
+      status.textContent = active ? 'Removal available ' + commitmentDate(site.lockUntil) : 'Commitment served · still blocked';
+      item.appendChild(status);
+    }
     blockedListEl.appendChild(item);
+    if (focusedId === site.id && !commitmentDialog.open) {
+      (item.querySelector(focusedAction) || lockBtn).focus();
+    }
   }
+  scheduleLockRefresh();
 }
+
+function isCommitted(site) { return Number.isFinite(site.lockUntil) && site.lockUntil > Date.now(); }
+function commitmentDate(timestamp) {
+  return new Date(timestamp).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+}
+function lockRemaining(deadline) {
+  const minutes = Math.ceil((deadline - Date.now()) / 60_000);
+  if (deadline - Date.now() < 60_000) return '<1m';
+  if (minutes < 60) return minutes + 'm';
+  const hours = Math.floor(minutes / 60);
+  if (hours >= 24) return Math.floor(hours / 24) + 'd ' + hours % 24 + 'h';
+  return hours + 'h ' + minutes % 60 + 'm';
+}
+function scheduleLockRefresh() {
+  clearTimeout(lockRefreshTimer);
+  const deadlines = blockedSites.filter(isCommitted).map(site => site.lockUntil);
+  if (!deadlines.length) return;
+  const delay = Math.min(30_000, Math.max(1, Math.min(...deadlines) - Date.now()));
+  lockRefreshTimer = setTimeout(() => {
+    renderBlockedSites(blockedSites);
+    if (commitmentState) updateCommitmentDialog();
+  }, delay);
+}
+function showBlockerError(message) {
+  const error = document.getElementById('blocker-error');
+  error.textContent = message;
+  error.hidden = !message;
+}
+function openCommitment(site, mode) {
+  commitmentState = { site, mode, hours: 24, custom: false, saving: false };
+  commitmentAmount.value = '24';
+  commitmentUnit.value = 'hours';
+  document.getElementById('commitment-error').hidden = true;
+  updateCommitmentDialog();
+  if (!commitmentDialog.open) commitmentDialog.showModal();
+  commitmentTitle.focus();
+}
+function selectedLockDuration() {
+  if (!commitmentState.custom) {
+    return { hours: commitmentState.hours, label: LOCK_DURATIONS[commitmentState.hours], valid: true };
+  }
+  const amount = commitmentAmount.valueAsNumber;
+  const days = commitmentUnit.value === 'days';
+  const hours = amount * (days ? 24 : 1);
+  const valid = Number.isSafeInteger(amount) && amount >= 1 && hours <= MAX_COMMITMENT_HOURS;
+  const unit = days ? (amount === 1 ? 'day' : 'days') : (amount === 1 ? 'hour' : 'hours');
+  return { hours, label: amount + ' ' + unit, valid };
+}
+function updateCommitmentDialog() {
+  if (!commitmentState) return;
+  const { site, mode, custom, saving } = commitmentState;
+  const duration = selectedLockDuration();
+  const confirm = mode === 'confirm';
+  const active = isCommitted(site);
+  document.getElementById('commitment-kicker').textContent = confirm ? 'OPTIONAL COMMITMENT' : active ? 'COMMITMENT ACTIVE' : 'COMMITMENT SERVED';
+  commitmentTitle.textContent = confirm ? 'NO EARLY REMOVAL.' : active ? 'YOU MADE A DEAL.' : 'COMMITMENT SERVED.';
+  document.getElementById('commitment-site').textContent = site.label || site.id;
+  document.getElementById('commitment-choices').hidden = !confirm;
+  document.getElementById('commitment-custom-fields').hidden = !confirm || !custom;
+  document.getElementById('commitment-duration-error').hidden = !confirm || !custom || duration.valid;
+  commitmentAmount.max = commitmentUnit.value === 'days' ? '365' : String(MAX_COMMITMENT_HOURS);
+  commitmentAmount.setAttribute('aria-invalid', String(custom && !duration.valid));
+  commitmentAmount.disabled = saving;
+  commitmentUnit.disabled = saving;
+  const deadline = confirm ? Date.now() + duration.hours * 3600_000 : site.lockUntil;
+  const time = document.getElementById('commitment-deadline');
+  if (!confirm || duration.valid) {
+    time.textContent = commitmentDate(deadline);
+    time.dateTime = new Date(deadline).toISOString();
+  } else {
+    time.textContent = 'Enter a valid duration';
+    time.removeAttribute('datetime');
+  }
+  document.getElementById('commitment-explanation').textContent = confirm
+    ? 'You cannot shorten this lock here. Chrome still lets you disable or uninstall the extension.'
+    : active ? 'No early removal through this popup. Chrome still lets you disable or uninstall the extension.'
+      : 'Your commitment ended. The site is still blocked. Close this panel to start removal.';
+  commitmentConfirm.hidden = !confirm;
+  commitmentConfirm.disabled = saving || !duration.valid;
+  commitmentConfirm.textContent = saving ? 'Locking…' : duration.valid ? 'Lock removal for ' + duration.label : 'Enter a valid duration';
+  commitmentCancel.textContent = confirm ? 'Cancel' : 'Back to blocker';
+  commitmentCancel.disabled = saving;
+  document.querySelectorAll('[data-lock-hours]').forEach(button => {
+    button.setAttribute('aria-pressed', String(!custom && Number(button.dataset.lockHours) === commitmentState.hours));
+    button.disabled = saving;
+  });
+  commitmentCustom.setAttribute('aria-pressed', String(custom));
+  commitmentCustom.disabled = saving;
+}
+document.querySelectorAll('[data-lock-hours]').forEach(button => button.addEventListener('click', () => {
+  if (!commitmentState || commitmentState.saving) return;
+  commitmentState.custom = false;
+  commitmentState.hours = Number(button.dataset.lockHours);
+  updateCommitmentDialog();
+}));
+commitmentCustom.addEventListener('click', () => {
+  if (!commitmentState || commitmentState.saving) return;
+  commitmentState.custom = true;
+  updateCommitmentDialog();
+  commitmentAmount.focus();
+  commitmentAmount.select();
+});
+commitmentAmount.addEventListener('input', updateCommitmentDialog);
+commitmentUnit.addEventListener('change', updateCommitmentDialog);
+commitmentDialog.addEventListener('cancel', event => {
+  if (commitmentState?.saving) event.preventDefault();
+});
+commitmentDialog.addEventListener('keydown', event => {
+  if (event.key !== 'Tab') return;
+  const buttons = [...commitmentDialog.querySelectorAll('button, input, select')].filter(button => !button.disabled && button.getClientRects().length);
+  const first = buttons[0];
+  const last = buttons[buttons.length - 1];
+  if (!first) return;
+  if (event.shiftKey && (document.activeElement === first || document.activeElement === commitmentTitle)) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+commitmentDialog.addEventListener('close', () => { commitmentState = null; });
+commitmentCancel.addEventListener('click', () => commitmentDialog.close());
+commitmentConfirm.addEventListener('click', async () => {
+  if (!commitmentState || commitmentState.saving || commitmentState.mode !== 'confirm') return;
+  const duration = selectedLockDuration();
+  if (!duration.valid) return;
+  const state = commitmentState;
+  state.saving = true;
+  updateCommitmentDialog();
+  try {
+    const result = await chrome.runtime.sendMessage({ type: 'LOCK_BLOCKED_SITE', siteId: state.site.id, durationHours: duration.hours });
+    if (!result?.success) {
+      if (result?.code === 'COMMITMENT_ACTIVE') {
+        state.site.lockUntil = result.lockUntil;
+        state.mode = 'details';
+      } else throw new Error(result?.error || 'Could not start the lock. Try again.');
+    } else commitmentDialog.close();
+    await loadBlockedSites();
+  } catch (error) {
+    const message = document.getElementById('commitment-error');
+    message.textContent = error.message;
+    message.hidden = false;
+  } finally {
+    state.saving = false;
+    updateCommitmentDialog();
+  }
+});
 
 async function addSite() {
   const raw = siteInput.value;
@@ -198,6 +401,8 @@ const GAUNTLET_STEPS = [
 let gauntletState = null;
 
 function startRemovalGauntlet(siteId, siteLabel) {
+  const site = blockedSites.find(entry => entry.id === siteId);
+  if (site && isCommitted(site)) return openCommitment(site, 'details');
   gauntletState = { siteId, siteLabel, step: 0 };
   showGauntletStep();
 }
@@ -235,20 +440,17 @@ async function advanceGauntlet() {
   const { siteId } = gauntletState;
   closeGauntlet();
 
-  let photoId = null;
-  try {
-    const capture = await chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO' });
-    if (capture && capture.success) {
-      photoId = capture.photoId;
-    }
-  } catch (e) {
-    // Camera denied or failed — proceed without photo
-  }
-
-  const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId, photoId });
-  if (result && result.success) {
+  showBlockerError('');
+  const result = await chrome.runtime.sendMessage({ type: 'REMOVE_BLOCKED_SITE', siteId, capturePhoto: true });
+  if (result?.success) {
     await loadBlockedSites();
     await loadRemovalStats();
+  } else if (result?.code === 'COMMITMENT_ACTIVE') {
+    await loadBlockedSites();
+    const site = blockedSites.find(entry => entry.id === siteId);
+    if (site) openCommitment(site, 'details');
+  } else {
+    showBlockerError(result?.error || 'Could not remove the site. Try again.');
   }
 }
 
@@ -497,8 +699,14 @@ viewTrackingReportBtn.addEventListener('click', () => {
 
 // Load on popup open
 loadStats();
-loadBlockedSites();
+loadBlockedSites().catch(error => showBlockerError(error.message));
 loadRemovalStats();
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.blockedSites) {
+    loadBlockedSites().catch(error => showBlockerError(error.message));
+  }
+});
 
 chrome.extension.isAllowedIncognitoAccess().then(allowed => {
   document.getElementById('incognito-warning').hidden = allowed;

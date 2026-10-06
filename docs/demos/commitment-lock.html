@@ -1,0 +1,156 @@
+<div id="pm-commitment-demo" aria-label="Punishment Mode commitment lock demos">
+  <nav class="pm-variants" aria-label="UX candidates">
+    <button type="button" data-variant="add" aria-pressed="false">A · At add</button>
+    <button type="button" data-variant="row" aria-pressed="true">B · Per site</button>
+    <button type="button" data-variant="screen" aria-pressed="false">C · Commitment screen</button>
+  </nav>
+  <div class="pm-demo-tools" aria-label="Demo scenarios">
+    <button type="button" data-demo="reopen">Reopen popup</button>
+    <button type="button" data-demo="expire">Advance past expiry</button>
+    <button type="button" data-demo="reset">Restart demo</button>
+  </div>
+  <section class="pm-popup" aria-label="Extension popup">
+    <header><h1>Punishment Mode</h1><span>v1.3</span></header>
+    <div class="pm-tabs"><span class="pm-active">Blocker</span><span>Tracker</span></div>
+    <div class="pm-stats"><div><b>12</b><small>Total attempts</small></div><div><b>3</b><small>Today</small></div><div><b class="pm-red">0</b><small>Surrendered</small></div></div>
+    <div class="pm-level">Shame level: <b>Repeat offender</b></div>
+    <div class="pm-main"></div>
+    <div class="pm-bottom"><button type="button">View Hall of Shame</button><button type="button">Shame Report</button></div>
+    <footer>// Stay strong. Touch grass.</footer>
+    <div class="pm-overlay" hidden><section class="pm-dialog" role="dialog" aria-modal="true" aria-labelledby="pm-dialog-title" tabindex="-1"></section></div>
+  </section>
+</div>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+#pm-commitment-demo { --pm-bg:#0a0a0a; --pm-surface:#111113; --pm-line:#2a2a2d; --pm-ink:#ededef; --pm-muted:#96969d; --pm-acid:#e4ff1a; --pm-red:#ff2d2d; font-family:'Space Mono',monospace; max-width:660px; margin:auto; }
+#pm-commitment-demo * { box-sizing:border-box; }
+#pm-commitment-demo button,#pm-commitment-demo input,#pm-commitment-demo select { font:inherit; border-radius:0; }
+#pm-commitment-demo button { cursor:pointer; }
+#pm-commitment-demo button:focus-visible,#pm-commitment-demo input:focus-visible,#pm-commitment-demo select:focus-visible { outline:2px solid var(--pm-acid); outline-offset:3px; }
+#pm-commitment-demo .pm-variants { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:0 0 8px; }
+#pm-commitment-demo .pm-variants button { background:#111113; border:1px solid #555; color:#ededef; padding:9px 12px; font-size:11px; }
+#pm-commitment-demo .pm-variants button[aria-pressed=true] { border-color:var(--pm-acid); color:var(--pm-acid); }
+#pm-commitment-demo .pm-demo-tools { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:14px; }
+#pm-commitment-demo .pm-demo-tools button { font-size:10px; padding:7px; background:#111113; color:#ededef; border:1px dashed #555; }
+#pm-commitment-demo .pm-popup { background:var(--pm-bg); color:var(--pm-ink); width:320px; max-width:100%; padding:16px; margin:auto; position:relative; min-height:505px; border:1px solid var(--pm-line); font-size:12px; }
+#pm-commitment-demo header { position:relative; border-bottom:2px solid var(--pm-acid); margin-bottom:12px; padding-bottom:12px; }
+#pm-commitment-demo h1 { font:26px 'Bebas Neue',Impact,sans-serif; color:var(--pm-acid); text-transform:uppercase; letter-spacing:3px; margin:0; text-align:center; }
+#pm-commitment-demo header>span { position:absolute; right:0; bottom:14px; font-size:8px; color:var(--pm-muted); }
+#pm-commitment-demo .pm-tabs { display:flex; border:1px solid var(--pm-line); margin-bottom:14px; }
+#pm-commitment-demo .pm-tabs span { flex:1; padding:8px; text-align:center; color:var(--pm-muted); font:14px 'Bebas Neue',Impact,sans-serif; letter-spacing:1px; }
+#pm-commitment-demo .pm-tabs .pm-active { color:var(--pm-acid); background:#222711; border-right:1px solid var(--pm-line); }
+#pm-commitment-demo .pm-stats { display:flex; border:1px solid var(--pm-line); }
+#pm-commitment-demo .pm-stats>div { flex:1; background:var(--pm-surface); text-align:center; padding:10px 4px; border-right:1px solid var(--pm-line); }
+#pm-commitment-demo .pm-stats b { display:block; color:var(--pm-acid); font:26px 'Bebas Neue',Impact,sans-serif; }
+#pm-commitment-demo .pm-stats b.pm-red { color:var(--pm-red); }
+#pm-commitment-demo small { display:block; font-size:9px; color:var(--pm-muted); text-transform:uppercase; }
+#pm-commitment-demo .pm-level { border:1px solid var(--pm-line); background:var(--pm-surface); margin:14px 0; padding:8px; font-size:10px; text-align:center; color:var(--pm-muted); }
+#pm-commitment-demo .pm-level b { color:#ffb800; }
+#pm-commitment-demo h2 { margin:10px 0 6px; font:16px 'Bebas Neue',Impact,sans-serif; letter-spacing:1px; color:var(--pm-muted); }
+#pm-commitment-demo .pm-site { border:1px solid var(--pm-line); background:var(--pm-surface); padding:8px; margin-bottom:-1px; }
+#pm-commitment-demo .pm-site-top { display:flex; align-items:center; gap:5px; }
+#pm-commitment-demo .pm-site-name { flex:1; min-width:0; overflow-wrap:anywhere; }
+#pm-commitment-demo .pm-site-name::before { content:'× '; color:var(--pm-red); }
+#pm-commitment-demo .pm-site button { color:var(--pm-muted); border:1px solid var(--pm-line); background:transparent; min-height:32px; font-size:10px; padding:4px 8px; }
+#pm-commitment-demo .pm-site button.pm-locked { color:var(--pm-acid); border-color:#66720c; }
+#pm-commitment-demo .pm-site .pm-remove { font-size:18px; border:0; padding:4px; }
+#pm-commitment-demo .pm-state { display:block; font-size:9px; color:var(--pm-muted); margin-top:5px; }
+#pm-commitment-demo .pm-add { display:flex; margin-top:8px; }
+#pm-commitment-demo .pm-add input { background:var(--pm-surface); border:1px solid var(--pm-line); padding:9px; color:var(--pm-ink); min-width:0; width:100%; font-size:11px; }
+#pm-commitment-demo .pm-add button,#pm-commitment-demo .pm-primary { background:var(--pm-acid); border:1px solid var(--pm-acid); color:#000; font:16px 'Bebas Neue',Impact,sans-serif; padding:9px 12px; letter-spacing:.5px; white-space:nowrap; }
+#pm-commitment-demo .pm-optional { display:flex; align-items:center; gap:6px; font-size:10px; margin:8px 0; color:var(--pm-muted); }
+#pm-commitment-demo select { flex:1; min-width:0; background:var(--pm-surface); border:1px solid var(--pm-line); color:var(--pm-ink); padding:7px; font-size:10px; }
+#pm-commitment-demo .pm-secondary { background:transparent; border:1px solid var(--pm-line); color:var(--pm-ink); padding:10px; font:15px 'Bebas Neue',Impact,sans-serif; letter-spacing:.5px; }
+#pm-commitment-demo .pm-screen-toggle { width:100%; margin-bottom:8px; }
+#pm-commitment-demo .pm-bottom { display:grid; gap:6px; margin:16px 0; }
+#pm-commitment-demo .pm-bottom button { font:15px 'Bebas Neue',Impact,sans-serif; letter-spacing:1px; padding:10px; color:var(--pm-muted); border:1px solid var(--pm-line); background:transparent; }
+#pm-commitment-demo .pm-bottom button:first-child { color:#000; background:var(--pm-acid); }
+#pm-commitment-demo footer { border-top:1px solid var(--pm-line); padding-top:10px; text-align:center; color:var(--pm-muted); font-size:9px; text-transform:uppercase; }
+#pm-commitment-demo .pm-overlay { position:absolute; inset:0; padding:16px; background:#000e; display:flex; justify-content:center; align-items:center; z-index:2; }
+#pm-commitment-demo [hidden] { display:none !important; }
+#pm-commitment-demo .pm-dialog { width:100%; border:1px solid var(--pm-acid); padding:18px 16px; background:var(--pm-surface); max-height:100%; overflow:auto; }
+#pm-commitment-demo .pm-kicker { color:var(--pm-muted); font-size:9px; letter-spacing:1px; margin:0 0 8px; }
+#pm-commitment-demo .pm-dialog h2 { font-size:27px; color:var(--pm-acid); margin:0 0 8px; }
+#pm-commitment-demo .pm-dialog h3 { font-size:12px; margin:8px 0 16px; overflow-wrap:anywhere; }
+#pm-commitment-demo .pm-dialog p { font-size:10px; line-height:1.6; color:var(--pm-muted); }
+#pm-commitment-demo .pm-options { display:flex; gap:4px; margin:12px 0; }
+#pm-commitment-demo .pm-options button { flex:1; border:1px solid var(--pm-line); color:var(--pm-ink); padding:10px 3px; background:transparent; font-size:11px; }
+#pm-commitment-demo .pm-options button[aria-pressed=true] { background:#222711; border-color:var(--pm-acid); color:var(--pm-acid); }
+#pm-commitment-demo .pm-deadline { border-top:1px solid var(--pm-line); border-bottom:1px solid var(--pm-line); padding:10px 0; margin:12px 0; }
+#pm-commitment-demo .pm-deadline strong { display:block; margin:5px 0; font-size:12px; color:var(--pm-ink); }
+#pm-commitment-demo .pm-dialog-actions { display:grid; gap:6px; margin-top:16px; }
+#pm-commitment-demo .pm-gauntlet h2 { color:var(--pm-red); }
+#pm-commitment-demo .pm-danger { background:var(--pm-red); color:white; border:0; padding:10px; font:16px 'Bebas Neue',Impact,sans-serif; }
+@media (prefers-reduced-motion:reduce) { #pm-commitment-demo * { scroll-behavior:auto; } }
+</style>
+<script>
+(() => {
+  const root = document.getElementById('pm-commitment-demo');
+  const state = { variant:'row', screen:false, offset:0, hours:24, sites:[], modal:null, step:0 };
+  const main = root.querySelector('.pm-main');
+  const dialog = root.querySelector('.pm-dialog');
+  const overlay = root.querySelector('.pm-overlay');
+  const durations = { 1:'1 hour',24:'24 hours',168:'7 days' };
+  let returnFocus = null;
+  const now = () => Date.now() + state.offset;
+  const date = value => new Date(value).toLocaleString([], { month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short' });
+  const remaining = until => Math.ceil((until-now())/3600000) + 'h';
+  const escape = value => value.replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  function reset() { state.sites = [{id:'twitter',label:'Twitter / X'},{id:'youtube',label:'YouTube Shorts'}]; state.offset=0; state.screen=false; close(); render(); }
+  function close() { overlay.hidden=true; state.modal=null; if (returnFocus && returnFocus.isConnected) returnFocus.focus(); }
+  function open(mode, site, hours=24) { returnFocus=document.activeElement; state.modal={mode,site}; state.hours=hours; state.step=0; showDialog(); overlay.hidden=false; dialog.focus(); }
+  function render() {
+    root.querySelectorAll('[data-variant]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.variant===state.variant)));
+    const list = state.sites.map(site => {
+      const active=site.until>now();
+      const action=active ? `<button type="button" class="pm-locked" data-action="details" data-id="${site.id}" aria-label="Locked ${escape(site.label)}">Locked · ${remaining(site.until)}</button>`
+        : state.screen ? `<button type="button" data-action="lock" data-id="${site.id}" aria-label="Set commitment for ${escape(site.label)}">Set lock</button>`
+        : `${state.variant==='row' ? `<button type="button" data-action="lock" data-id="${site.id}" aria-label="Lock ${escape(site.label)}">Lock</button>`:''}<button type="button" class="pm-remove" data-action="remove" data-id="${site.id}" aria-label="Remove ${escape(site.label)}">×</button>`;
+      return `<div class="pm-site"><div class="pm-site-top"><span class="pm-site-name">${escape(site.label)}</span>${action}</div>${site.until ? `<span class="pm-state">${active ? 'Removal available '+date(site.until) : 'Commitment served · still blocked'}</span>`:''}</div>`;
+    }).join('');
+    main.innerHTML = `${state.variant==='screen' ? `<button type="button" class="pm-secondary pm-screen-toggle" data-action="screen">${state.screen?'Back to blocker':'Commitments'}</button>`:''}<h2>${state.screen?'Commitments':'Blocked sites'}</h2>${list}${state.screen?'':`<div class="pm-add"><input aria-label="Site to block" placeholder="e.g. reddit.com"><button type="button" data-action="add">Block</button></div>${state.variant==='add'?'<label class="pm-optional">Removal lock<select aria-label="Commitment when adding"><option value="0">No commitment lock</option><option value="1">1 hour</option><option value="24">24 hours</option><option value="168">7 days</option></select></label>':''}`}`;
+  }
+  function showDialog() {
+    const {mode,site}=state.modal;
+    if (mode==='confirm') {
+      dialog.className='pm-dialog';
+      dialog.innerHTML=`<div class="pm-kicker">OPTIONAL COMMITMENT</div><h2 id="pm-dialog-title">NO EARLY REMOVAL.</h2><h3>${escape(site.label)}</h3><p>Choose how long removal stays locked.</p><div class="pm-options">${Object.entries(durations).map(([hours,label])=>`<button type="button" data-hours="${hours}" aria-pressed="${Number(hours)===state.hours}">${label}</button>`).join('')}</div><div class="pm-deadline"><small>Removal available</small><strong>${date(now()+state.hours*3600000)}</strong><p>The site stays blocked after this deadline.</p></div><p>You cannot shorten this lock here. Chrome still lets you disable or uninstall the extension.</p><div class="pm-dialog-actions"><button type="button" class="pm-primary" data-action="confirm">Lock removal for ${durations[state.hours]}</button><button type="button" class="pm-secondary" data-action="cancel">Cancel</button></div>`;
+    } else if (mode==='details') {
+      dialog.className='pm-dialog';
+      dialog.innerHTML=`<div class="pm-kicker">COMMITMENT ACTIVE</div><h2 id="pm-dialog-title">YOU MADE A DEAL.</h2><h3>${escape(site.label)}</h3><div class="pm-deadline"><small>Removal available</small><strong>${date(site.until)}</strong><p>The site stays blocked after this deadline.</p></div><p>No early removal through this popup. Chrome still lets you disable or uninstall the extension.</p><div class="pm-dialog-actions"><button type="button" class="pm-primary" data-action="cancel">Back to blocker</button></div>`;
+    } else {
+      dialog.className='pm-dialog pm-gauntlet';
+      dialog.innerHTML=`<div class="pm-kicker">STEP ${state.step+1}/3</div><h2 id="pm-dialog-title">${['REMOVING '+escape(site.label)+'? COWARD.',"YOU'RE REALLY GIVING UP?",'LAST CHANCE.'][state.step]}</h2><p>${['You blocked this site for a reason. Giving up already?','Every surrender is tracked locally.','Your removal selfie and surrender will go in your local report.'][state.step]}</p><div class="pm-dialog-actions"><button type="button" class="pm-danger" data-action="continue">${state.step===2?'Remove':'Continue'}</button><button type="button" class="pm-secondary" data-action="cancel">Cancel</button></div>`;
+    }
+  }
+  root.addEventListener('change',event=>{ if(event.target.matches('[aria-label="Commitment when adding"]')) main.querySelector('[data-action="add"]').textContent=event.target.value==='0'?'Block':'Block + lock'; });
+  root.addEventListener('click',event=>{
+    const button=event.target.closest('button'); if(!button)return;
+    if(button.dataset.variant) { state.variant=button.dataset.variant; reset(); return; }
+    if(button.dataset.demo) { if(button.dataset.demo==='reset') reset(); else { if(button.dataset.demo==='expire')state.offset+=8*24*3600000; close(); state.screen=false; render(); } return; }
+    if(button.dataset.hours) { state.hours=Number(button.dataset.hours); showDialog(); dialog.querySelector(`[data-hours="${state.hours}"]`).focus(); return; }
+    const action=button.dataset.action;
+    const site=state.sites.find(item=>item.id===button.dataset.id);
+    if(action==='lock') open('confirm',site);
+    if(action==='details') open('details',site);
+    if(action==='remove') open('gauntlet',site);
+    if(action==='screen') { state.screen=!state.screen; render(); }
+    if(action==='cancel') close();
+    if(action==='add') {
+      const label=main.querySelector('input').value.trim(); if(!label || state.sites.some(item=>item.label===label))return;
+      const newSite={id:label,label};
+      const hours=Number(main.querySelector('select')?.value || 0);
+      if(hours)open('confirm',newSite,hours); else { state.sites.push(newSite); render(); }
+    }
+    if(action==='confirm') { const entry=state.modal.site; entry.until=now()+state.hours*3600000; if(!state.sites.includes(entry))state.sites.push(entry); close(); render(); }
+    if(action==='continue') { if(++state.step<3)showDialog(); else { const id=state.modal.site.id; state.sites=state.sites.filter(item=>item.id!==id); close(); render(); } }
+  });
+  root.addEventListener('keydown',event=>{
+    if(overlay.hidden)return;
+    if(event.key==='Escape') { event.preventDefault();close(); }
+    if(event.key==='Tab') { const buttons=[...dialog.querySelectorAll('button')]; const first=buttons[0],last=buttons.at(-1); if(event.shiftKey && (document.activeElement===first || document.activeElement===dialog)) {event.preventDefault();last.focus();} else if(!event.shiftKey && document.activeElement===last) {event.preventDefault();first.focus();} }
+  });
+  reset();
+  if(globalThis.Tweak) { const tweak=new Tweak({container:root,onChange:()=>reset()});tweak.addSelect(state,'variant',{label:'Lock placement',options:[{label:'At add',value:'add'},{label:'Per site',value:'row'},{label:'Commitment screen',value:'screen'}]}); }
+})();
+</script>

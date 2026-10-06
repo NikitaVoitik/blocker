@@ -3,6 +3,7 @@
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen/offscreen.html';
 const RULE_CHECK_ALARM = 'verify-block-rules';
 const TRACKING_FLUSH_ALARM = 'flush-tracking-time';
+const MAX_COMMITMENT_HOURS = 365 * 24;
 
 const DEFAULT_SITES = [
   {
@@ -169,9 +170,12 @@ function normalizeSite(site) {
 }
 
 // Load blocked sites from storage
-async function loadBlockedSites() {
+async function readBlockedSites() {
   const result = await chrome.storage.local.get('blockedSites');
-  currentBlockedSites = (result.blockedSites || DEFAULT_SITES).map(normalizeSite);
+  return (result.blockedSites || DEFAULT_SITES).map(normalizeSite);
+}
+async function loadBlockedSites() {
+  currentBlockedSites = await readBlockedSites();
   return currentBlockedSites;
 }
 
@@ -304,7 +308,7 @@ chrome.webNavigation.onCommitted.addListener(details => {
   if (url.origin === new URL(chrome.runtime.getURL('/')).origin && url.pathname === '/blocked/blocked.html') {
     const siteId = url.searchParams.get('site');
     if (siteId && !['reload', 'auto_toplevel'].includes(details.transitionType) && !details.transitionQualifiers.includes('forward_back')) {
-      initReady.then(() => incrementAttempt(siteId)).catch(console.error);
+      initReady.then(() => incrementAttempt(siteId, details.documentId)).catch(console.error);
     }
   } else {
     enforce(details); // Covers redirects, restored pages and cached navigations.
@@ -439,6 +443,18 @@ async function getPhotos() {
 
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
+  });
+}
+
+// Roll back a removal capture if shared settings change while the camera runs.
+async function discardRemovalPhoto(photoId) {
+  const database = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction([PHOTOS_STORE], 'readwrite');
+    transaction.objectStore(PHOTOS_STORE).delete(photoId);
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () => reject(transaction.error || new Error('Photo deletion aborted'));
+    transaction.onerror = () => reject(transaction.error);
   });
 }
 
@@ -782,9 +798,13 @@ async function readStats() {
   return { allTimeCount: combined.attemptCount, todayCount: combined.todayCount, threeDayCount: sumLastThreeDays(combined.dailyCounts) };
 }
 
-function incrementAttempt(siteId) { return mutateStorage(() => recordAttempt(siteId)); }
-async function recordAttempt(siteId) {
-  const result = await getOwnData(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts', 'attemptLog']);
+function incrementAttempt(siteId, documentId) { return mutateStorage(() => recordAttempt(siteId, documentId)); }
+async function recordAttempt(siteId, documentId) {
+  const result = await getOwnData(['attemptCount', 'todayDate', 'todayCount', 'dailyCounts', 'attemptLog', 'attemptDocumentIds']);
+  const documents = result.attemptDocumentIds || [];
+  // Navigation events and the page acknowledgement can arrive in either order.
+  // Save the receipt with the count, so worker restarts cannot count it twice.
+  if (documentId && documents.includes(documentId)) return;
 
   const today = new Date().toDateString();
   let todayCount = result.todayCount || 0;
@@ -808,7 +828,8 @@ async function recordAttempt(siteId) {
     todayDate: today,
     todayCount: newToday,
     dailyCounts,
-    attemptLog: [...(result.attemptLog || []), { siteId, timestamp: Date.now() }].slice(-1000)
+    attemptLog: [...(result.attemptLog || []), { siteId, timestamp: Date.now() }].slice(-1000),
+    attemptDocumentIds: documentId ? [...documents, documentId].slice(-1000) : documents
   });
 
   return { allTimeCount: newAllTime, todayCount: newToday, threeDayCount: sumLastThreeDays(dailyCounts) };
@@ -879,7 +900,11 @@ async function captureAndSavePhoto() {
 // Add a blocked site
 function addBlockedSite(siteEntry) {
   return mutateSites(async () => {
+    await loadBlockedSites();
     siteEntry = normalizeSite(siteEntry);
+    // Commitments are created only by the explicit, worker-timed lock action.
+    delete siteEntry.lockStartedAt;
+    delete siteEntry.lockUntil;
     const sites = [...currentBlockedSites];
 
     // Check for duplicate
@@ -895,11 +920,55 @@ function addBlockedSite(siteEntry) {
   });
 }
 
-// Remove a blocked site
-function removeBlockedSite(siteId, photoId) {
+function activeCommitment(site) {
+  if (Number.isFinite(site.lockUntil) && site.lockUntil > Date.now()) {
+    return { success: false, code: 'COMMITMENT_ACTIVE', error: 'You made a deal. Removal is locked until the deadline.', lockUntil: site.lockUntil };
+  }
+  return null;
+}
+
+function lockBlockedSite(siteId, durationHours) {
   return mutateSites(async () => {
+    if (!Number.isSafeInteger(durationHours) || durationHours < 1 || durationHours > MAX_COMMITMENT_HOURS) {
+      return { success: false, code: 'INVALID_LOCK_DURATION', error: 'Choose whole hours or days, from 1 hour to 365 days.' };
+    }
+    await loadBlockedSites();
+    const site = currentBlockedSites.find(entry => entry.id === siteId);
+    if (!site) return { success: false, error: 'Site is not blocked' };
+    const locked = activeCommitment(site);
+    if (locked) return locked;
+    const lockStartedAt = Date.now();
+    const sites = currentBlockedSites.map(entry => entry.id === siteId
+      ? { ...entry, lockStartedAt, lockUntil: lockStartedAt + durationHours * 3600_000 }
+      : entry);
+    await saveBlockedSites(sites);
+    return { success: true, sites };
+  });
+}
+
+// Remove a blocked site
+function removeBlockedSite(siteId, photoId, withPhoto = false) {
+  return mutateSites(async () => {
+    await loadBlockedSites();
     const removed = currentBlockedSites.find(site => site.id === siteId);
     if (!removed) return { success: false, error: 'Site is not blocked' };
+    const locked = activeCommitment(removed);
+    if (locked) return locked;
+    // Validate before using the camera or recording a surrender. Serializing the
+    // whole removal also prevents another popup locking it mid-capture.
+    let capturedPhotoId = null;
+    if (withPhoto) {
+      const capture = await capturePhoto();
+      if (capture.success) photoId = capturedPhotoId = capture.photoId;
+    }
+    // A split Incognito worker can update shared site settings during capture.
+    await loadBlockedSites();
+    const latest = currentBlockedSites.find(site => site.id === siteId);
+    const changedLock = latest && activeCommitment(latest);
+    if (!latest || changedLock) {
+      if (capturedPhotoId !== null) await discardRemovalPhoto(capturedPhotoId);
+      return changedLock || { success: false, error: 'Site is not blocked' };
+    }
     const sites = currentBlockedSites.filter(s => s.id !== siteId);
     await saveBlockedSites(sites);
     await logRemoval(siteId, removed.label || siteId, photoId);
@@ -935,7 +1004,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'CAPTURE_PHOTO') {
-    initReady.then(() => capturePhoto()).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
+    (async () => {
+      await initReady;
+      // During a cold browser start, DNR can finish the redirect before Chrome
+      // delivers webNavigation events. The loaded block page acknowledges that
+      // document even when the navigation event was missed. Reload/history
+      // restoration is not a new attempt.
+      if (message.navigationType === 'navigate' && sender.documentId && sender.frameId === 0 &&
+          sender.url?.startsWith(chrome.runtime.getURL('blocked/blocked.html?'))) {
+        const siteId = new URL(sender.url).searchParams.get('site');
+        if (siteId && currentBlockedSites.some(site => site.id === siteId)) {
+          await incrementAttempt(siteId, sender.documentId);
+        }
+      }
+      return capturePhoto();
+    })().then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Async response
   }
 
@@ -1034,7 +1117,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'GET_BLOCKED_SITES') {
-    initReady.then(() => sendResponse(currentBlockedSites));
+    initReady.then(readBlockedSites).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 
@@ -1043,8 +1126,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === 'LOCK_BLOCKED_SITE') {
+    initReady.then(() => lockBlockedSite(message.siteId, message.durationHours)).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
   if (message.type === 'REMOVE_BLOCKED_SITE') {
-    initReady.then(() => removeBlockedSite(message.siteId, message.photoId)).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
+    initReady.then(() => removeBlockedSite(message.siteId, message.photoId, message.capturePhoto === true)).then(sendResponse).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 

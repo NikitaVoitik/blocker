@@ -174,7 +174,8 @@
   // Request photo capture from service worker
   async function requestCapture() {
     return new Promise((resolve) => {
-      chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO' }, (response) => {
+      const navigationType = performance.getEntriesByType('navigation')[0]?.type;
+      chrome.runtime.sendMessage({ type: 'CAPTURE_PHOTO', navigationType }, (response) => {
         resolve(response);
       });
     });

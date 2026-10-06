@@ -11,7 +11,8 @@ Punishment Mode is a Chrome extension that blocks distracting websites and recor
 Settings, attempt history, and tracking totals are stored locally on your device using Chrome's `chrome.storage.local` API. Photos use local IndexedDB; active tracking state uses session storage. This includes:
 
 - Your list of blocked and tracked websites
-- Attempt counts and timestamps
+- Optional commitment lock start times and removal deadlines
+- Attempt counts, timestamps, and recent document identifiers used to prevent duplicate counts
 - Webcam photos captured on the block page or during deliberate site removal
 - Time tracking statistics
 

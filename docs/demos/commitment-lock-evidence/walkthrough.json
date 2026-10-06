@@ -1,0 +1,53 @@
+{
+  "runAt": "2026-10-02T15:37:08.536Z",
+  "results": [
+    {
+      "variant": "add",
+      "rounds": 3,
+      "seconds": 65,
+      "workflows": [
+        "change duration",
+        "cancel commitment",
+        "confirm commitment",
+        "inspect active lock",
+        "expiry retains block",
+        "cancel removal",
+        "complete gauntlet",
+        "reopen popup"
+      ],
+      "passed": true
+    },
+    {
+      "variant": "row",
+      "rounds": 3,
+      "seconds": 63,
+      "workflows": [
+        "change duration",
+        "cancel commitment",
+        "confirm commitment",
+        "inspect active lock",
+        "expiry retains block",
+        "cancel removal",
+        "complete gauntlet",
+        "reopen popup"
+      ],
+      "passed": true
+    },
+    {
+      "variant": "screen",
+      "rounds": 3,
+      "seconds": 63,
+      "workflows": [
+        "change duration",
+        "cancel commitment",
+        "confirm commitment",
+        "inspect active lock",
+        "expiry retains block",
+        "cancel removal",
+        "complete gauntlet",
+        "reopen popup"
+      ],
+      "passed": true
+    }
+  ]
+}

@@ -11,7 +11,7 @@
   --surface: #111113;
   --border: #2a2a2d;
   --text: #ededef;
-  --text-muted: #6b6b70;
+  --text-muted: #96969d;
   --accent: #E4FF1A;
   --accent-dim: rgba(228, 255, 26, 0.08);
   --danger: #FF2D2D;
@@ -230,7 +230,6 @@ body::after {
   color: var(--text-muted);
   font-size: 0.7rem;
   margin-top: 8px;
-  opacity: 0.6;
 }
 
 /* Quotes */
@@ -249,7 +248,6 @@ body::after {
   font-family: 'Bebas Neue', sans-serif;
   color: var(--text-muted);
   font-size: 0.7rem;
-  opacity: 0.5;
 }
 
 .quote {
@@ -303,7 +301,6 @@ body::after {
   color: var(--text-muted);
   min-width: 24px;
   font-size: 0.7rem;
-  opacity: 0.5;
 }
 
 .leaderboard-entry.you {
@@ -473,7 +470,6 @@ body::after {
   font-family: 'Space Mono', monospace;
   font-size: 0.6rem;
   color: var(--text-muted);
-  opacity: 0.7;
   letter-spacing: 0.05em;
 }
 
@@ -655,7 +651,6 @@ body::after {
 .gallery-item-caption .timestamp {
   font-size: 0.6rem;
   color: var(--text-muted);
-  opacity: 0.5;
 }
 
 /* Empty state */
@@ -682,7 +677,6 @@ body::after {
 .gallery-empty .empty-subtext {
   font-size: 0.8rem;
   color: var(--text-muted);
-  opacity: 0.5;
 }
 
 /* Escalating shame levels */

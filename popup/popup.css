@@ -11,7 +11,7 @@
   --surface: #111113;
   --border: #2a2a2d;
   --text: #ededef;
-  --text-muted: #6b6b70;
+  --text-muted: #96969d;
   --accent: #E4FF1A;
   --accent-dim: rgba(228, 255, 26, 0.12);
   --danger: #FF2D2D;
@@ -308,7 +308,6 @@ h1::after {
   font-size: 0.55rem;
   color: var(--text-muted);
   margin-top: 4px;
-  opacity: 0.7;
 }
 
 /* Actions */
@@ -576,3 +575,37 @@ h1::after {
 .incognito-warning p { line-height: 1.5; }
 
 .privacy-note { color: #888; font-size: 10px; line-height: 1.5; margin: 12px 0; }
+
+/* Optional commitments: a deadline receipt, never an access countdown. */
+.commitment-hint { color: #96969d; font-size: 10px; line-height: 1.5; margin: 8px 0; }
+#blocked-list .site-item { flex-wrap: wrap; gap: 5px; min-height: 42px; }
+#blocked-list .site-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.site-lock { background: transparent; border: 1px solid var(--border); color: #96969d; font: inherit; font-size: 10px; padding: 5px 8px; min-height: 32px; cursor: pointer; }
+.site-lock:hover { border-color: var(--accent); color: var(--accent); }
+.site-lock.is-locked { border-color: #66720c; color: var(--accent); }
+#blocked-list .site-remove { min-width: 28px; min-height: 32px; }
+.site-commitment { flex-basis: 100%; color: #96969d; font-size: 9px; line-height: 1.5; }
+.blocker-error { color: #ff6666; font-size: 11px; line-height: 1.5; margin-top: 8px; }
+.blocker-error[hidden], .commitment-dialog [hidden] { display: none; }
+.commitment-dialog { margin: auto; width: calc(100% - 32px); max-width: 288px; max-height: calc(100vh - 24px); overflow-y: auto; padding: 18px 16px; background: var(--surface); color: var(--text); border: 1px solid var(--accent); font: 10px/1.6 'Space Mono', monospace; }
+.commitment-dialog::backdrop { background: rgba(0, 0, 0, 0.88); }
+.commitment-kicker { color: #96969d; font-size: 9px; letter-spacing: 0.1em; margin-bottom: 8px; }
+.commitment-dialog h2 { font: 27px/1.1 'Bebas Neue', sans-serif; color: var(--accent); letter-spacing: 0.06em; margin-bottom: 8px; }
+.commitment-dialog h2:focus { outline: none; }
+.commitment-site { font-size: 12px; font-weight: bold; margin-bottom: 16px; overflow-wrap: anywhere; }
+.commitment-dialog p:not(.commitment-site):not(.blocker-error) { color: #96969d; }
+.commitment-options { display: flex; gap: 4px; margin: 12px 0; }
+.commitment-options button { flex: 1; padding: 10px 0; background: transparent; color: var(--text); border: 1px solid var(--border); font: inherit; font-size: 10px; white-space: nowrap; cursor: pointer; }
+.commitment-options button[aria-pressed="true"] { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+.commitment-custom-inputs { display: flex; gap: 6px; margin: 5px 0; }
+.commitment-custom-inputs input, .commitment-custom-inputs select { min-width: 0; width: 50%; min-height: 36px; padding: 6px 8px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 0; font: inherit; font-size: 12px; }
+.commitment-custom-inputs input[aria-invalid="true"] { border-color: var(--danger); }
+.commitment-dialog select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.commitment-receipt { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 10px 0; margin: 12px 0; }
+.commitment-receipt > span { color: #96969d; font-size: 9px; text-transform: uppercase; }
+.commitment-receipt time { display: block; color: var(--text); font-size: 12px; font-weight: bold; margin: 5px 0; }
+.commitment-actions { display: grid; gap: 6px; margin-top: 16px; }
+.commitment-actions .btn { padding: 10px 6px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { cursor: wait; opacity: 0.6; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }

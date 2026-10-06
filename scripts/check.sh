@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ "${1:-}" == "--" ]]; then shift; fi
 cd "$(dirname "$0")/.."
 pnpm run check:syntax
+pnpm run check:lint
 pnpm run check:types
-if [[ -z "${DISPLAY:-}" && "$(uname -s)" == "Linux" ]]; then
-  xvfb-run -a pnpm exec playwright test "$@"
-else
-  pnpm exec playwright test "$@"
-fi
+pnpm run package:ext
+pnpm run check:package
+EXTENSION_UNDER_TEST="$PWD/dist/test-extension" bash scripts/browser-tests.sh "$@"
