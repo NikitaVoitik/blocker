@@ -1,26 +1,61 @@
 /* Hide YouTube Shorts elements across the site */
 
-/* Homepage Shorts shelf */
+/* Homepage / subscriptions Shorts shelf */
 html.punishment-hide-shorts ytd-rich-shelf-renderer[is-shorts],
 html.punishment-hide-shorts ytd-reel-shelf-renderer,
-html.punishment-hide-shorts ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]) {
+html.punishment-hide-shorts ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+html.punishment-hide-shorts ytd-rich-section-renderer:has(ytm-shorts-lockup-view-model),
+html.punishment-hide-shorts ytd-rich-section-renderer:has(ytm-shorts-lockup-view-model-v2) {
   display: none !important;
 }
 
-/* Shorts in search results */
-html.punishment-hide-shorts ytd-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"]) {
+/* Newer view-model Shorts shelves and cards (search, watch sidebar, channel pages) */
+html.punishment-hide-shorts grid-shelf-view-model:has(ytm-shorts-lockup-view-model),
+html.punishment-hide-shorts grid-shelf-view-model:has(ytm-shorts-lockup-view-model-v2),
+html.punishment-hide-shorts grid-shelf-view-model:has(a[href^="/shorts/"]),
+html.punishment-hide-shorts ytd-item-section-renderer:has(> #contents > grid-shelf-view-model a[href^="/shorts/"]),
+html.punishment-hide-shorts ytm-shorts-lockup-view-model,
+html.punishment-hide-shorts ytm-shorts-lockup-view-model-v2,
+html.punishment-hide-shorts yt-lockup-view-model:has(a[href^="/shorts/"]) {
   display: none !important;
 }
 
-/* Sidebar navigation Shorts link */
-html.punishment-hide-shorts ytd-guide-entry-renderer:has(a[href="/shorts"]),
-html.punishment-hide-shorts ytd-mini-guide-entry-renderer:has(a[href="/shorts"]) {
-  display: none !important;
-}
-
-/* Shorts in recommendations and related videos */
+/* Individual Shorts in feeds, search results, and related videos */
+html.punishment-hide-shorts ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+html.punishment-hide-shorts ytd-video-renderer:has(a[href^="/shorts/"]),
+html.punishment-hide-shorts ytd-compact-video-renderer:has(a[href^="/shorts/"]),
+html.punishment-hide-shorts ytd-grid-video-renderer:has(a[href^="/shorts/"]),
 html.punishment-hide-shorts ytd-rich-item-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"]),
+html.punishment-hide-shorts ytd-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"]),
 html.punishment-hide-shorts ytd-compact-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"]),
 html.punishment-hide-shorts ytd-grid-video-renderer:has(ytd-thumbnail-overlay-time-status-renderer[overlay-style="SHORTS"]) {
+  display: none !important;
+}
+
+/* Sidebar / mini-guide navigation Shorts link */
+html.punishment-hide-shorts ytd-guide-entry-renderer:has(a[href^="/shorts"]),
+html.punishment-hide-shorts ytd-guide-entry-renderer:has(a[title="Shorts"]),
+html.punishment-hide-shorts ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
+html.punishment-hide-shorts ytd-mini-guide-entry-renderer[aria-label="Shorts"] {
+  display: none !important;
+}
+
+/* Channel page Shorts tab */
+html.punishment-hide-shorts yt-tab-shape[tab-title="Shorts"],
+html.punishment-hide-shorts tp-yt-paper-tab:has(a[href$="/shorts"]) {
+  display: none !important;
+}
+
+/* Search filter chips and other buttons tagged by youtube-shorts.js */
+html.punishment-hide-shorts [data-punishment-shorts] {
+  display: none !important;
+}
+
+/* Mobile site (m.youtube.com) */
+html.punishment-hide-shorts ytm-reel-shelf-renderer,
+html.punishment-hide-shorts ytm-pivot-bar-item-renderer:has(.pivot-shorts),
+html.punishment-hide-shorts ytm-rich-section-renderer:has(ytm-shorts-lockup-view-model),
+html.punishment-hide-shorts ytm-rich-section-renderer:has(ytm-reel-shelf-renderer),
+html.punishment-hide-shorts ytm-video-with-context-renderer:has(a[href^="/shorts/"]) {
   display: none !important;
 }
